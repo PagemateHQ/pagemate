@@ -1,7 +1,13 @@
 import styled from '@emotion/styled';
 import React from 'react';
+import { useDraggable } from '../hooks/useDraggable';
 
 const HomePage = () => {
+  const { ref, style, isDragging } = useDraggable({
+    snapToCorners: true,
+    cornerGap: 48,
+  });
+
   return (
     <Container>
       <Header>
@@ -14,7 +20,7 @@ const HomePage = () => {
         </HeaderContent>
       </Header>
 
-      <FloatingOrb />
+      <FloatingOrb ref={ref} style={style} $isDragging={isDragging} />
 
       <ContentWrapper>
         <HeroSection>
@@ -96,13 +102,7 @@ const Container = styled.div`
   min-height: 100vh;
 `;
 
-const FloatingOrb = styled.div`
-  cursor: pointer;
-
-  position: fixed;
-  right: 48px;
-  bottom: 48px;
-
+const FloatingOrb = styled.div<{ $isDragging?: boolean }>`
   width: 64px;
   height: 64px;
   border-radius: 46px;
@@ -112,7 +112,20 @@ const FloatingOrb = styled.div`
     rgba(239, 250, 255, 1) 100%
   );
   border: 1px solid #dbf3ff;
-  box-shadow: 0px 10px 22px 0px rgba(106, 219, 255, 0.32);
+  box-shadow: ${props => props.$isDragging 
+    ? '0px 15px 30px 0px rgba(106, 219, 255, 0.45)' 
+    : '0px 10px 22px 0px rgba(106, 219, 255, 0.32)'};
+  transform: ${props => props.$isDragging ? 'scale(1.05)' : 'scale(1)'};
+  z-index: 9999;
+
+  &:hover {
+    transform: scale(1.05);
+    box-shadow: 0px 12px 25px 0px rgba(106, 219, 255, 0.38);
+  }
+
+  &:active {
+    transform: scale(1.08);
+  }
 
   &::before {
     content: '';
@@ -124,6 +137,7 @@ const FloatingOrb = styled.div`
     background: url('/assets/logo.png') center/cover no-repeat;
     filter: blur(5.742px);
     opacity: 0.47;
+    pointer-events: none;
   }
 
   &::after {
@@ -134,6 +148,7 @@ const FloatingOrb = styled.div`
     width: 45.639px;
     height: 45.639px;
     background: url('/assets/logo.png') center/cover no-repeat;
+    pointer-events: none;
   }
 `;
 
