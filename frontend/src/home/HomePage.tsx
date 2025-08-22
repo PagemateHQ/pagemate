@@ -4,7 +4,18 @@ import React from 'react';
 const HomePage = () => {
   return (
     <Container>
+      <Header>
+        <HeaderContent>
+          <LogoGroup>
+            <HeaderLogoBlur src="/assets/logo.png" alt="" />
+            <HeaderLogo src="/assets/logo.png" alt="Pagemate" />
+            <PagemateText src="/assets/pagemate-text.svg" alt="Pagemate" />
+          </LogoGroup>
+        </HeaderContent>
+      </Header>
+
       <FloatingOrb />
+
       <ContentWrapper>
         <HeroSection>
           <LogoSection>
@@ -21,7 +32,8 @@ const HomePage = () => {
             <Description>
               Pagemate guides users and executes tasks for them—
               <br />
-              all through a simple drop-in SDK that turns any flow into one-click experiences.
+              all through a simple drop-in SDK that turns any flow into
+              one-click experiences.
             </Description>
             <ButtonGroup>
               <StartBuildingButton>Start Building</StartBuildingButton>
@@ -29,7 +41,7 @@ const HomePage = () => {
             </ButtonGroup>
           </HeroContent>
         </HeroSection>
-        
+
         <DemoSection>
           <DemoLabel>DEMO</DemoLabel>
           <DemoGrid>
@@ -39,31 +51,31 @@ const HomePage = () => {
                   <BrowserDots src="/assets/browser-dots.svg" alt="" />
                 </BrowserHeader>
                 <BrowserContent>
-                  <DemoPreview src="/assets/demo-preview.png" alt="Demo preview" />
+                  <DemoPreview />
                 </BrowserContent>
               </BrowserWindow>
               <DemoCardTitle>Commerce</DemoCardTitle>
             </DemoCard>
-            
+
             <DemoCard>
               <BrowserWindow>
                 <BrowserHeader>
                   <BrowserDots src="/assets/browser-dots.svg" alt="" />
                 </BrowserHeader>
                 <BrowserContent>
-                  <DemoPreview src="/assets/demo-preview.png" alt="Demo preview" />
+                  <DemoPreview />
                 </BrowserContent>
               </BrowserWindow>
               <DemoCardTitle>Banking & Finance</DemoCardTitle>
             </DemoCard>
-            
+
             <DemoCard>
               <BrowserWindow>
                 <BrowserHeader>
                   <BrowserDots src="/assets/browser-dots.svg" alt="" />
                 </BrowserHeader>
                 <BrowserContent>
-                  <DemoPreview src="/assets/demo-preview.png" alt="Demo preview" />
+                  <DemoPreview />
                 </BrowserContent>
               </BrowserWindow>
               <DemoCardTitle>SaaS Products</DemoCardTitle>
@@ -71,16 +83,6 @@ const HomePage = () => {
           </DemoGrid>
         </DemoSection>
       </ContentWrapper>
-      
-      <Header>
-        <HeaderContent>
-          <LogoGroup>
-            <HeaderLogoBlur src="/assets/logo.png" alt="" />
-            <HeaderLogo src="/assets/logo.png" alt="Pagemate" />
-            <PagemateText src="/assets/pagemate-text.svg" alt="Pagemate" />
-          </LogoGroup>
-        </HeaderContent>
-      </Header>
     </Container>
   );
 };
@@ -95,9 +97,12 @@ const Container = styled.div`
 `;
 
 const FloatingOrb = styled.div`
-  position: absolute;
-  left: 1617px;
-  top: 848px;
+  cursor: pointer;
+
+  position: fixed;
+  right: 48px;
+  bottom: 48px;
+
   width: 64px;
   height: 64px;
   border-radius: 46px;
@@ -108,7 +113,7 @@ const FloatingOrb = styled.div`
   );
   border: 1px solid #dbf3ff;
   box-shadow: 0px 10px 22px 0px rgba(106, 219, 255, 0.32);
-  
+
   &::before {
     content: '';
     position: absolute;
@@ -120,7 +125,7 @@ const FloatingOrb = styled.div`
     filter: blur(5.742px);
     opacity: 0.47;
   }
-  
+
   &::after {
     content: '';
     position: absolute;
@@ -171,18 +176,20 @@ const LogoBlur = styled.img`
 
 const Logo = styled.img`
   position: absolute;
-  left: 16.48px;
   top: 0;
-  width: 177.389px;
-  height: 177.389px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 178px;
+  height: 178px;
 `;
 
 const LogoGradient = styled.div`
   position: absolute;
-  left: 16px;
-  top: 113px;
-  width: 178px;
-  height: 64px;
+  width: 100%;
+  height: 120px;
+  left: 0;
+  right: 0;
+  bottom: 0;
   background: linear-gradient(
     to bottom,
     rgba(232, 247, 255, 0) 0%,
@@ -192,12 +199,13 @@ const LogoGradient = styled.div`
 
 const HeroContent = styled.div`
   position: absolute;
-  left: 304px;
   top: 145px;
-  width: 591px;
+  left: 50%;
+  transform: translateX(-50%);
+
+  width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 28px;
   align-items: center;
 `;
 
@@ -209,10 +217,11 @@ const Title = styled.h1`
   letter-spacing: -1.92px;
   color: #0b3668;
   text-align: center;
-  margin: 0;
 `;
 
 const Description = styled.p`
+  margin-top: 28px;
+
   font-family: 'Instrument Sans', sans-serif;
   font-weight: 400;
   font-size: 18px;
@@ -220,10 +229,11 @@ const Description = styled.p`
   letter-spacing: -0.72px;
   color: #6c8bab;
   text-align: center;
-  margin: 0 0 24px 0;
 `;
 
 const ButtonGroup = styled.div`
+  margin-top: 24px;
+
   display: flex;
   gap: 8px;
   align-items: center;
@@ -231,11 +241,7 @@ const ButtonGroup = styled.div`
 
 const StartBuildingButton = styled.button`
   padding: 13px 28px;
-  background: linear-gradient(
-    180deg,
-    #eef9ff 29.327%,
-    #cdeeff 100%
-  );
+  background: linear-gradient(180deg, #eef9ff 29.327%, #cdeeff 100%);
   border: 1px solid #c4e2f1;
   border-radius: 8px;
   box-shadow: 0px 10px 22px 0px rgba(64, 156, 203, 0.3);
@@ -247,7 +253,7 @@ const StartBuildingButton = styled.button`
   color: #59b3e1;
   cursor: pointer;
   transition: all 0.2s ease;
-  
+
   &:hover {
     transform: translateY(-1px);
     box-shadow: 0px 12px 24px 0px rgba(64, 156, 203, 0.35);
@@ -267,7 +273,7 @@ const ReadDocsButton = styled.button`
   color: #6ab9e1;
   cursor: pointer;
   transition: all 0.2s ease;
-  
+
   &:hover {
     background: rgba(196, 226, 241, 0.1);
   }
