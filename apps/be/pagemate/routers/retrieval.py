@@ -6,7 +6,11 @@ from pagemate.services import embedding_service, document_service
 router = APIRouter(prefix="/tenants/{tenant_id}", tags=["retrieval"])
 
 
-@router.get("/retrieval", response_model=list[DocumentChunk])
+@router.get(
+    "/retrieval",
+    response_model=list[DocumentChunk],
+    response_model_exclude_none=True,
+)
 async def retrieval(
     tenant_id: str,
     query: str = Query(..., description="Query text to embed and search"),
@@ -33,5 +37,8 @@ async def retrieval(
         metric="cosine",
         limit=limit,
     )
+
+    for chunk in retrived_chunks:
+        chunk.embedding = []
 
     return retrived_chunks
