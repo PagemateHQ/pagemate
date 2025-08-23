@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware import Middleware
 import uvicorn
 
 app = FastAPI(
@@ -7,15 +8,15 @@ app = FastAPI(
 )
 
 # Configure CORS
-cors_middleware = CORSMiddleware(
-    app=app,
+cors_middleware = Middleware(
+    CORSMiddleware, # type: ignore
     allow_origins=["*"],
-    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    allow_credentials=True,
 )
 
-app.add_middleware(cors_middleware)
+app.add_middleware(cors_middleware) # type: ignore
 
 @app.get("/")
 async def root():
