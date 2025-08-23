@@ -43,8 +43,7 @@ export const FloatingOrb: React.FC<FloatingOrbProps> = ({
     const isLeft = orbRect.left < window.innerWidth / 2;
     const corner: CornerPosition =
       `${isTop ? 'top' : 'bottom'}-${isLeft ? 'left' : 'right'}` as CornerPosition;
-    setCurrentCorner(corner);
-
+    
     let top = 0;
     let left = 0;
 
@@ -69,20 +68,21 @@ export const FloatingOrb: React.FC<FloatingOrbProps> = ({
     top = Math.max(8, Math.min(top, window.innerHeight - viewHeight - 8));
 
     setIntroPosition({ top, left });
+    setCurrentCorner(corner);
   }, []);
 
   useEffect(() => {
     if (showIntro) {
       updateIntroPosition();
-
-      // Also update position when orb moves (e.g., when it snaps to corners)
-      const interval = setInterval(() => {
-        updateIntroPosition();
-      }, 300);
-
-      return () => clearInterval(interval);
     }
-  }, [showIntro, updateIntroPosition, style]);
+  }, [showIntro, updateIntroPosition]);
+
+  // Update position when orb moves
+  useEffect(() => {
+    if (showIntro) {
+      updateIntroPosition();
+    }
+  }, [style.left, style.top]); // Depend on position changes
 
   // Handle window resize with throttling
   useEffect(() => {
