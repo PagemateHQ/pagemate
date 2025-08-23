@@ -2,8 +2,7 @@ import styled from '@emotion/styled';
 import { AnimatePresence, motion } from 'framer-motion';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
-import { CornerPosition, useDraggable } from '@/hooks/useDraggable';
-
+import { CornerPosition, useDraggable } from '../hooks/useDraggable';
 import { PagemateChat } from './PagemateChat';
 
 interface FloatingOrbProps {
