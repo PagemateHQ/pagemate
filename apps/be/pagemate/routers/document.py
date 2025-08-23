@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, UploadFile, File
 
-from pagemate.schema.document import Document
+from pagemate.schema.document import Document, DocumentStatus
 from pagemate.services import document_service, storage_service
 
 router = APIRouter(prefix="/tenants/{tenant_id}/documents", tags=["documents"])
@@ -47,6 +47,17 @@ async def get_document(tenant_id: str, document_id: str):
     if not document:
         raise HTTPException(status_code=404, detail="Document not found")
     return document
+
+
+@router.get("/{document_id}/status", response_model=DocumentStatus)
+async def get_document_status(tenant_id: str, document_id: str):
+    """Get embedding status and chunk count for a document."""
+    status = await document_service.get_document_status(
+        document_id=document_id, tenant_id=tenant_id
+    )
+    if not status:
+        raise HTTPException(status_code=404, detail="Document not found")
+    return status
 
 
 @router.delete("/{document_id}", status_code=204)

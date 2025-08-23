@@ -36,6 +36,20 @@ class Document(BaseModel):
     completed_at: Optional[datetime] = Field(None, alias="completedAt")
     failed_at: Optional[datetime] = Field(None, alias="failedAt")
 
+
+class DocumentStatus(BaseModel):
+    id: str = Field(..., alias="_id", description="Document ID")
+    tenant_id: str = Field(..., description="Tenant ID")
+    embedding_status: Optional[DocumentEmbeddingStatus] = Field(
+        None, description="Embedding pipeline status"
+    )
+    error: Optional[str] = Field(None, description="Embedding error details")
+    started_at: Optional[datetime] = Field(None, alias="startedAt")
+    completed_at: Optional[datetime] = Field(None, alias="completedAt")
+    failed_at: Optional[datetime] = Field(None, alias="failedAt")
+    updated_at: Optional[datetime] = Field(None, alias="updatedAt")
+    chunks_count: int = Field(0, description="Number of chunks generated")
+
 class DocumentChunk(BaseModel):
     id: str | None = Field(None, alias="_id", description="Chunk ID")
     document_id: str = Field(..., description="Parent document ID")
@@ -52,8 +66,10 @@ class DocumentChunk(BaseModel):
     created_at: datetime = Field(
         default_factory=lambda: datetime.now(timezone.utc),
         description="Creation timestamp",
+        alias="createdAt",
     )
     updated_at: datetime = Field(
         default_factory=lambda: datetime.now(timezone.utc),
         description="Last update timestamp",
+        alias="updatedAt",
     )

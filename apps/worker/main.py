@@ -93,8 +93,8 @@ def claim_pending(doc_col) -> Optional[Dict[str, Any]]:
             {
                 "$set": {
                     "embedding_status": "processing",
-                    "startedAt": now,
-                    "updatedAt": now,
+                    "started_at": now,
+                    "updated_at": now,
                 }
             },
             return_document=ReturnDocument.AFTER,
@@ -295,13 +295,13 @@ def requeue_one_failed(doc_col) -> bool:
         "embedding_status": "failed",
         "$and": [
             {"$or": [{"attempts": {"$exists": False}}, {"attempts": {"$lt": max_attempts}}]},
-            {"$or": [{"nextRetryAt": {"$exists": False}}, {"nextRetryAt": {"$lte": now}}]},
+            {"$or": [{"next_retry_at": {"$exists": False}}, {"next_retry_at": {"$lte": now}}]},
         ],
     }
     try:
         doc = doc_col.find_one_and_update(
             filt,
-            {"$set": {"embedding_status": "pending", "updatedAt": now}},
+            {"$set": {"embedding_status": "pending", "updated_at": now}},
             return_document=ReturnDocument.AFTER,
         )
         if doc is not None:
@@ -435,8 +435,8 @@ def create_chunks_for_document(
                     "embedding": vec,
                     "char_start": start,
                     "char_end": end,
-                    "createdAt": now,
-                    "updatedAt": now,
+                    "created_at": now,
+                    "updated_at": now,
                 }
             )
             idx_global += 1
@@ -446,7 +446,7 @@ def create_chunks_for_document(
         try:
             logger.info(
                 "Inserted chunks: document_id=%s, count=%d",
-                _short_id(doc_id),
+                _short_id(doc_id_str),
                 len(getattr(insert_res, "inserted_ids", []) or docs),
             )
         except Exception:
@@ -467,7 +467,7 @@ def process_embedding(
                 save_text = text[:max_save]
                 documents_col.update_one(
                     {"_id": emb_id},
-                    {"$set": {"text": save_text, "updatedAt": utc_now()}},
+                    {"$set": {"text": save_text, "updated_at": utc_now()}},
                 )
                 logger.debug(
                     "Saved text snapshot to document _id=%s (len=%d)",
@@ -485,8 +485,8 @@ def process_embedding(
                     "$set": {
                         "embedding_status": "failed",
                         "error": str(e),
-                        "failedAt": utc_now(),
-                        "updatedAt": utc_now(),
+                        "failed_at": utc_now(),
+                        "updated_at": utc_now(),
                     }
                 },
             )
@@ -512,8 +512,8 @@ def process_embedding(
             {
                 "$set": {
                     "embedding_status": "completed",
-                    "completedAt": utc_now(),
-                    "updatedAt": utc_now(),
+                    "completed_at": utc_now(),
+                    "updated_at": utc_now(),
                 },
                 "$unset": {"embedding": ""},
             },
@@ -531,15 +531,15 @@ def process_embedding(
                     "$set": {
                         "embedding_status": "failed",
                         "error": f"{type(e).__name__}: {e}",
-                        "failedAt": utc_now(),
-                        "updatedAt": utc_now(),
+                        "failed_at": utc_now(),
+                        "updated_at": utc_now(),
                         "attempts": attempts,
-                        "nextRetryAt": next_retry,
+                        "next_retry_at": next_retry,
                     }
                 },
             )
             logger.warning(
-                "Scheduled retry for _id=%s attempts=%d nextRetryAt=%s",
+                "Scheduled retry for _id=%s attempts=%d next_retry_at=%s",
                 _short_id(emb_id),
                 attempts,
                 next_retry.isoformat(),

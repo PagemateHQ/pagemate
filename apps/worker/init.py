@@ -110,17 +110,17 @@ def seed(db, storage_root: Path) -> None:
                 # Insert document with embedding status on the same record
                 # Keeping document_id used in path consistent with record id makes it easier to reason.
                 # So we pass size and the actual object path.
-                now = utc_now()
-                doc_payload = {
-                    "_id": document_id,
-                    "tenant_id": tenant_id,
-                    "name": filename,
-                    "object_path": str(dest),
-                    "size": len(data),
-                    "createdAt": now,
-                    "updatedAt": now,
-                    "embedding_status": "pending",
-                }
+        now = utc_now()
+        doc_payload = {
+            "_id": document_id,
+            "tenant_id": tenant_id,
+            "name": filename,
+            "object_path": str(dest),
+            "size": len(data),
+            "created_at": now,
+            "updated_at": now,
+            "embedding_status": "pending",
+        }
                 documents_col.insert_one(doc_payload)
                 print(
                     f"  Added document _id={document_id} ({len(data)} bytes), embedding_status=pending"

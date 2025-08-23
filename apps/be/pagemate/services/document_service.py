@@ -2,7 +2,7 @@ from datetime import datetime, timezone
 from typing import Any
 
 from pagemate import clients
-from pagemate.schema.document import Document
+from pagemate.schema.document import Document, DocumentStatus
 
 
 async def list_documents(offset: int = 0, limit: int = 20) -> list[Document]:
@@ -33,6 +33,22 @@ async def get_document_by_id(document_id: str, *, tenant_id: str) -> Document | 
     if document_data is None:
         return None
     return Document(**document_data)
+
+
+async def get_document_status(document_id: str, *, tenant_id: str) -> DocumentStatus | None:
+    """Returns minimal status + chunk count for the given document."""
+    document_data = await clients.mongo.document.get_document_by_id(
+        document_id=document_id, tenant_id=tenant_id
+    )
+    if document_data is None:
+        return None
+    # Count chunks
+    try:
+        chunks_count = await clients.mongo.chunk.count_chunks_by_document_id(document_id)
+    except Exception:
+        chunks_count = 0
+    payload = {**document_data, "chunks_count": chunks_count}
+    return DocumentStatus(**payload)
 
 
 async def create_document(
