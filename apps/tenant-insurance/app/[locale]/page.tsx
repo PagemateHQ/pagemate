@@ -56,6 +56,7 @@ export default async function Home({
 			<TaskSelector />
 			<section className="grid gap-6 md:grid-cols-2 md:gap-10">
 				<div className="space-y-4">
+					<img src="/3d-column.png" alt="" className="h-[128px] w-[83px] object-fit" />
 					<h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
 						{t("Home.heroTitle")}
 					</h1>
