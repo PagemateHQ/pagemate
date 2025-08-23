@@ -1,6 +1,6 @@
 import styled from '@emotion/styled';
 import { motion } from 'framer-motion';
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 
 import { SparkleIcon } from '@/components/icons/SparkleIcon';
 
@@ -19,10 +19,6 @@ export const IntroView: React.FC<IntroViewProps> = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const chatScrollRef = useRef<HTMLDivElement | null>(null);
-
-  const apiKey = process.env.NEXT_PUBLIC_UPSTAGE_API_KEY ?? '';
-
-  const baseURL = 'https://api.upstage.ai/v1';
 
   const scrollToBottom = useCallback(() => {
     requestAnimationFrame(() => {
@@ -50,21 +46,15 @@ export const IntroView: React.FC<IntroViewProps> = () => {
       scrollToBottom();
 
       try {
-        // Lazy import to avoid SSR bundling issues
-        const { default: OpenAI } = await import('openai');
-        const openai = new OpenAI({
-          apiKey,
-          baseURL,
-          dangerouslyAllowBrowser: true,
+        const resp = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ messages: nextMessages, model: 'solar-pro2' }),
         });
+        const data = await resp.json();
+        if (!resp.ok) throw new Error(data?.error || 'Failed to fetch');
 
-        const chatCompletion = await openai.chat.completions.create({
-          model: 'solar-pro2',
-          messages: nextMessages.map((m) => ({ role: m.role, content: m.content })),
-          stream: false,
-        });
-
-        const reply = chatCompletion.choices?.[0]?.message?.content ?? '';
+        const reply = data?.content ?? '';
         if (reply) {
           setMessages((prev) => [...prev, { role: 'assistant', content: reply }]);
           scrollToBottom();
@@ -76,7 +66,7 @@ export const IntroView: React.FC<IntroViewProps> = () => {
         setLoading(false);
       }
     },
-    [apiKey, baseURL, loading, messages, scrollToBottom]
+    [loading, messages, scrollToBottom]
   );
 
   const handleSubmit = useCallback(
@@ -212,11 +202,11 @@ export const IntroView: React.FC<IntroViewProps> = () => {
                     if (!loading) handleSubmit(e as unknown as React.FormEvent);
                   }
                 }}
-                disabled={!apiKey || loading}
+                disabled={loading}
               />
-              <InputLabel>{apiKey ? (loading ? 'Generating…' : 'Turbo Mode') : 'Add NEXT_PUBLIC_UPSTAGE_API_KEY to .env'}</InputLabel>
+              <InputLabel>{loading ? 'Generating…' : 'Turbo Mode'}</InputLabel>
             </InputContent>
-            <SendButton type="submit" disabled={!input.trim() || loading || !apiKey}>
+            <SendButton type="submit" disabled={!input.trim() || loading}>
               {loading ? '…' : 'Send'}
             </SendButton>
           </MotionInputContainer>
