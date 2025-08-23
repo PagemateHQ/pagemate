@@ -27,14 +27,12 @@ async def get_tenant_by_name(tenant_name: str) -> Tenant | None:
     return Tenant(**tenant_data)
 
 
-async def create_tenant(name: str) -> Tenant:
+async def create_tenant(tenant: Tenant) -> Tenant:
     """Creates a new tenant and returns the Tenant model."""
     now = datetime.now(timezone.utc)
-    tenant_data = {
-        "name": name,
-        "created_at": now,
-        "updated_at": now,
-    }
+    tenant_data = tenant.model_dump(exclude={"id"})
+    tenant_data["created_at"] = now
+    tenant_data["updated_at"] = now
 
     created_data = await tenant_client.create_tenant(tenant_data)
     return Tenant(**created_data)

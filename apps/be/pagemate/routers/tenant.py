@@ -24,7 +24,8 @@ async def list_tenants(offset: int = 0, limit: int = 20):
 @router.post("/", response_model=Tenant, status_code=201)
 async def create_tenant(request: TenantCreateRequest):
     """Create a new tenant."""
-    return await tenant_service.create_tenant(name=request.name)
+    tenant = Tenant(name=request.name)
+    return await tenant_service.create_tenant(tenant)
 
 
 @router.get("/{tenant_id}", response_model=Tenant)

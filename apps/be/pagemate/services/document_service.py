@@ -42,7 +42,9 @@ async def create_document(
 ) -> Document:
     """Creates a new document and returns the Document model."""
     now = datetime.now(timezone.utc)
-    document_data = document.model_dump()
+    document_data = document.model_dump(exclude={"id"})
+    document_data["created_at"] = now
+    document_data["updated_at"] = now
 
     created_data = await clients.mongo.document.create_document(
         document_data=document_data, tenant_id=tenant_id
