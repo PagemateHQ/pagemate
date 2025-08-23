@@ -252,7 +252,7 @@ const DemoSection = styled.div`
   gap: 16px;
 `;
 
-const DemoLabel = styled.div`
+const DemoLabel = styled.span`
   font-family: 'Instrument Sans', sans-serif;
   font-weight: 500;
   font-size: 20px;
@@ -330,7 +330,7 @@ const DemoPreview = styled(Image)`
   background-color: #e8f7ff;
 `;
 
-const DemoCardTitle = styled.div`
+const DemoCardTitle = styled.span`
   font-family: 'Instrument Sans', sans-serif;
   font-weight: 500;
   font-size: 20px;
