@@ -1,7 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import OpenAI from 'openai';
 import { z } from 'zod';
-import { zodResponseFormat } from 'openai/helpers/zod';
 
 import { stripJunk } from '../../utils/stripJunk';
 import { withCORS } from '../../lib/withCORS';
@@ -31,9 +30,8 @@ async function handler(
   }
 
   const apiKey = process.env.UPSTAGE_API_KEY;
-  const openaiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey && !openaiKey) {
-    return res.status(500).json({ error: 'Missing UPSTAGE_API_KEY or OPENAI_API_KEY' });
+  if (!apiKey) {
+    return res.status(500).json({ error: 'Missing UPSTAGE_API_KEY' });
   }
 
   try {
@@ -53,9 +51,7 @@ async function handler(
       return res.status(400).json({ error: 'messages[] is required' });
     }
 
-    const upstageClient = apiKey
-      ? new OpenAI({ apiKey, baseURL: 'https://api.upstage.ai/v1' })
-      : null;
+    const upstageClient = new OpenAI({ apiKey, baseURL: 'https://api.upstage.ai/v1' });
 
     const DEFAULT_SYSTEM_PROMPT = [
       'You are Pagemate, an on-page AI assistant embedded in a website.',
@@ -211,53 +207,16 @@ async function handler(
       return { content: raw.trim(), structured: null };
     };
 
-    let content = '';
-    let structured: { reply: string; action: { verb: z.infer<typeof ActionVerb>; target: string } } | null = null;
-
     const mname = (model || 'solar-pro2').trim();
-    const isOpenAIModel = /^gpt-|^o3|^gpt4|^gpt-4o/i.test(mname);
-
-    if (openaiKey && isOpenAIModel) {
-      const oai = new OpenAI({ apiKey: openaiKey });
-      try {
-        const completion: any = await oai.chat.completions.create({
-          model: mname,
-          messages: finalMessages,
-          response_format: zodResponseFormat(AssistantSchema, 'assistant_reply'),
-        } as any);
-        const msg = completion?.choices?.[0]?.message || {};
-        if (msg.refusal) {
-          content = String(msg.refusal || 'Refused');
-        } else if (msg.parsed) {
-          const parsed = msg.parsed as z.infer<typeof AssistantSchema>;
-          structured = { reply: parsed.reply, action: parsed.action };
-          content = toTextWithSingleAction(parsed);
-        } else {
-          const text = msg?.content?.[0]?.text || msg?.content || '';
-          ({ content, structured } = locallyValidateOrSanitize(String(text || '')));
-        }
-      } catch (e: any) {
-        if (!upstageClient) throw e;
-        const completion = await upstageClient.chat.completions.create({
-          model: 'solar-pro2',
-          messages: finalMessages,
-          stream: false,
-        });
-        const raw = completion.choices?.[0]?.message?.content ?? '';
-        ({ content, structured } = locallyValidateOrSanitize(raw));
-      }
-    } else {
-      if (!upstageClient) {
-        return res.status(500).json({ error: 'No suitable provider configured' });
-      }
-      const completion = await upstageClient.chat.completions.create({
-        model: mname || 'solar-pro2',
-        messages: finalMessages,
-        stream: false,
-      });
-      const raw = completion.choices?.[0]?.message?.content ?? '';
-      ({ content, structured } = locallyValidateOrSanitize(raw));
-    }
+    
+    const completion = await upstageClient.chat.completions.create({
+      model: mname,
+      messages: finalMessages,
+      stream: false,
+    });
+    
+    const raw = completion.choices?.[0]?.message?.content ?? '';
+    const { content, structured } = locallyValidateOrSanitize(raw);
 
     return res.status(200).json({ content, structured: structured ?? undefined });
   } catch (err: any) {
