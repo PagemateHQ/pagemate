@@ -252,7 +252,11 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({ isOpen, onClose }) =
       const resp = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: nextMessages, model: 'solar-pro2' }),
+        body: JSON.stringify({
+          messages: nextMessages,
+          model: 'solar-pro2',
+          pageHtml: typeof document !== 'undefined' ? document.body.innerHTML : '',
+        }),
       });
       const data = await resp.json();
       if (!resp.ok) throw new Error(data?.error || 'Failed to fetch');
