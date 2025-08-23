@@ -1,7 +1,7 @@
-from typing import List, Optional
+from typing import List, Literal
 
 import openai
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Query
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
@@ -15,70 +15,37 @@ openai_client = openai.Client(
 
 
 class Message(BaseModel):
-    role: str
+    role: Literal["system", "user", "assistant"]
     content: str
 
 
 class ChatCompletionRequest(BaseModel):
     messages: List[Message]
-    model: str
-    pageHtml: Optional[str] = None
-    stream: Optional[bool] = False
-    temperature: Optional[float] = None
-    max_tokens: Optional[int] = None
-    top_p: Optional[float] = None
-    frequency_penalty: Optional[float] = None
-    presence_penalty: Optional[float] = None
 
 
 @router.post("/v1/chat/completions")
-async def upstage_chat_completions(request: ChatCompletionRequest):
+async def upstage_chat_completions(
+    request: ChatCompletionRequest,
+    stream: bool = Query(False),
+):
     """Proxy for Upstage chat completions endpoint."""
     try:
-        # Start with secret_recipe as the first system message
         messages = []
+
         if settings.secret_recipe:
             messages.append({"role": "system", "content": settings.secret_recipe})
-        
-        # Add the messages from the request
-        messages.extend([
-            {"role": msg.role, "content": msg.content} for msg in request.messages
-        ])
 
-        # If pageHtml is provided, add it as context to the last user message
-        if request.pageHtml:
-            if messages and messages[-1]["role"] == "user":
-                messages[-1][
-                    "content"
-                ] = f"{messages[-1]['content']}\n\nPage HTML Context:\n{request.pageHtml}"
-            else:
-                messages.append(
-                    {
-                        "role": "system",
-                        "content": f"Page HTML Context:\n{request.pageHtml}",
-                    }
-                )
+        messages.extend(
+            [{"role": msg.role, "content": msg.content} for msg in request.messages]
+        )
 
-        # Prepare OpenAI API parameters
         openai_params = {
-            "model": request.model,
+            "model": settings.upstage_completion_model,
             "messages": messages,
-            "stream": request.stream,
+            "stream": stream,
         }
 
-        # Add optional parameters if provided
-        if request.temperature is not None:
-            openai_params["temperature"] = request.temperature
-        if request.max_tokens is not None:
-            openai_params["max_tokens"] = request.max_tokens
-        if request.top_p is not None:
-            openai_params["top_p"] = request.top_p
-        if request.frequency_penalty is not None:
-            openai_params["frequency_penalty"] = request.frequency_penalty
-        if request.presence_penalty is not None:
-            openai_params["presence_penalty"] = request.presence_penalty
-
-        if request.stream:
+        if stream:
             response = openai_client.chat.completions.create(**openai_params)
 
             async def generate():
