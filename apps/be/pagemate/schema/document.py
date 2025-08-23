@@ -27,28 +27,17 @@ class Document(BaseModel):
         description="Last update timestamp",
     )
 
-class DocumentEmbedding(BaseModel):
-    id: str = Field(..., alias="_id", description="Embedding ID")
-    document_id: str = Field(..., description="Related Document ID")
+    text: Optional[str] = Field(None, description="Text used for embedding (optional)")
+    embedding: Optional[List[float]] = Field(None, description="Embedding vector (optional)")
+    embedding_status: Optional[DocumentEmbeddingStatus] = Field(
+        None, description="Embedding pipeline status (optional)"
+    )
+    error: Optional[str] = Field(None, description="Embedding error details (if any)")
 
-    # Text provided directly for embedding (optional; file-based flows may omit)
-    text: Optional[str] = Field(None, description="Text to embed, if provided")
-
-    # Dense vector for cosine similarity (present when status=completed)
-    embedding: Optional[List[float]] = Field(None, description="Embedding vector")
-
-    status: DocumentEmbeddingStatus = Field(..., description="Embedding status")
-    error: Optional[str] = Field(None, description="Error details if status=failed")
-
-    # Processing timestamps (match worker fields via aliases)
+    # Processing timestamps for embedding jobs
     started_at: Optional[datetime] = Field(None, alias="startedAt")
     completed_at: Optional[datetime] = Field(None, alias="completedAt")
     failed_at: Optional[datetime] = Field(None, alias="failedAt")
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), description="Creation timestamp")
-    updated_at: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc),
-        description="Last update timestamp",
-    )
 
 class DocumentChunk(BaseModel):
     id: str = Field(..., alias="_id", description="Chunk ID")
