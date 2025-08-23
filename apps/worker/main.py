@@ -527,7 +527,7 @@ def main() -> None:
     if not openai_api_key:
         logger.error("OPENAI_API_KEY is required in environment.")
         sys.exit(1)
-    embedding_model = os.getenv("EMBEDDING_MODEL", "solar-embedding-1-large-query")
+    embedding_model = os.getenv("EMBEDDING_MODEL", "solar-embedding-1-large-passage")
     poll_interval = float(os.getenv("POLL_INTERVAL", "1.0"))
     client, db, documents_col = get_db()
     chunks_col = get_chunks_collection(db)
