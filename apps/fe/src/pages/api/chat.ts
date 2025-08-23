@@ -32,7 +32,7 @@ async function handler(
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
 
-  const apiKey = process.env.OPENAI_API_KEY;
+  const apiKey = process.env.UPSTAGE_API_KEY;
   if (!apiKey) {
     return res.status(500).json({ error: 'Missing UPSTAGE_API_KEY' });
   }
@@ -55,7 +55,7 @@ async function handler(
     }
 
     const upstageClient = new OpenAI({ apiKey, 
-      // baseURL: 'https://api.upstage.ai/v1' 
+      baseURL: process.env.UPSTAGE_BASE_URL || 'https://api.upstage.ai/v1'
     });
 
     const DEFAULT_SYSTEM_PROMPT = [

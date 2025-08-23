@@ -27,12 +27,7 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
     | { type: 'highlightByText'; text: string }
     | { type: 'clickByXPath'; xpath: string }
     | { type: 'highlightByXPath'; xpath: string }
-    | {
-        type: 'retrieve';
-        query: string;
-        limit?: number;
-        documentId?: string | null;
-      };
+    | { type: 'autofill'; spec?: string; fields?: Record<string, string> };
 
   const parseToolIntent = (raw: string): ToolAction | null => {
     const text = raw.trim();
@@ -77,9 +72,7 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
       return { type: 'highlightByXPath', xpath };
     }
 
-    // Match: retrieve/search <query>
-    const r1 = text.match(/^(?:retrieve|search)\s+(.+)/i);
-    if (r1) return { type: 'retrieve', query: r1[1].trim() };
+    // RETRIEVE disabled: server injects RAG automatically
 
     return null;
   };
@@ -132,6 +125,20 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
           return false;
         }
       }
+      case 'autofill': {
+        try {
+          const mapping = tool.fields || parseAutofillSpec(tool.spec || '');
+          const result = autofillFields(mapping);
+          const details = result.filled.map((f) => `- ${f.label || f.key}: ${truncateText(f.value, 80)}`).join('\n');
+          setMessages((prev) => [
+            ...prev,
+            { role: 'assistant', content: (result.success ? `✅ Autofilled ${result.filledCount} ${result.filledCount === 1 ? 'field' : 'fields'}` : `⚠️ Autofill failed: ${result.error or 'No matching fields'}`) + (details ? `\n${details}` : '') },
+          ]);
+          return result.success;
+        } catch {
+          return false;
+        }
+      }
       default:
         return false;
     }
@@ -168,7 +175,10 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
           actions.push({ type: 'clickByXPath', xpath: target });
         else actions.push({ type: 'clickByText', text: target });
       } else if (verb === 'RETRIEVE') {
-        actions.push({ type: 'retrieve', query: target });
+        // Ignore RETRIEVE (RAG injected by server)
+      } else if (verb === 'AUTOFILL') {
+        const fields = parseAutofillSpec(target);
+        actions.push({ type: 'autofill', spec: target, fields });
       } else if (verb === 'CLICK_XPATH')
         actions.push({ type: 'clickByXPath', xpath: target });
       else if (verb === 'SPOTLIGHT_XPATH')
@@ -340,7 +350,151 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
     spotlightInterval = setInterval(positionSpotlight, 300);
   };
 
-  const sendMessage = useCallback(
+  
+  // --- Autofill helpers ---
+  const truncateText = (s: string, max = 80): string => {
+    const t = String(s);
+    return t.length > max ? `${t.slice(0, max - 1)}…` : t;
+  };
+
+  const parseAutofillSpec = (raw: string): Record<string, string> => {
+    const out: Record<string, string> = {};
+    const s = (raw || '').trim();
+    if (!s) return out;
+    try {
+      if (s.startsWith('{') && s.endsWith('}')) {
+        const obj = JSON.parse(s);
+        if (obj && typeof obj === 'object') {
+          for (const [k, v] of Object.entries(obj)) {
+            if (!k) continue;
+            if (typeof v === 'string' || typeof v === 'number' || typeof v === 'boolean') out[k] = String(v);
+          }
+          return out;
+        }
+      }
+    } catch {}
+    const lines = s.replace(/
+/g, '
+').split(/
+|;/).map((l) => l.trim()).filter(Boolean);
+    for (const line of lines) {
+      const m = line.match(/^([^:=]+)\s*[:=]\s*([\s\S]+)$/);
+      if (!m) continue;
+      const key = (m[1] || '').trim();
+      let val = (m[2] || '').trim();
+      if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'")) || (val.startsWith('`') && val.endsWith('`'))) val = val.slice(1, -1);
+      if (key) out[key] = val;
+    }
+    return out;
+  };
+
+  const norm = (s: string) => s.replace(/\s+/g, ' ').trim().toLowerCase();
+  const isVisible = (el: HTMLElement): boolean => {
+    const style = window.getComputedStyle(el);
+    const rect = el.getBoundingClientRect();
+    return style.display !== 'none' && style.visibility !== 'hidden' && style.opacity !== '0' && rect.width > 0 && rect.height > 0;
+  };
+  const getAssociatedLabel = (el: HTMLElement): string => {
+    try {
+      const id = el.getAttribute('id');
+      if (id) {
+        const lab = document.querySelector(`label[for="${CSS.escape(id)}"]`);
+        if (lab) return (lab.textContent || '').trim();
+      }
+      let p: HTMLElement | null = el;
+      while (p) {
+        if (p.tagName.toLowerCase() === 'label') return (p.textContent || '').trim();
+        p = p.parentElement;
+      }
+      const aria = el.getAttribute('aria-label');
+      if (aria) return aria.trim();
+      const labelledby = el.getAttribute('aria-labelledby');
+      if (labelledby) {
+        const ids = labelledby.split(/\s+/).filter(Boolean);
+        const arr: string[] = [];
+        ids.forEach((i) => { const r = document.getElementById(i); if (r) arr.push((r.textContent || '').trim()); });
+        if (arr.length) return arr.join(' ').trim();
+      }
+    } catch {}
+    return '';
+  };
+
+  const collectFormFields = () => {
+    const nodes = Array.from(document.querySelectorAll<HTMLElement>('input:not([type="hidden"]):not([disabled]), textarea:not([disabled]), select:not([disabled])'));
+    return nodes.filter(isVisible).map((n) => {
+      const tag = n.tagName.toLowerCase();
+      const type = (n as HTMLInputElement).type?.toLowerCase?.() || tag;
+      const label = getAssociatedLabel(n) || '';
+      const placeholder = (n.getAttribute('placeholder') || '').trim();
+      const name = (n.getAttribute('name') || '').trim();
+      const id = (n.getAttribute('id') || '').trim();
+      const aliases = [label, placeholder, name, id, n.getAttribute('autocomplete') || '', type].map((x) => norm(String(x || ''))).filter(Boolean);
+      const uniq = Array.from(new Set(aliases));
+      const scoreWith = (key: string): number => {
+        const k = norm(key);
+        if (!k) return 0;
+        let best = 0;
+        for (const a of uniq) {
+          if (!a) continue;
+          if (a === k) best = Math.max(best, 100);
+          else if (a.includes(k) || k.includes(a)) best = Math.max(best, 60);
+        }
+        return best;
+      };
+      return { el: n, label, placeholder, name, id, scoreWith };
+    });
+  };
+
+  const setElementValue = (el: HTMLElement, value: string): boolean => {
+    try {
+      if (el instanceof HTMLInputElement) {
+        const t = (el.type || '').toLowerCase();
+        if (t === 'checkbox') { el.checked = /^(1|y|yes|true|on|checked)$/i.test(String(value)); el.dispatchEvent(new Event('input', { bubbles: true })); el.dispatchEvent(new Event('change', { bubbles: true })); return true; }
+        if (t === 'radio') return false; // skip complex radios in this FE
+        el.value = String(value);
+        el.dispatchEvent(new Event('input', { bubbles: true }));
+        el.dispatchEvent(new Event('change', { bubbles: true }));
+        el.blur?.();
+        return true;
+      }
+      if (el instanceof HTMLTextAreaElement) {
+        el.value = String(value);
+        el.dispatchEvent(new Event('input', { bubbles: true }));
+        el.dispatchEvent(new Event('change', { bubbles: true }));
+        el.blur?.();
+        return true;
+      }
+      if (el instanceof HTMLSelectElement) {
+        const val = String(value).trim().toLowerCase();
+        for (const opt of Array.from(el.options)) {
+          const txt = (opt.textContent || '').trim().toLowerCase();
+          const v = (opt.value || '').trim().toLowerCase();
+          if (v === val || txt === val || txt.includes(val)) { el.value = opt.value; break; }
+        }
+        el.dispatchEvent(new Event('input', { bubbles: true }));
+        el.dispatchEvent(new Event('change', { bubbles: true }));
+        el.blur?.();
+        return true;
+      }
+      return false;
+    } catch { return false; }
+  };
+
+  const autofillFields = (fields?: Record<string, string>) => {
+    const mapping = fields || {};
+    const entries = Object.entries(mapping).filter(([k]) => !!k);
+    const candidates = collectFormFields();
+    const filled: Array<{ key: string; label: string; value: string }> = [];
+    for (const [key, value] of entries) {
+      const ranked = candidates.map((c) => ({ c, s: c.scoreWith(key) })).filter((x) => x.s > 0).sort((a, b) => b.s - a.s);
+      if (!ranked.length) continue;
+      const target = ranked[0].c.el;
+      const ok = setElementValue(target, value);
+      if (ok) filled.push({ key, label: getAssociatedLabel(target) || '', value });
+    }
+    return { success: filled.length > 0, filledCount: filled.length, filled };
+  };
+const sendMessage = useCallback(
     async (text: string) => {
       if (!text.trim() || loading) return;
 
@@ -359,7 +513,7 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
       }
 
       try {
-        // Tool calling (local): check if user asked to click/highlight/retrieve
+        // Tool calling (local): check if user asked to click/highlight
         const tool = parseToolIntent(text);
         if (tool) {
           if (tool.type === 'retrieve') {

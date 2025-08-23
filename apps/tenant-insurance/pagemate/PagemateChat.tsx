@@ -308,7 +308,7 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
       msgs: ChatMessage[],
       opts: { ragContext?: string | null; signal?: AbortSignal } = {},
     ) => {
-      const resp = await fetch('http://localhost:3000/api/chat', {
+      const resp = await fetch('http://pagemate.app/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -942,13 +942,12 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
           msgs: ChatMessage[],
           opts: { ragContext?: string | null } = {},
         ) => {
-          const resp = await fetch('http://localhost:3000/api/chat', {
+          const resp = await fetch('http://pagemate.app/api/chat', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               messages: msgs,
-              // model: 'solar-pro2',
-              model: 'gpt-5',
+              model: process.env.PAGEMATE_MODEL || 'solar-pro2',
               pageHtml:
                 typeof document !== 'undefined' ? document.body.innerHTML : '',
               ...(opts.ragContext ? { ragContext: opts.ragContext } : {}),
