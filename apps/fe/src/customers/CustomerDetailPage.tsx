@@ -114,7 +114,19 @@ const CustomerDetailPage: React.FC = () => {
             {loading ? (
               <LoadingText>Loading...</LoadingText>
             ) : (
-              <TenantName>{tenant?.name || 'CUSTOMER NAME'}</TenantName>
+              <>
+                <TenantHeader>
+                  <TenantLogo src="/app/logo-acme-insurance.png" alt="Acme Insurance" />
+                  <Divider />
+                </TenantHeader>
+                <TenantInfo>
+                  <TenantDetails>
+                    <TenantCategory>Insurance & Finance</TenantCategory>
+                    <TenantName>{tenant?.name || 'Acme Insurance'}</TenantName>
+                    <TenantCreated>Created Aug 23, 2025</TenantCreated>
+                  </TenantDetails>
+                </TenantInfo>
+              </>
             )}
           </TenantCard>
         </Sidebar>
@@ -240,8 +252,56 @@ const Sidebar = styled.aside`
 const TenantCard = styled.div`
   background: white;
   border-radius: 8px;
-  padding: 18px 21px;
+  padding: 22px 18px;
   min-height: 210px;
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+`;
+
+const TenantHeader = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  width: 100%;
+`;
+
+const TenantLogo = styled.img`
+  width: 162px;
+  height: 58px;
+  object-fit: contain;
+`;
+
+const Divider = styled.div`
+  height: 1px;
+  width: 100%;
+  background: #c4e2f1;
+`;
+
+const TenantInfo = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+`;
+
+const TenantDetails = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+`;
+
+const TenantCategory = styled.div`
+  font-family:
+    'Instrument Sans',
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: -0.42px;
+  color: #0093f6;
+  font-variation-settings: 'wdth' 100;
 `;
 
 const TenantName = styled.h2`
@@ -251,11 +311,27 @@ const TenantName = styled.h2`
     BlinkMacSystemFont,
     'Segoe UI',
     sans-serif;
-  font-size: 18px;
+  font-size: 23px;
   font-weight: 500;
-  letter-spacing: -0.72px;
+  letter-spacing: -0.69px;
   color: #000000;
   margin: 0;
+  font-variation-settings: 'wdth' 100;
+`;
+
+const TenantCreated = styled.div`
+  font-family:
+    'Instrument Sans',
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  letter-spacing: -0.56px;
+  color: #6c8bab;
+  line-height: 1.2;
+  font-variation-settings: 'wdth' 100;
 `;
 
 const MainContent = styled.main`
