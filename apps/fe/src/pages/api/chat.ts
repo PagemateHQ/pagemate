@@ -30,6 +30,12 @@ async function handler(
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
 
+  const apiKey = process.env.UPSTAGE_API_KEY;
+  const openaiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey && !openaiKey) {
+    return res.status(500).json({ error: 'Missing UPSTAGE_API_KEY or OPENAI_API_KEY' });
+  }
+
   try {
     const {
       messages,
@@ -47,15 +53,16 @@ async function handler(
       return res.status(400).json({ error: 'messages[] is required' });
     }
 
-    const upstageClient = new OpenAI({ apiKey: process.env.UPSTAGE_API_KEY, baseURL: 'https://api.upstage.ai/v1' });
+    const upstageClient = apiKey
+      ? new OpenAI({ apiKey, baseURL: 'https://api.upstage.ai/v1' })
+      : null;
 
     const DEFAULT_SYSTEM_PROMPT = [
       'You are Pagemate, an on-page AI assistant embedded in a website.',
-      'Interpret imperative requests as UI actions when possible (highlight, navigate, fill forms).',
+      'Interpret imperative requests as UI actions when possible (click, highlight, navigate, fill forms).',
       'If the user says "highlight <text>", they mean visually highlight the on-page element — do NOT format text as bold/italics.',
       'You MUST respond as a strict JSON object, no markdown/code fences, no extra text. JSON ONLY.',
-      'Schema: { "reply": string, "action": { "verb": SPOTLIGHT|CLICK|RETRIEVE, "target": string } }',
-      "It is a good idea to use RETRIEVE to get instructions for the action on the first few messages.",
+      'Schema: { "reply": string, "action": { "verb": "SPOTLIGHT"|"CLICK"|"RETRIEVE", "target": string } }',
       'Exactly one action is required. Think carefully and choose one.',
       'Keep the "reply" concise and confirm the action (e.g., "Highlighting Start Building").',
       'When uncertain, ask a short clarifying question in "reply". Do not hallucinate UI that is not present.',
@@ -208,14 +215,15 @@ async function handler(
     let structured: { reply: string; action: { verb: z.infer<typeof ActionVerb>; target: string } } | null = null;
 
     const mname = (model || 'solar-pro2').trim();
+    const isOpenAIModel = /^gpt-|^o3|^gpt4|^gpt-4o/i.test(mname);
 
-    const oai = new OpenAI({ apiKey: process.env.UPSTAGE_API_KEY, baseURL: 'https://api.upstage.ai/v1' });
-      
-        const completion: any = await oai.chat.completions.create({
+    if (openaiKey && isOpenAIModel) {
+      const oai = new OpenAI({ apiKey: openaiKey });
+      try {
+        const completion: any = await oai.chat.completions.parse({
           model: mname,
           messages: finalMessages,
           response_format: zodResponseFormat(AssistantSchema, 'assistant_reply'),
-          temperature: 0.0,
         } as any);
         const msg = completion?.choices?.[0]?.message || {};
         if (msg.refusal) {
@@ -228,8 +236,28 @@ async function handler(
           const text = msg?.content?.[0]?.text || msg?.content || '';
           ({ content, structured } = locallyValidateOrSanitize(String(text || '')));
         }
-      
-   
+      } catch (e: any) {
+        if (!upstageClient) throw e;
+        const completion = await upstageClient.chat.completions.create({
+          model: 'solar-pro2',
+          messages: finalMessages,
+          stream: false,
+        });
+        const raw = completion.choices?.[0]?.message?.content ?? '';
+        ({ content, structured } = locallyValidateOrSanitize(raw));
+      }
+    } else {
+      if (!upstageClient) {
+        return res.status(500).json({ error: 'No suitable provider configured' });
+      }
+      const completion = await upstageClient.chat.completions.create({
+        model: mname || 'solar-pro2',
+        messages: finalMessages,
+        stream: false,
+      });
+      const raw = completion.choices?.[0]?.message?.content ?? '';
+      ({ content, structured } = locallyValidateOrSanitize(raw));
+    }
 
     return res.status(200).json({ content, structured: structured ?? undefined });
   } catch (err: any) {
