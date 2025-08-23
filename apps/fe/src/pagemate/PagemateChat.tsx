@@ -537,7 +537,12 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
 
     const getLabel = (el: HTMLElement): string => {
       // Prefer visible text
-      let txt = (el.textContent || '').trim();
+      let txt = (
+        Array.from(el.childNodes)
+          .filter(node => node.nodeType === Node.TEXT_NODE)
+          .map(node => (node.textContent || '').trim())
+          .join(" ") || ''
+      ).trim();
       if (txt) return txt;
       // Accessible name via aria-label
       const aria = el.getAttribute('aria-label');
@@ -570,12 +575,13 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
 
     const candidates = Array.from(
       document.querySelectorAll<HTMLElement>(
-        'a, [role="link"], button, [role="button"], input[type="button"], input[type="submit"], div',
+        'a, [role="link"], button, [role="button"], input[type="button"], input[type="submit"], div, p',
       ),
     );
     const visible = candidates.filter((el) => isVisible(el));
+    const notInOverlay = visible.filter((el) => !isInOverlay(el));
     // Prefer exact match on accessible label, then includes
-    const exact = visible.find((el) => norm(getLabel(el)) === t);
+    const exact = notInOverlay.find((el) => norm(getLabel(el)) === t);
     if (exact) return exact;
     const partial = visible.find((el) => norm(getLabel(el)).includes(t));
     return partial || null;
@@ -836,6 +842,18 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
     );
   };
 
+  const isInOverlay = (el: HTMLElement): boolean => {
+    // Recursively check parents for our overlay/container IDs/classes
+    let parent: HTMLElement | null = el;
+    while (parent) {
+      if (parent.id === 'pagemate-view-container') {
+        return true;
+      }
+      parent = parent.parentElement;
+    }
+    return false;
+  }
+
   // XPath helpers removed
 
   // Compute a border-radius string expanded by `expandPx` to account for the overlay padding
@@ -981,6 +999,7 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
 
   const sendMessage = useCallback(
     async (text: string) => {
+      // 여기에 들어옴.
       if (!text.trim() || loading) return;
 
       setError(null);
@@ -1034,8 +1053,10 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
 
         // 1) If the user message is a tool command, execute it (no RETRIEVE tool).
         const tool = parseToolIntent(text);
+        console.log('Parsed tool intent:', tool);
         if (tool) {
           const result = await executeTool(tool);
+          console.log('Tool execution result:', result);
           if (tool.type === 'autofill') {
             // Detailed message already appended inside executeTool('autofill')
             // Sync workingMessages to the latest state
@@ -1061,6 +1082,7 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
           refreshInjectedHtml();
         } catch {}
         let reply = await callAI(workingMessages);
+        console.log('AI reply:', reply);
         // Parse possible JSON action envelope
         let envelopeActions: ToolAction[] = [];
         try {

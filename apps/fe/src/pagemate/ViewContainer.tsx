@@ -52,6 +52,7 @@ export const ViewContainer: React.FC<ViewContainerProps> = ({
 
   return (
     <MotionContainer
+      id="pagemate-view-container"
       variants={containerVariants}
       initial="hidden"
       animate="visible"
