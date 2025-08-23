@@ -277,11 +277,15 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
       return ret;
     };
 
-    const stripActionLines = (text: string): string => {
+    const disableActionLines = (text: string): string => {
       try {
-        const lines = text.split(/\r?\n/);
-        const kept = lines.filter((l) => !/^\s*ACTION\s+[A-Z_]+\b/.test(l));
-        return kept.join('\n').replace(/\n{3,}/g, '\n\n').trim();
+        // Replace actionable directives so they won't match our ACTION parser,
+        // while keeping human-readable content.
+        return text.replace(/^(\s*)ACTION\s+([A-Z_]+)\b(.*)$/gim, (_m, ws: string, verb: string, rest: string) => {
+          const v = (verb || '').toUpperCase();
+          if (v === 'NOTE') return `${ws}NOTE${rest}`.trimEnd();
+          return `${ws}NOTE (${v})${rest}`.trimEnd();
+        });
       } catch {
         return text;
       }
@@ -293,12 +297,12 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
       currentUrlRef.current = href;
       try { removeSpotlight(); } catch {}
       try { setSuppressActions(true); } catch {}
-      // Erase already-executed commands from existing messages
+      // Disable already-executed commands in existing messages
       try {
         if (messagesRef.current && messagesRef.current.length) {
           const sanitized: ChatMessage[] = messagesRef.current.map((m) => ({
             ...m,
-            content: stripActionLines(m.content || ''),
+            content: disableActionLines(m.content || ''),
           }));
           messagesRef.current = sanitized;
           setMessages(sanitized);
