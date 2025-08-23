@@ -9,31 +9,31 @@ const offices = [
 	{
 		city: "Austin, TX",
 		zipPrefix: "78",
-		phone: "(512) 555-0102",
+		phone: "5125550102",
 		address: "300 Congress Ave",
 	},
 	{
 		city: "San Francisco, CA",
 		zipPrefix: "94",
-		phone: "(415) 555-0100",
+		phone: "4155550100",
 		address: "100 Market St",
 	},
 	{
 		city: "New York, NY",
 		zipPrefix: "10",
-		phone: "(212) 555-0101",
+		phone: "2125550101",
 		address: "200 Broadway",
 	},
 	{
 		city: "Chicago, IL",
 		zipPrefix: "60",
-		phone: "(312) 555-0103",
+		phone: "3125550103",
 		address: "400 Michigan Ave",
 	},
 	{
 		city: "Miami, FL",
 		zipPrefix: "33",
-		phone: "(305) 555-0104",
+		phone: "3055550104",
 		address: "500 Ocean Dr",
 	},
 ];
