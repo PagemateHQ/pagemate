@@ -35,7 +35,9 @@ async def get_document_by_id(document_id: str, *, tenant_id: str) -> Document | 
     return Document(**document_data)
 
 
-async def get_document_status(document_id: str, *, tenant_id: str) -> DocumentStatus | None:
+async def get_document_status(
+    document_id: str, *, tenant_id: str
+) -> DocumentStatus | None:
     """Returns minimal status + chunk count for the given document."""
     document_data = await clients.mongo.document.get_document_by_id(
         document_id=document_id, tenant_id=tenant_id
@@ -44,7 +46,9 @@ async def get_document_status(document_id: str, *, tenant_id: str) -> DocumentSt
         return None
     # Count chunks
     try:
-        chunks_count = await clients.mongo.chunk.count_chunks_by_document_id(document_id)
+        chunks_count = await clients.mongo.chunk.count_chunks_by_document_id(
+            document_id
+        )
     except Exception:
         chunks_count = 0
     payload = {**document_data, "chunks_count": chunks_count}

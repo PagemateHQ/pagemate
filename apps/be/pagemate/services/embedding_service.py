@@ -6,7 +6,9 @@ from pagemate import clients, tools
 from pagemate.schema import DocumentChunk
 
 
-async def get_embedding(query: str, embedding_type: Literal["query", "document"]) -> np.ndarray:
+async def get_embedding(
+    query: str, embedding_type: Literal["query", "document"]
+) -> np.ndarray:
     embedding = await clients.opanai.get_embedding(query, embedding_type)
     embedding = np.array(embedding, dtype=np.float32)
     return embedding

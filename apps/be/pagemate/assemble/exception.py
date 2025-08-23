@@ -10,13 +10,17 @@ logger = logging.getLogger("default")
 
 
 async def exception_handler(_: Request, e: Exception):
-    logger.exception(f"Exception => {type(e).__name__}: {str(e)}\n{traceback.format_exc()}")
+    logger.exception(
+        f"Exception => {type(e).__name__}: {str(e)}\n{traceback.format_exc()}"
+    )
     content = dict(detail=str(e))
     return JSONResponse(status_code=500, content=content)
 
 
 async def http_exception_handler(_: Request, e: HTTPException):
-    logger.exception(f"Exception => {type(e).__name__}: {str(e)}\n{traceback.format_exc()}")
+    logger.exception(
+        f"Exception => {type(e).__name__}: {str(e)}\n{traceback.format_exc()}"
+    )
     content = dict(detail=e.detail)
     return JSONResponse(status_code=e.status_code, content=content)
 

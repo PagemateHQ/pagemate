@@ -11,7 +11,9 @@ client = OpenAI(
 )
 
 
-async def get_embedding(query: str, embedding_type: Literal["query", "document"]) -> list[float]:
+async def get_embedding(
+    query: str, embedding_type: Literal["query", "document"]
+) -> list[float]:
     if embedding_type == "query":
         embedding_model = settings.query_embedding_model
     elif embedding_type == "document":

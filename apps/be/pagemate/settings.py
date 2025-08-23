@@ -17,4 +17,5 @@ class Settings(BaseSettings):
     def file_storage_base_path(self) -> pathlib.Path:
         return pathlib.Path(self.file_storage_base_path_str)
 
+
 settings = Settings()

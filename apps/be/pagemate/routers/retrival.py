@@ -17,7 +17,9 @@ async def retrival(
     Not ANN, Exact Nearest Neighbor Search...
     """
 
-    query_embedding = await embedding_service.get_embedding(query, embedding_type="query")
+    query_embedding = await embedding_service.get_embedding(
+        query, embedding_type="query"
+    )
     candidate_chunks = await document_service.list_document_chunks(
         document_id=document_id,
         offset=0,

@@ -32,6 +32,7 @@ async def scalar_docs():
         openapi_url="/openapi.json",
     )
 
+
 app.include_router(routers.index.router)
 app.include_router(routers.tenant.router)
 app.include_router(routers.document.router)
