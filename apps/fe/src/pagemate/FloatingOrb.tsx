@@ -1,6 +1,6 @@
 import styled from '@emotion/styled';
 import { AnimatePresence, motion } from 'framer-motion';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 
 import { CornerPosition, useDraggable } from '@/hooks/useDraggable';
 
@@ -30,46 +30,78 @@ export const FloatingOrb: React.FC<FloatingOrbProps> = ({
     initialCorner,
   });
 
-  useEffect(() => {
-    if (showIntro && dragRef.current) {
-      const orbRect = dragRef.current.getBoundingClientRect();
-      const viewWidth = 471;
-      const viewHeight = 577;
-      const gap = 24;
+  const updateIntroPosition = useCallback(() => {
+    if (!dragRef.current) return;
 
-      // Determine current corner based on position
-      const isTop = orbRect.top < window.innerHeight / 2;
-      const isLeft = orbRect.left < window.innerWidth / 2;
-      const corner: CornerPosition =
-        `${isTop ? 'top' : 'bottom'}-${isLeft ? 'left' : 'right'}` as CornerPosition;
-      setCurrentCorner(corner);
+    const orbRect = dragRef.current.getBoundingClientRect();
+    const viewWidth = 471;
+    const viewHeight = 577;
+    const gap = 24;
 
-      let top = 0;
-      let left = 0;
+    // Determine current corner based on position
+    const isTop = orbRect.top < window.innerHeight / 2;
+    const isLeft = orbRect.left < window.innerWidth / 2;
+    const corner: CornerPosition =
+      `${isTop ? 'top' : 'bottom'}-${isLeft ? 'left' : 'right'}` as CornerPosition;
+    setCurrentCorner(corner);
 
-      if (corner.includes('bottom')) {
-        // Position above the orb
-        top = orbRect.top - viewHeight - gap;
-      } else {
-        // Position below the orb
-        top = orbRect.bottom + gap;
-      }
+    let top = 0;
+    let left = 0;
 
-      if (corner.includes('right')) {
-        // Align to the right edge of the orb
-        left = orbRect.right - viewWidth;
-      } else {
-        // Align to the left edge of the orb
-        left = orbRect.left;
-      }
-
-      // Ensure the view stays within viewport bounds
-      left = Math.max(8, Math.min(left, window.innerWidth - viewWidth - 8));
-      top = Math.max(8, Math.min(top, window.innerHeight - viewHeight - 8));
-
-      setIntroPosition({ top, left });
+    if (corner.includes('bottom')) {
+      // Position above the orb
+      top = orbRect.top - viewHeight - gap;
+    } else {
+      // Position below the orb
+      top = orbRect.bottom + gap;
     }
-  }, [showIntro]);
+
+    if (corner.includes('right')) {
+      // Align to the right edge of the orb
+      left = orbRect.right - viewWidth;
+    } else {
+      // Align to the left edge of the orb
+      left = orbRect.left;
+    }
+
+    // Ensure the view stays within viewport bounds
+    left = Math.max(8, Math.min(left, window.innerWidth - viewWidth - 8));
+    top = Math.max(8, Math.min(top, window.innerHeight - viewHeight - 8));
+
+    setIntroPosition({ top, left });
+  }, []);
+
+  useEffect(() => {
+    if (showIntro) {
+      updateIntroPosition();
+
+      // Also update position when orb moves (e.g., when it snaps to corners)
+      const interval = setInterval(() => {
+        updateIntroPosition();
+      }, 300);
+
+      return () => clearInterval(interval);
+    }
+  }, [showIntro, updateIntroPosition, style]);
+
+  // Handle window resize with throttling
+  useEffect(() => {
+    if (!showIntro) return;
+
+    let resizeTimer: NodeJS.Timeout;
+    const handleResize = () => {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => {
+        updateIntroPosition();
+      }, 100); // Throttle to 100ms
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => {
+      clearTimeout(resizeTimer);
+      window.removeEventListener('resize', handleResize);
+    };
+  }, [showIntro, updateIntroPosition]);
 
   // Handle click outside to close
   useEffect(() => {
