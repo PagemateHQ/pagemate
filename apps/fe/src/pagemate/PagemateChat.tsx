@@ -24,7 +24,8 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
     | { type: 'clickByText'; text: string }
     | { type: 'highlightByText'; text: string }
     | { type: 'clickByXPath'; xpath: string }
-    | { type: 'highlightByXPath'; xpath: string };
+    | { type: 'highlightByXPath'; xpath: string }
+    | { type: 'retrieve'; query: string; limit?: number; documentId?: string | null };
 
   const parseToolIntent = (raw: string): ToolAction | null => {
     const text = raw.trim();
@@ -69,10 +70,14 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
       return { type: 'highlightByXPath', xpath };
     }
 
+    // Match: retrieve/search <query>
+    const r1 = text.match(/^(?:retrieve|search)\s+(.+)/i);
+    if (r1) return { type: 'retrieve', query: r1[1].trim() };
+
     return null;
   };
 
-  const executeTool = (tool: ToolAction): boolean => {
+  const executeTool = async (tool: ToolAction): Promise<boolean> => {
     switch (tool.type) {
       case 'clickByText': {
         const el = findClickableByText(tool.text);
@@ -120,6 +125,50 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
           return false;
         }
       }
+      case 'retrieve': {
+        try {
+          const { query, limit = 5, documentId = null } = tool;
+          const chunks = await fetchRetrieval(query, { limit, documentId });
+          const summary = formatRetrievalSummary(query, chunks);
+          setMessages((prev) => [
+            ...prev,
+            { role: 'assistant', content: summary },
+          ]);
+
+          // Attempt follow-up answer using RAG context and last user message
+          const lastUser = [...messages].reverse().find((m) => m.role === 'user');
+          if (lastUser) {
+            const ragText = buildRagContextFromChunks(query, chunks);
+            try {
+              const resp = await fetch('/api/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  messages: [...messages, { role: 'user', content: lastUser.content }],
+                  model: 'solar-pro2',
+                  pageHtml:
+                    typeof document !== 'undefined' ? document.body.innerHTML : '',
+                  ragContext: ragText,
+                }),
+              });
+              const data = await resp.json();
+              if (resp.ok && data?.content) {
+                setMessages((prev) => [
+                  ...prev,
+                  { role: 'assistant', content: data.content },
+                ]);
+              }
+            } catch {}
+          }
+          return true;
+        } catch (e: any) {
+          setMessages((prev) => [
+            ...prev,
+            { role: 'assistant', content: `⚠️ Retrieval failed: ${e?.message || 'Unknown error'}` },
+          ]);
+          return false;
+        }
+      }
       default:
         return false;
     }
@@ -155,6 +204,8 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
         if (isLikelyXPath(target))
           actions.push({ type: 'clickByXPath', xpath: target });
         else actions.push({ type: 'clickByText', text: target });
+      } else if (verb === 'RETRIEVE') {
+        actions.push({ type: 'retrieve', query: target });
       } else if (verb === 'CLICK_XPATH')
         actions.push({ type: 'clickByXPath', xpath: target });
       else if (verb === 'SPOTLIGHT_XPATH')
@@ -345,21 +396,27 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
       }
 
       try {
-        // Tool calling (local): check if user asked to click/highlight by text
+        // Tool calling (local): check if user asked to click/highlight/retrieve
         const tool = parseToolIntent(text);
         if (tool) {
-          const ok = executeTool(tool);
-          const verb =
-            tool.type === 'highlightByText' ? 'Highlighted' : 'Clicked';
-          const assistantText = ok
-            ? `✅ ${verb} "${'text' in tool ? tool.text : ''}"`
-            : `⚠️ Couldn't find target for "${'text' in tool ? tool.text : ''}"`;
-          setMessages((prev) => [
-            ...prev,
-            { role: 'assistant', content: assistantText },
-          ]);
-          setLoading(false);
-          return; // Skip network call when a local tool is executed
+          if (tool.type === 'retrieve') {
+            await executeTool(tool);
+            setLoading(false);
+            return;
+          } else {
+            const ok = await executeTool(tool);
+            const verb =
+              tool.type === 'highlightByText' ? 'Highlighted' : 'Clicked';
+            const assistantText = ok
+              ? `✅ ${verb} "${'text' in tool ? tool.text : ''}"`
+              : `⚠️ Couldn't find target for "${'text' in tool ? tool.text : ''}"`;
+            setMessages((prev) => [
+              ...prev,
+              { role: 'assistant', content: assistantText },
+            ]);
+            setLoading(false);
+            return; // Skip network call when a local tool is executed
+          }
         }
 
         const resp = await fetch('/api/chat', {
@@ -384,7 +441,9 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
           // Parse any ACTION directives in the assistant reply and execute tools.
           try {
             const actions = parseAssistantActions(reply);
-            actions.forEach((a) => executeTool(a));
+            for (const a of actions) {
+              await executeTool(a);
+            }
           } catch {}
         }
       } catch (e: any) {
@@ -396,6 +455,83 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
     },
     [loading, messages, currentView],
   );
+
+  // --- Retrieval helpers ---
+  type DocumentChunk = {
+    id?: string;
+    document_id?: string | null;
+    content?: string;
+    text?: string;
+    score?: number;
+    metadata?: Record<string, any>;
+  };
+
+  async function fetchRetrieval(
+    query: string,
+    opts: { limit?: number; documentId?: string | null } = {},
+  ): Promise<DocumentChunk[]> {
+    const baseUrl = 'https://api.pagemate.app';
+    const tenantId = process.env.NEXT_PUBLIC_PAGEMATE_TENANT_ID as string | undefined;
+    if (!tenantId) throw new Error('Missing NEXT_PUBLIC_PAGEMATE_TENANT_ID');
+    const params = new URLSearchParams();
+    params.set('query', query);
+    if (opts.limit) params.set('limit', String(opts.limit));
+    if (opts.documentId) params.set('document_id', String(opts.documentId));
+    const url = `${baseUrl}/tenants/${encodeURIComponent(
+      tenantId,
+    )}/retrieval?${params.toString()}`;
+    const resp = await fetch(url, { method: 'GET' });
+    if (!resp.ok) {
+      const txt = await resp.text().catch(() => '');
+      throw new Error(
+        `HTTP ${resp.status} ${resp.statusText}${txt ? `: ${txt}` : ''}`,
+      );
+    }
+    return (await resp.json()) as DocumentChunk[];
+  }
+
+  function formatRetrievalSummary(
+    query: string,
+    chunks: DocumentChunk[],
+  ): string {
+    const lines: string[] = [];
+    lines.push(`RAG: Retrieved ${chunks.length} results for "${query}"`);
+    const top = chunks.slice(0, Math.min(5, chunks.length));
+    for (let i = 0; i < top.length; i++) {
+      const c = top[i];
+      const text = (c.content || c.text || '')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .slice(0, 280);
+      const doc = c.document_id ? ` doc:${c.document_id}` : '';
+      const score =
+        typeof c.score === 'number' ? ` score:${c.score.toFixed(3)}` : '';
+      lines.push(`- [${i + 1}]${doc}${score} ${text}`);
+    }
+    lines.push('');
+    lines.push('ACTION NOTE Retrieved context loaded.');
+    return lines.join('\n');
+  }
+
+  function buildRagContextFromChunks(
+    query: string,
+    chunks: DocumentChunk[],
+  ): string {
+    const parts: string[] = [];
+    parts.push(`RAG_CONTEXT Query: ${query}`);
+    const top = chunks.slice(0, Math.min(8, chunks.length));
+    for (let i = 0; i < top.length; i++) {
+      const c = top[i];
+      const text = (c.content || c.text || '').replace(/\s+/g, ' ').trim();
+      parts.push(
+        `[${i + 1}] doc:${c.document_id ?? ''} score:${
+          typeof c.score === 'number' ? c.score.toFixed(4) : ''
+        }`,
+      );
+      parts.push(text);
+    }
+    return parts.join('\n');
+  }
 
   const handleSwitchToChat = useCallback(
     (initialMessage: string) => {

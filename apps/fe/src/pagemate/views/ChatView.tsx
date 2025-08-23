@@ -157,33 +157,46 @@ const CommandTarget = styled.code`
 `;
 
 function renderMessageContent(content: string) {
-  const lines = content.split(/\r?\n/);
   const out: React.ReactNode[] = [];
-  const actionRe = /^(?:\s*)ACTION\s+([A-Z_]+)\s*[:\-]?\s*(.+)$/i;
+  // Global matcher: ACTION <VERB> <TARGET> until newline, next ACTION, or end
+  const re = /ACTION\s+([A-Z_]+)\s*[:\-]?\s*([\s\S]+?)(?=(?:\r?\n|\s*ACTION\s+[A-Z_]+|$))/gim;
 
-  for (let idx = 0; idx < lines.length; idx++) {
-    const line = lines[idx];
-    const m = line.match(actionRe);
-    if (m) {
-      const verb = (m[1] || '').toUpperCase();
-      let target = (m[2] || '').trim();
-      if (
-        (target.startsWith('"') && target.endsWith('"')) ||
-        (target.startsWith("'") && target.endsWith("'")) ||
-        (target.startsWith('`') && target.endsWith('`'))
-      ) {
-        target = target.slice(1, -1);
-      }
-      out.push(
-        <CommandRow key={`cmd-${idx}`}>
-          <CommandVerb>{verb}</CommandVerb>
-          <CommandTarget>{target}</CommandTarget>
-        </CommandRow>,
-      );
-    } else {
-      out.push(<Fragment key={`ln-${idx}`}>{line}</Fragment>);
+  let lastIndex = 0;
+  let match: RegExpExecArray | null;
+  let cmdIdx = 0;
+
+  while ((match = re.exec(content)) !== null) {
+    const start = match.index;
+    const end = re.lastIndex;
+    const before = content.slice(lastIndex, start);
+    if (before) {
+      out.push(<Fragment key={`txt-${lastIndex}`}>{before}</Fragment>);
     }
+
+    const verb = (match[1] || '').toUpperCase().trim();
+    let target = (match[2] || '').trim();
+    if (
+      (target.startsWith('"') && target.endsWith('"')) ||
+      (target.startsWith("'") && target.endsWith("'")) ||
+      (target.startsWith('`') && target.endsWith('`'))
+    ) {
+      target = target.slice(1, -1);
+    }
+
+    out.push(
+      <CommandRow key={`cmd-${cmdIdx++}`}>
+        <CommandVerb>{verb}</CommandVerb>
+        <CommandTarget>{target}</CommandTarget>
+      </CommandRow>,
+    );
+    lastIndex = end;
   }
 
+  const tail = content.slice(lastIndex);
+  if (tail) {
+    out.push(<Fragment key={`tail-${lastIndex}`}>{tail}</Fragment>);
+  }
+
+  if (out.length === 0) return content;
   return out;
 }

@@ -340,7 +340,7 @@
 		"title": "How fast can you do it?",
 		"desc": "We'll measure how long each task takes.",
 		"tasks": {
-			"t1": "1) Find Austin Phone Number",
+			"t1": "1) Find the Phone Number of the Austin Office",
 			"t2": "2) Track a Claim ACM-123456",
 			"t3": "3) Get a Quote with $20k Car and $1M Home in MA"
 		}
