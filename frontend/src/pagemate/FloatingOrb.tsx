@@ -1,12 +1,21 @@
 import styled from '@emotion/styled';
 import React from 'react';
 
-import { useDraggable } from '@/hooks/useDraggable';
+import { useDraggable, CornerPosition } from '@/hooks/useDraggable';
 
-export const FloatingOrb: React.FC = () => {
+interface FloatingOrbProps {
+  initialCorner?: CornerPosition;
+  cornerGap?: number;
+}
+
+export const FloatingOrb: React.FC<FloatingOrbProps> = ({ 
+  initialCorner = 'bottom-right',
+  cornerGap = 48 
+}) => {
   const { ref, style, isDragging } = useDraggable({
     snapToCorners: true,
-    cornerGap: 48,
+    cornerGap,
+    initialCorner,
   });
 
   return <StyledFloatingOrb ref={ref} style={style} $isDragging={isDragging} />;
