@@ -222,9 +222,11 @@ const CustomerDetailPage: React.FC = () => {
 // Styled Components
 const Container = styled.div`
   min-height: 100vh;
+  padding: 0 20px;
+  width: 100%;
 `;
 
-const LoadingText = styled.div`
+const LoadingText = styled.span`
   font-size: 16px;
   font-weight: 400;
   letter-spacing: -0.64px;
@@ -238,7 +240,7 @@ const Content = styled.div`
 
   display: flex;
   gap: 24px;
-  padding: 88px 24px 24px;
+  padding: 88px 0 24px;
 
   @media screen and (max-width: 1160px) {
     flex-direction: column;
