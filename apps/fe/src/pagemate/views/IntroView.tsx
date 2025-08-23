@@ -37,10 +37,10 @@ export const IntroView: React.FC<IntroViewProps> = () => {
       initial="hidden"
       animate="visible"
     >
-      <Backdrop />
+      <CircleGlow />
+
       <Content>
         <LogoSection>
-          <CircleGlow />
           <LogoWrapper>
             <LogoBlur />
             <Logo />
@@ -121,24 +121,37 @@ export const IntroView: React.FC<IntroViewProps> = () => {
   );
 };
 
-const Container = styled.div`
+const _Container = styled.div`
   position: relative;
-  width: 423px;
+  width: 471px;
   height: 577px;
-  border-radius: 12px;
   overflow: hidden;
-`;
 
-const MotionContainer = motion(Container);
-
-const Backdrop = styled.div`
-  position: absolute;
-  inset: 0;
-  background: rgba(234, 249, 255, 0.6);
-  backdrop-filter: blur(8px);
-  border: 1px solid #abdcf6;
   border-radius: 12px;
-  box-shadow: 0px 10px 32px 0px rgba(106, 219, 255, 0.3);
+  border: 1px solid #abdcf6;
+  background:
+    linear-gradient(
+      0deg,
+      rgba(236, 250, 255, 0.33) 0%,
+      rgba(236, 250, 255, 0.33) 100%
+    ),
+    rgba(234, 249, 255, 0.6);
+  box-shadow: 0 10px 32px 0 rgba(106, 219, 255, 0.3);
+  backdrop-filter: blur(4px);
+`;
+const MotionContainer = motion(_Container);
+
+const CircleGlow = styled.div`
+  position: absolute;
+  width: 403px;
+  height: 359px;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  background: url('/assets/intro-circle.svg');
+  background-size: cover;
+  background-position: top center;
+  background-repeat: no-repeat;
 `;
 
 const Content = styled.div`
@@ -159,28 +172,6 @@ const LogoSection = styled.div`
   align-items: center;
   width: 407px;
   padding: 32px 0 64px;
-`;
-
-const CircleGlow = styled.div`
-  position: absolute;
-  width: 403px;
-  height: 403px;
-  top: -60px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: radial-gradient(
-    50% 50% at 50% 50%,
-    rgba(106, 219, 255, 0.12) 0%,
-    rgba(106, 219, 255, 0) 100%
-  );
-
-  &::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: url("data:image/svg+xml,%3Csvg width='403' height='403' viewBox='0 0 403 403' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='201.5' cy='201.5' r='200.5' stroke='url(%23paint0_linear)' stroke-width='2' opacity='0.3'/%3E%3Cdefs%3E%3ClinearGradient id='paint0_linear' x1='201.5' y1='0' x2='201.5' y2='403' gradientUnits='userSpaceOnUse'%3E%3Cstop stop-color='%2306DBFF'/%3E%3Cstop offset='1' stop-color='%2306DBFF' stop-opacity='0'/%3E%3C/linearGradient%3E%3C/defs%3E%3C/svg%3E")
-      center/contain no-repeat;
-  }
 `;
 
 const LogoWrapper = styled.div`
@@ -391,12 +382,6 @@ const Title = styled.h1`
   /* add padding bottom to avoid bottom cutoff from tight line height  */
   padding-bottom: 2px;
 
-  font-family:
-    'Instrument Sans',
-    -apple-system,
-    BlinkMacSystemFont,
-    'Segoe UI',
-    sans-serif;
   font-size: 36px;
   font-weight: 400;
   line-height: 1.04;
@@ -409,12 +394,6 @@ const Title = styled.h1`
 `;
 
 const Subtitle = styled.p`
-  font-family:
-    'Instrument Sans',
-    -apple-system,
-    BlinkMacSystemFont,
-    'Segoe UI',
-    sans-serif;
   font-size: 18px;
   font-weight: 400;
   line-height: 1.2;
@@ -426,14 +405,13 @@ const HighlightedText = styled.span`
   color: #0093f6;
 `;
 
-const SuggestionsContainer = styled.div`
+const _SuggestionsContainer = styled.div`
   display: flex;
   flex-direction: column;
   gap: 5px;
   width: 367px;
 `;
-
-const MotionSuggestionsContainer = motion(SuggestionsContainer);
+const MotionSuggestionsContainer = motion(_SuggestionsContainer);
 
 const SuggestionButton = styled.button`
   width: fit-content;
@@ -443,12 +421,7 @@ const SuggestionButton = styled.button`
   border: 1px solid rgba(0, 147, 246, 0.16);
   border-radius: 500px;
   padding: 7px 16px;
-  font-family:
-    'Instrument Sans',
-    -apple-system,
-    BlinkMacSystemFont,
-    'Segoe UI',
-    sans-serif;
+
   font-size: 14px;
   font-weight: 400;
   letter-spacing: -0.56px;
@@ -491,12 +464,6 @@ const InputContent = styled.div`
 `;
 
 const InputText = styled.span`
-  font-family:
-    'Instrument Sans',
-    -apple-system,
-    BlinkMacSystemFont,
-    'Segoe UI',
-    sans-serif;
   font-size: 16px;
   font-weight: 400;
   letter-spacing: -0.64px;
@@ -504,12 +471,6 @@ const InputText = styled.span`
 `;
 
 const InputLabel = styled.span`
-  font-family:
-    'Instrument Sans',
-    -apple-system,
-    BlinkMacSystemFont,
-    'Segoe UI',
-    sans-serif;
   font-size: 12px;
   font-weight: 400;
   letter-spacing: -0.48px;

@@ -33,7 +33,7 @@ export const FloatingOrb: React.FC<FloatingOrbProps> = ({
   useEffect(() => {
     if (showIntro && dragRef.current) {
       const orbRect = dragRef.current.getBoundingClientRect();
-      const viewWidth = 423;
+      const viewWidth = 471;
       const viewHeight = 577;
       const gap = 24;
 
