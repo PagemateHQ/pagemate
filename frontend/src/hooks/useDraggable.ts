@@ -22,7 +22,12 @@ export const useDraggable = (options: UseDraggableOptions = {}) => {
   
   const elementRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
-  const [position, setPosition] = useState<Position>({ x: window.innerWidth - 112, y: window.innerHeight - 112 });
+  const [position, setPosition] = useState<Position>(() => {
+    if (typeof window === 'undefined') {
+      return { x: 0, y: 0 };
+    }
+    return { x: window.innerWidth - 112, y: window.innerHeight - 112 };
+  });
   const [dragStart, setDragStart] = useState<Position>({ x: 0, y: 0 });
   const [elementStart, setElementStart] = useState<Position>({ x: 0, y: 0 });
 
@@ -162,8 +167,21 @@ export const useDraggable = (options: UseDraggableOptions = {}) => {
     };
   }, [isDragging, dragStart, elementStart, position]);
 
+  // Initialize position on client side
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const initialPosition = snapToNearestCorner(
+        window.innerWidth - 112, 
+        window.innerHeight - 112
+      );
+      setPosition(initialPosition);
+    }
+  }, []);
+
   // Handle window resize
   useEffect(() => {
+    if (typeof window === 'undefined') return;
+    
     const handleResize = () => {
       if (snapToCorners) {
         const snappedPosition = snapToNearestCorner(position.x, position.y);
