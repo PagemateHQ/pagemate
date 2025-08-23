@@ -96,20 +96,21 @@ const HomePage = () => {
 export default HomePage;
 
 const Container = styled.div`
-  background: #e8f7ff;
-  position: relative;
+  padding: 0 20px;
   width: 100%;
   min-height: 100vh;
+
+  background: #e8f7ff;
+  position: relative;
 `;
 
 const ContentWrapper = styled.div`
+  padding-top: 105px;
+  margin: 0 auto;
+
   max-width: 1200px;
   width: 100%;
 
-  position: absolute;
-  left: 50%;
-  top: 105px;
-  transform: translateX(-50%);
   display: flex;
   flex-direction: column;
   gap: 80px;
@@ -120,7 +121,6 @@ const HeroSection = styled.div`
   height: 394px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
   align-items: center;
 `;
 
@@ -128,7 +128,7 @@ const LogoSection = styled.div`
   position: relative;
   width: 206px;
   height: 206px;
-  margin: 0 auto;
+  min-height: 206px;
 `;
 
 const LogoBlur = styled.img`
@@ -152,7 +152,7 @@ const Logo = styled.img`
 
 const LogoGradient = styled.div`
   position: absolute;
-  width: 100%;
+  width: 206px;
   height: 120px;
   left: 0;
   right: 0;
@@ -165,10 +165,8 @@ const LogoGradient = styled.div`
 `;
 
 const HeroContent = styled.div`
-  position: absolute;
-  top: 145px;
-  left: 50%;
-  transform: translateX(-50%);
+  margin-top: -61px;
+  z-index: 1;
 
   width: 100%;
   display: flex;
@@ -309,7 +307,7 @@ const BrowserContent = styled.div`
 
 const DemoPreviewBorderProvider = styled.div`
   width: 100%;
-  height: 200px;
+  height: fit-content;
   overflow: hidden;
   border-radius: 4px;
 
@@ -320,7 +318,6 @@ const DemoPreviewBorderProvider = styled.div`
 `;
 const DemoPreview = styled(Image)`
   width: 100%;
-  height: 200px;
   background-color: #e8f7ff;
 `;
 
