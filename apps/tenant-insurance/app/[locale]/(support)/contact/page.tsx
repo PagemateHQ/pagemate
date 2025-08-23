@@ -1,4 +1,4 @@
-import { getTranslations } from "next-intl/server";
+import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Button } from "@/components/ui/button";
 import {
 	Card,
@@ -16,8 +16,14 @@ export function generateStaticParams() {
 	return locales.map((locale) => ({ locale }));
 }
 
-export default async function ContactPage() {
-	const t = await getTranslations();
+export default async function ContactPage({
+    params,
+}: {
+    params: Promise<{ locale: string }>;
+}) {
+    const { locale } = await params;
+    setRequestLocale(locale);
+    const t = await getTranslations();
 	return (
 		<div className="space-y-6">
 			<div className="space-y-1">
