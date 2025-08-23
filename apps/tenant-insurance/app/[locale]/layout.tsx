@@ -10,8 +10,11 @@ import { SiteHeader } from "@/components/site-header";
 import { TaskTimer } from "@/components/task-timer";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
+import { locales } from "@/i18n/routing";
 
-// Locale routes render dynamically to simplify build.
+export function generateStaticParams() {
+	return locales.map((locale) => ({ locale }));
+}
 
 export default function LocaleLayout({
 	children,

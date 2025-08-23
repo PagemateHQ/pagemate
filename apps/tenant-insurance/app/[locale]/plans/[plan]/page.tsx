@@ -11,9 +11,19 @@ import {
 } from "@/components/ui/breadcrumb";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Link } from "@/i18n/routing";
+import { Link, locales } from "@/i18n/routing";
 
 type PlanKey = "Essential" | "Standard" | "Plus";
+
+export function generateStaticParams() {
+	const plans: PlanKey[] = ["Essential", "Standard", "Plus"];
+	return locales.flatMap((locale) =>
+		plans.map((plan) => ({
+			locale,
+			plan,
+		}))
+	);
+}
 
 export default async function PlanDetail({
 	params,

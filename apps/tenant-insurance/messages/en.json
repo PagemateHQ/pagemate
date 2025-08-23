@@ -322,6 +322,10 @@
 			"title": "Quote sent to {email}",
 			"desc": "{plan} plan estimated at ${price}/mo"
 		},
+		"toastInvalid": {
+			"title": "Missing required details",
+			"desc": "For this task, select MA and mention car $20k and home $1M in notes."
+		},
 		"toastErr": {
 			"title": "Could not submit quote",
 			"desc": "Please try again in a moment."

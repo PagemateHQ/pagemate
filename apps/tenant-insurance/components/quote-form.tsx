@@ -44,40 +44,57 @@ export default function QuoteForm({ initialPlan }: { initialPlan: string }) {
 
 	async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
 		e.preventDefault();
-		try {
-			const res = await fetch("/api/estimate", {
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({ plan, zip, propertyValue }),
-			});
-			const { premium: serverPremium } = await res.json();
-			const quote = serverPremium ?? premium;
-			const { toast } = await import("@/components/ui/sonner");
-			toast.success(t("Quote.toastOk.title", { email }), {
-				description: t("Quote.toastOk.desc", { plan, price: quote }),
-			});
-			// Detect Task 3 completion via ZIP + notes
-			const note = (notes || "").toLowerCase();
-			const mentionsCar = /car/.test(note);
-			const mentionsHome = /home/.test(note);
-			const mentions20k = /(\$?\s*20k|\$?\s*20[, ]?000)/i.test(note);
-			const mentions1m = /(\$?\s*1m|\$?\s*1[, ]?000[, ]?000)/i.test(note);
-			const selectedState =
-				typeof window !== "undefined"
-					? localStorage.getItem("state-selector:v1")
-					: null;
-			const isMA = selectedState === "MA";
-			const matched =
-				isMA && mentionsCar && mentions20k && mentionsHome && mentions1m;
-			if (matched) {
-				useTaskStore.getState().stop();
-			}
-		} catch (_err) {
-			const { toast } = await import("@/components/ui/sonner");
-			toast.error(t("Quote.toastErr.title"), {
-				description: t("Quote.toastErr.desc"),
-			});
-		}
+        try {
+            // Detect Task 3 criteria via state + notes (English or Korean)
+            const note = notes || "";
+
+            // Car keywords: English + Korean (자동차, 차량)
+            const mentionsCar = /(\bcar\b|\bauto\b|vehicle|자동차|차량)/i.test(note);
+            // Home keywords: English + Korean (주택, 집)
+            const mentionsHome = /(\bhome\b|house|주택|집)/i.test(note);
+            // Amounts: $20k or $20,000 or Korean "2만(달러/불)"
+            const mentions20k = /(\$?\s*20k|\$?\s*20[, ]?000|2\s*만(?:\s*(?:달러|불))?)/i.test(note);
+            // Amounts: $1M or $1,000,000 or Korean "100만/백만 (달러/불)"
+            const mentions1m = /(\$?\s*1m|\$?\s*1[, ]?000[, ]?000|100\s*만(?:\s*(?:달러|불))?|백\s*만(?:\s*(?:달러|불))?|1\s*백\s*만(?:\s*(?:달러|불))?)/i.test(note);
+            const selectedState =
+                typeof window !== "undefined"
+                    ? localStorage.getItem("state-selector:v1")
+                    : null;
+            const isMA = selectedState === "MA";
+            const matched = isMA && mentionsCar && mentions20k && mentionsHome && mentions1m;
+
+            // Always enforce gating: if conditions are not met, reject with an error toast.
+            if (!matched) {
+                const { toast } = await import("@/components/ui/sonner");
+                toast.error(t("Quote.toastInvalid.title"), {
+                    description: t("Quote.toastInvalid.desc"),
+                });
+                return;
+            }
+
+            // Proceed with normal submission
+            const res = await fetch("/api/estimate", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ plan, zip, propertyValue }),
+            });
+            const { premium: serverPremium } = await res.json();
+            const quote = serverPremium ?? premium;
+            const { toast } = await import("@/components/ui/sonner");
+            toast.success(t("Quote.toastOk.title", { email }), {
+                description: t("Quote.toastOk.desc", { plan, price: quote }),
+            });
+
+            // If Task 3 matched, stop the timer to mark completion
+            if (matched) {
+                useTaskStore.getState().stop();
+            }
+        } catch (_err) {
+            const { toast } = await import("@/components/ui/sonner");
+            toast.error(t("Quote.toastErr.title"), {
+                description: t("Quote.toastErr.desc"),
+            });
+        }
 	}
 
 	return (

@@ -8,7 +8,11 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
-import { Link } from "@/i18n/routing";
+import { Link, locales } from "@/i18n/routing";
+
+export function generateStaticParams() {
+	return locales.map((locale) => ({ locale }));
+}
 
 export default async function ProductsPage({
 	params,
