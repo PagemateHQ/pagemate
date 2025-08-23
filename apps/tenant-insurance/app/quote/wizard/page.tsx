@@ -129,6 +129,10 @@ function WizardContent() {
     import("@/components/ui/sonner").then(({ toast }) =>
       toast.success("Application submitted", { description: "An agent will contact you." })
     )
+    // Stop the global demo timer when task completes
+    import("@/lib/task-store").then(({ useTaskStore }) => {
+      useTaskStore.getState().stop("Application Wizard")
+    })
   }
 
   return (

@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
@@ -44,23 +44,29 @@ export default function ClaimsPage() {
       </div>
 
       <Card>
-        <CardContent className="p-6">
-          {submitted ? (
-            <div className="space-y-2">
-              <h2 className="text-lg font-medium">Thanks — we’ve got it.</h2>
-              <p className="text-muted-foreground">
-                Your claim number is {" "}
-                <span className="font-mono">{claimId ?? "pending"}</span>.
-                An adjuster will contact you shortly.
-              </p>
-            </div>
-          ) : (
-            <form className="grid gap-4 sm:grid-cols-2" onSubmit={onSubmit}>
-              <div className="grid gap-2 sm:col-span-2">
-                <Label htmlFor="name">Full name</Label>
-                <Input id="name" required placeholder="Jane Doe" />
-              </div>
-              <div className="grid gap-2">
+        {submitted ? (
+          <>
+            <CardHeader>
+              <CardTitle>Thanks — we’ve got it.</CardTitle>
+              <CardDescription>
+                Your claim number is <span className="font-mono">{claimId ?? "pending"}</span>. An adjuster will contact you shortly.
+              </CardDescription>
+            </CardHeader>
+            <CardContent />
+          </>
+        ) : (
+          <>
+            <CardHeader>
+              <CardTitle>Claim Details</CardTitle>
+              <CardDescription>Tell us what happened and how to reach you.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form className="grid gap-4 sm:grid-cols-2" onSubmit={onSubmit}>
+                <div className="grid gap-2 sm:col-span-2">
+                  <Label htmlFor="name">Full name</Label>
+                  <Input id="name" required placeholder="Jane Doe" />
+                </div>
+                <div className="grid gap-2">
                 <Label htmlFor="email">Email</Label>
                 <Input id="email" type="email" required placeholder="you@example.com" />
               </div>
@@ -76,18 +82,18 @@ export default function ClaimsPage() {
                 <Label htmlFor="type">Type of loss</Label>
                 <Input id="type" placeholder="Water, fire, theft, etc." required />
               </div>
-              <div className="grid gap-2 sm:col-span-2">
-                <Label htmlFor="desc">What happened?</Label>
-                <Textarea id="desc" required placeholder="Briefly describe the incident" />
-              </div>
-              <div className="sm:col-span-2">
-                <Button type="submit">Submit claim</Button>
-              </div>
-            </form>
-          )}
-        </CardContent>
+                <div className="grid gap-2 sm:col-span-2">
+                  <Label htmlFor="desc">What happened?</Label>
+                  <Textarea id="desc" required placeholder="Briefly describe the incident" />
+                </div>
+                <div className="sm:col-span-2">
+                  <Button type="submit">Submit claim</Button>
+                </div>
+              </form>
+            </CardContent>
+          </>
+        )}
       </Card>
     </div>
   )
 }
-

@@ -1,6 +1,6 @@
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card"
 import { CheckIcon, ShieldCheckIcon } from "lucide-react"
 
 export default function Home() {
@@ -36,36 +36,24 @@ export default function Home() {
           </ul>
         </div>
         <Card className="relative overflow-hidden">
-          <CardContent className="p-6">
+          <CardHeader>
             <div className="flex items-center gap-3">
               <span className="inline-flex size-10 items-center justify-center rounded-full bg-primary text-primary-foreground">
                 <ShieldCheckIcon className="size-5" />
               </span>
               <div>
-                <h3 className="font-medium">Why Acme Insurance?</h3>
-                <p className="text-sm text-muted-foreground">
-                  Simple coverage for renters and tenants.
-                </p>
+                <CardTitle>Why Acme Insurance?</CardTitle>
+                <CardDescription>Simple coverage for renters and tenants.</CardDescription>
               </div>
             </div>
-            <div className="mt-6 grid gap-3 sm:grid-cols-2">
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-3 sm:grid-cols-2">
               {[
-                {
-                  title: "Flexible plans",
-                  desc: "Choose coverage levels that fit your life.",
-                },
-                {
-                  title: "Fast claims",
-                  desc: "File online and track your claim status.",
-                },
-                {
-                  title: "Trusted support",
-                  desc: "Talk to licensed agents when you need help.",
-                },
-                {
-                  title: "Bundle & save",
-                  desc: "Discounts when you add additional products.",
-                },
+                { title: "Flexible plans", desc: "Choose coverage levels that fit your life." },
+                { title: "Fast claims", desc: "File online and track your claim status." },
+                { title: "Trusted support", desc: "Talk to licensed agents when you need help." },
+                { title: "Bundle & save", desc: "Discounts when you add additional products." },
               ].map(({ title, desc }) => (
                 <div key={title} className="rounded-md border p-4">
                   <div className="font-medium">{title}</div>
@@ -98,29 +86,31 @@ export default function Home() {
             },
           ].map((plan) => (
             <Card key={plan.name} className="flex flex-col">
-              <CardContent className="p-6">
+              <CardHeader>
                 <div className="flex items-baseline justify-between">
-                  <div className="text-lg font-medium">{plan.name}</div>
+                  <CardTitle>{plan.name}</CardTitle>
                   <div>
                     <span className="text-2xl font-semibold">${plan.price}</span>
                     <span className="text-sm text-muted-foreground">/mo</span>
                   </div>
                 </div>
-                <ul className="mt-4 grid gap-2 text-sm text-muted-foreground">
+              </CardHeader>
+              <CardContent>
+                <ul className="grid gap-2 text-sm text-muted-foreground">
                   {plan.features.map((f) => (
                     <li key={f} className="flex items-center gap-2">
                       <CheckIcon className="size-4 text-primary" /> {f}
                     </li>
                   ))}
                 </ul>
-                <div className="mt-6">
-                  <Button asChild className="w-full">
-                    <Link href={{ pathname: "/quote", query: { plan: plan.name } }}>
-                      Start with {plan.name}
-                    </Link>
-                  </Button>
-                </div>
               </CardContent>
+              <CardFooter>
+                <Button asChild className="w-full">
+                  <Link href={{ pathname: "/quote", query: { plan: plan.name } }}>
+                    Start with {plan.name}
+                  </Link>
+                </Button>
+              </CardFooter>
             </Card>
           ))}
         </div>

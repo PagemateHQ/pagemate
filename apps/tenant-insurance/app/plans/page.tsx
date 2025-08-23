@@ -1,4 +1,4 @@
-import { Card, CardContent } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
@@ -53,16 +53,19 @@ export default function PlansPage() {
       </div>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {plans.map((p) => (
-          <Card key={p.name} className="flex flex-col">
-            <CardContent className="p-6">
+          <Link href={{ pathname: "/quote", query: { plan: p.name } }} key={p.name}>    
+          <Card className="flex flex-col h-full">
+            <CardHeader>
               <div className="flex items-start justify-between gap-2">
                 <div>
-                  <div className="text-lg font-medium">{p.name}</div>
-                  <p className="text-sm text-muted-foreground">{p.tagline}</p>
+                  <CardTitle>{p.name}</CardTitle>
+                  <CardDescription>{p.tagline}</CardDescription>
                 </div>
                 {p.popular ? <Badge variant="secondary">Popular</Badge> : null}
               </div>
-              <div className="mt-4">
+            </CardHeader>
+            <CardContent>
+              <div>
                 <span className="text-2xl font-semibold">${p.price}</span>
                 <span className="text-sm text-muted-foreground">/mo</span>
               </div>
@@ -71,18 +74,11 @@ export default function PlansPage() {
                   <li key={f}>• {f}</li>
                 ))}
               </ul>
-              <div className="mt-6">
-                <Button asChild className="w-full">
-                  <Link href={{ pathname: "/quote", query: { plan: p.name } }}>
-                    Start with {p.name}
-                  </Link>
-                </Button>
-              </div>
-            </CardContent>
+            </CardContent>  
           </Card>
+          </Link>
         ))}
       </div>
     </div>
   )
 }
-

@@ -5,6 +5,7 @@ import { SiteHeader } from "@/components/site-header"
 import { SiteFooter } from "@/components/site-footer"
 import { ThemeProvider } from "@/components/theme-provider"
 import { Toaster } from "@/components/ui/sonner"
+import { TaskTimer } from "@/components/task-timer"
 import { CookieConsent } from "@/components/cookie-consent"
 import { GTM } from "@/components/gtm"
 import { DisclaimerBar } from "@/components/disclaimer-bar"
@@ -60,7 +61,8 @@ export default function RootLayout({
             </main>
             <SiteFooter />
           </div>
-          <Toaster richColors position="top-right" />
+          <Toaster richColors position="bottom-center" />
+          <TaskTimer />
           <CookieConsent />
         </ThemeProvider>
       </body>

@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 
 const stages = ["Submitted", "Assigned", "In Review", "Approved", "Closed"]
 
@@ -31,7 +31,11 @@ export default function ClaimsTrackPage() {
 
       {current !== null && (
         <Card>
-          <CardContent className="p-6">
+          <CardHeader>
+            <CardTitle>Claim Progress</CardTitle>
+            <CardDescription>Where your claim is in the process.</CardDescription>
+          </CardHeader>
+          <CardContent>
             <ol className="grid gap-3">
               {stages.map((s, i) => (
                 <li key={s} className={i <= current ? "text-foreground" : "text-muted-foreground"}>
@@ -46,4 +50,3 @@ export default function ClaimsTrackPage() {
     </div>
   )
 }
-

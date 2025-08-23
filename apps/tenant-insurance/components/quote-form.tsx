@@ -13,6 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { useTaskStore } from "@/lib/task-store"
 
 function estimateMonthlyPremium({
   propertyValue,
@@ -53,6 +54,8 @@ export default function QuoteForm({ initialPlan }: { initialPlan: string }) {
       toast.success(`Quote sent to ${email}`, {
         description: `${plan} plan estimated at $${quote}/mo`,
       })
+      // Stop the global demo timer when task completes
+      useTaskStore.getState().stop("Quick Quote")
     } catch (_err) {
       const { toast } = await import("@/components/ui/sonner")
       toast.error("Could not submit quote", {
