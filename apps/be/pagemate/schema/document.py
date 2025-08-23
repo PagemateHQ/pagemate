@@ -29,12 +29,9 @@ class Document(BaseModel):
 
     text: Optional[str] = Field(None, description="Text used for embedding (optional)")
     embedding: Optional[List[float]] = Field(None, description="Embedding vector (optional)")
-    embedding_status: Optional[DocumentEmbeddingStatus] = Field(
-        None, description="Embedding pipeline status (optional)"
-    )
+    embedding_status: DocumentEmbeddingStatus = Field(DocumentEmbeddingStatus.PENDING, description="Embedding pipeline status")
     error: Optional[str] = Field(None, description="Embedding error details (if any)")
 
-    # Processing timestamps for embedding jobs
     started_at: Optional[datetime] = Field(None, alias="startedAt")
     completed_at: Optional[datetime] = Field(None, alias="completedAt")
     failed_at: Optional[datetime] = Field(None, alias="failedAt")
