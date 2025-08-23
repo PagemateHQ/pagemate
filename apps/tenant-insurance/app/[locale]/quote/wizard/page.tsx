@@ -219,11 +219,11 @@ function WizardContent() {
                 <Label>{t('Common.labels.endorsements')}</Label>
                 <div className="grid gap-2 sm:grid-cols-2">
                   {([
-                    { key: "jewelry", label: "Scheduled jewelry" },
-                    { key: "electronics", label: "Electronics" },
-                    { key: "identityTheft", label: "Identity theft" },
-                    { key: "waterBackup", label: "Water backup" },
-                  ] as const).map(({ key, label }) => (
+                    { key: "jewelry" },
+                    { key: "electronics" },
+                    { key: "identityTheft" },
+                    { key: "waterBackup" },
+                  ] as const).map(({ key }) => (
                     <label key={key} className="flex items-center gap-2">
                       <Checkbox
                         checked={form.watch("endorsements")[key]}
@@ -232,7 +232,7 @@ function WizardContent() {
                           form.setValue("endorsements", { ...current, [key]: Boolean(v) })
                         }}
                       />
-                      <span>{label}</span>
+                      <span>{t(`Common.endorsementsMap.${key}` as any)}</span>
                     </label>
                   ))}
                 </div>
@@ -271,7 +271,7 @@ function WizardContent() {
                       ))}
                       {(Object.entries(quote.breakdown.endorsements) as Array<[keyof typeof quote.breakdown.endorsements, number]>).map(([k, v]) => (
                         <TableRow key={`endorse-${String(k)}`}>
-                          <TableCell className="capitalize">{t('Wizard.table.endorsement', {key: k})}</TableCell>
+                          <TableCell className="capitalize">{t('Wizard.table.endorsement', {key: t(`Common.endorsementsMap.${String(k)}` as any) })}</TableCell>
                           <TableCell className="text-right">${v}</TableCell>
                         </TableRow>
                       ))}

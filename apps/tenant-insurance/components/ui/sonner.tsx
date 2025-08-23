@@ -1,4 +1,3 @@
-"use client"
+"use client";
 
-export { Toaster, toast } from "sonner"
-
+export { Toaster, toast } from "sonner";

@@ -1,269 +1,368 @@
 {
-  "Common": {
-    "brand": "아무개 보험",
-    "nav": {
-      "home": "Home",
-      "plans": "Plans",
-      "products": "Products",
-      "support": "Support"
-    },
-    "mobile": {
-      "planDetails": "Plan Details",
-      "claims": "Claims",
-      "trackClaim": "Track Claim",
-      "faq": "FAQ",
-      "agents": "Find an Agent",
-      "contact": "Contact",
-      "disclosures": "Disclosures"
-    },
-    "footer": {
-      "privacy": "Privacy",
-      "terms": "Terms",
-      "contact": "Contact",
-      "copyright": "© {year} 아무개 보험. All rights reserved."
-    },
-    "actions": {
-      "getQuote": "Get a Quote",
-      "explorePlans": "Explore Plans",
-      "startWith": "Start with {plan}",
-      "emailQuote": "Email me my quote",
-      "send": "Send",
-      "submitClaim": "Submit claim",
-      "lookup": "Lookup",
-      "back": "Back",
-      "next": "Next",
-      "submitApplication": "Submit Application",
-      "accept": "Accept",
-      "decline": "Decline",
-      "close": "Close"
-    },
-    "labels": {
-      "plan": "Plan",
-      "zip": "ZIP code",
-      "zipShort": "ZIP",
-      "email": "Email",
-      "state": "State",
-      "buildingType": "Building type",
-      "personalProperty": "Personal property ($)",
-      "notes": "Notes (optional)",
-      "estimatedPremium": "Estimated premium",
-      "fullName": "Full name",
-      "phone": "Phone",
-      "dateOfIncident": "Date of incident",
-      "typeOfLoss": "Type of loss",
-      "whatHappened": "What happened?",
-      "firstName": "First name",
-      "lastName": "Last name",
-      "deductible": "Deductible",
-      "endorsements": "Endorsements",
-      "priorClaims": "Prior claims (5 years)",
-      "component": "Component",
-      "amount": "Amount",
-      "step": "Step {step} of {total}: {label}"
-    },
-    "endorsementsMap": {
-      "jewelry": "Scheduled jewelry",
-      "electronics": "Electronics",
-      "identityTheft": "Identity theft",
-      "waterBackup": "Water backup"
-    },
-    "buildingTypes": {
-      "apartment": "Apartment",
-      "condo": "Condo",
-      "house": "House"
-    },
-    "placeholders": {
-      "zip": "94105",
-      "email": "you@example.com",
-      "name": "Jane Doe",
-      "phone": "(555) 123-4567",
-      "typeOfLoss": "Water, fire, theft, etc.",
-      "desc": "Briefly describe the incident",
-      "notes": "Any special details about your rental"
-    },
-    "disclaimer": {
-      "default": "Coverage subject to terms. Availability varies by state.",
-      "CA": "CA: Not available in designated wildfire zones.",
-      "NY": "NY: Some endorsements not available.",
-      "TX": "TX: Wind/hail deductible may apply in coastal counties.",
-      "FL": "FL: Hurricane deductible may apply."
-    },
-    "cookie": {
-      "message": "We use cookies to improve your experience. See our <privacy>Privacy Policy</privacy>.",
-      "privacy": "Privacy Policy"
-    },
-    "a11y": {
-      "openMenu": "Open Menu"
-    },
-    "language": {
-      "label": "Language",
-      "en": "English",
-      "ko": "Korean"
-    },
-    "states": {
-      "CA": "CA",
-      "NY": "NY",
-      "TX": "TX",
-      "IL": "IL",
-      "FL": "FL",
-      "WA": "WA",
-      "MA": "MA",
-      "GA": "GA",
-      "PA": "PA",
-      "AZ": "AZ"
-    }
-  },
-  "Home": {
-    "heroTitle": "Protect what matters most.",
-    "heroDesc": "Affordable tenant insurance with fast claims, flexible coverage, and great support. Get a personalized quote in minutes.",
-    "bullets": ["Coverage from $10/month", "Cancel anytime", "24/7 claims support"],
-    "whyTitle": "Why 아무개 보험?",
-    "whyDesc": "Simple coverage for renters and tenants.",
-    "whyCards": {
-      "flexible": {"title": "Flexible plans", "desc": "Choose coverage levels that fit your life."},
-      "fast": {"title": "Fast claims", "desc": "File online and track your claim status."},
-      "support": {"title": "Trusted support", "desc": "Talk to licensed agents when you need help."},
-      "bundle": {"title": "Bundle & save", "desc": "Discounts when you add additional products."}
-    },
-    "popularPlans": "Popular Plans",
-    "plan": {
-      "Essential": "Essential",
-      "Standard": "Standard",
-      "Plus": "Plus",
-      "mo": "/mo",
-      "features": {
-        "essential": ["$10k personal property", "$100k liability", "$500 deductible"],
-        "standard": ["$25k personal property", "$300k liability", "$500 deductible"],
-        "plus": ["$50k personal property", "$500k liability", "$250 deductible"]
-      }
-    }
-  },
-  "Plans": {
-    "title": "Plans",
-    "desc": "Choose the plan that fits your needs. You can adjust limits later.",
-    "popular": "Popular",
-    "tagline": {
-      "Essential": "Core protection for everyday renters",
-      "Standard": "Best value for most tenants",
-      "Plus": "Extra coverage and lower deductible"
-    }
-  },
-  "PlanDetails": {
-    "tabs": {"coverage": "Coverage", "exclusions": "Exclusions", "endorsements": "Endorsements", "faq": "FAQ"},
-    "terms": {
-      "Flood": "Flood",
-      "Earthquake": "Earthquake",
-      "Scheduled jewelry": "Scheduled jewelry",
-      "Electronics": "Electronics",
-      "Identity theft": "Identity theft",
-      "Water backup": "Water backup"
-    }
-  },
-  "Products": {
-    "title": "Products",
-    "desc": "Coverage options tailored for renters and property owners.",
-    "items": {
-      "renters": {"name": "Renters Insurance", "desc": "Protect personal property and liability at your rental.", "cta": "Get a Quote"},
-      "landlord": {"name": "Landlord Insurance", "desc": "Basic dwelling coverage for rental property owners.", "cta": "Explore Plans"},
-      "liability": {"name": "Personal Liability", "desc": "Extra liability coverage for peace of mind.", "cta": "Explore Plans"}
-    }
-  },
-  "Support": {
-    "title": "Support",
-    "desc": "Get help with claims, policies, and account questions.",
-    "items": {
-      "fileClaim": {"title": "File a Claim", "desc": "Start a new claim online in minutes.", "href": "/claims"},
-      "faq": {"title": "FAQs", "desc": "Answers to common questions about coverage and billing.", "href": "/faq"},
-      "agents": {"title": "Find an Agent", "desc": "Locate phone numbers and addresses for local offices.", "href": "/agents"},
-      "contact": {"title": "Contact Support", "desc": "Email or message our team for help.", "href": "/contact"}
-    }
-  },
-  "FAQ": {
-    "title": "FAQs",
-    "desc": "Answers to common questions.",
-    "items": [
-      {"q": "What does renters insurance cover?", "a": "Personal property (your stuff), personal liability, and additional living expenses if your home becomes uninhabitable due to a covered loss."},
-      {"q": "Is water damage covered?", "a": "Sudden and accidental water damage is typically covered. Floods usually require separate coverage."},
-      {"q": "Can I cancel anytime?", "a": "Yes. You can cancel your policy at any time with no fees."}
-    ]
-  },
-  "Claims": {
-    "title": "File a Claim",
-    "desc": "We’re here to help 24/7. Submit your details and an agent will reach out.",
-    "thanksTitle": "Thanks — we’ve got it.",
-    "thanksDesc": "Your claim number is {id}. An adjuster will contact you shortly.",
-    "details": {"title": "Claim Details", "desc": "Tell us what happened and how to reach you."},
-    "toastOk": {"title": "Claim submitted", "desc": "Your claim number is {id}"},
-    "toastErr": {"title": "Could not submit claim", "desc": "Please try again shortly."},
-    "trackLink": "You can track your claim <here>here</here>.",
-    "here": "here"
-  },
-  "Track": {
-    "title": "Track a Claim",
-    "desc": "Enter your claim number to see the current status.",
-    "progressTitle": "Claim Progress",
-    "progressDesc": "Where your claim is in the process.",
-    "stages": ["Submitted", "Assigned", "In Review", "Approved", "Closed"]
-  },
-  "Agents": {
-    "title": "Find an Agent",
-    "desc": "Call or visit a local office for personalized help.",
-    "zipPrefix": "ZIPs starting with {prefix}"
-  },
-  "Contact": {
-    "title": "Contact Us",
-    "desc": "Questions about coverage, billing, or claims? We’re happy to help.",
-    "details": {"title": "Contact Details", "desc": "How to reach our team.", "support": "Support:", "claims": "Claims:", "phone": "Phone:", "hours": "Mon–Fri 8am–8pm, Sat 9am–3pm"},
-    "form": {"title": "Send us a message", "desc": "We’ll reply by email.", "message": "Message", "help": "How can we help?"}
-  },
-  "Legal": {
-    "privacyTitle": "Privacy Policy",
-    "privacyBody": "This is a demo site for an insurance company. Replace this page with your organization’s actual privacy policy.",
-    "termsTitle": "Terms of Service",
-    "termsBody": "This is a demo site for an insurance company. Replace this page with your organization’s actual terms of service.",
-    "disclosuresTitle": "Disclosures & Licensing",
-    "disclosuresBody": "아무개 보험 is a fictitious brand for demo purposes. Replace with your compliance and licensing details, including NAIC numbers, producer licenses, and state-specific disclosures.",
-    "disclosuresItems": ["CA License 0A00000 (demo)", "NY License BR-000000 (demo)"]
-  },
-  "Quote": {
-    "title": "Get a Quote",
-    "desc": "Enter a few details to see your estimated monthly premium.",
-    "toastOk": {"title": "Quote sent to {email}", "desc": "{plan} plan estimated at ${price}/mo"},
-    "toastErr": {"title": "Could not submit quote", "desc": "Please try again in a moment."}
-  },
-  "Timer": {
-    "elapsed": "It took {time}!",
-    "task": "Task: {label}",
-    "runningDesc": "Complete a task to stop the timer."
-  },
-  "TaskSelector": {
-    "title": "Select a Task",
-    "desc": "Pick one to start the demo timer.",
-    "tasks": {
-      "t1": "1) Find Austin Phone Number",
-      "t2": "2) Track a Claim ACM-123456",
-      "t3": "3) Get a Quote with $20k Car and $1M Home in MA"
-    }
-  },
-  "Wizard": {
-    "title": "Get a Quote (Wizard)",
-    "desc": "A multi-step flow with validation and a rating breakdown.",
-    "steps": ["About you", "Location", "Coverage", "Review"],
-    "review": {
-      "helper": "Review your selections and estimated premium.",
-      "plan": "Plan:",
-      "zip": "ZIP:",
-      "state": "State:",
-      "property": "Property:",
-      "deductible": "Deductible:",
-      "estimated": "Estimated premium: ${price}/mo"
-    },
-    "table": {"endorsement": "Endorsement: {key}"},
-    "submitOk": {"title": "Application submitted", "desc": "An agent will contact you."}
-  },
-  "NotFound": {
-    "title": "Page not found",
-    "desc": "The page you’re looking for doesn’t exist.",
-    "home": "Return home"
-  }
+	"Common": {
+		"brand": "아무개 보험",
+		"nav": {
+			"home": "Home",
+			"plans": "Plans",
+			"products": "Products",
+			"support": "Support"
+		},
+		"mobile": {
+			"planDetails": "Plan Details",
+			"claims": "Claims",
+			"trackClaim": "Track Claim",
+			"faq": "FAQ",
+			"agents": "Find an Agent",
+			"contact": "Contact",
+			"disclosures": "Disclosures"
+		},
+		"footer": {
+			"privacy": "Privacy",
+			"terms": "Terms",
+			"contact": "Contact",
+			"copyright": "© {year} 아무개 보험. All rights reserved."
+		},
+		"actions": {
+			"getQuote": "Get a Quote",
+			"explorePlans": "Explore Plans",
+			"startWith": "Start with {plan}",
+			"emailQuote": "Email me my quote",
+			"send": "Send",
+			"submitClaim": "Submit claim",
+			"lookup": "Lookup",
+			"back": "Back",
+			"next": "Next",
+			"submitApplication": "Submit Application",
+			"accept": "Accept",
+			"decline": "Decline",
+			"close": "Close"
+		},
+		"labels": {
+			"plan": "Plan",
+			"zip": "ZIP code",
+			"zipShort": "ZIP",
+			"email": "Email",
+			"state": "State",
+			"buildingType": "Building type",
+			"personalProperty": "Personal property ($)",
+			"notes": "Notes (optional)",
+			"estimatedPremium": "Estimated premium",
+			"fullName": "Full name",
+			"phone": "Phone",
+			"dateOfIncident": "Date of incident",
+			"typeOfLoss": "Type of loss",
+			"whatHappened": "What happened?",
+			"firstName": "First name",
+			"lastName": "Last name",
+			"deductible": "Deductible",
+			"endorsements": "Endorsements",
+			"priorClaims": "Prior claims (5 years)",
+			"component": "Component",
+			"amount": "Amount",
+			"step": "Step {step} of {total}: {label}"
+		},
+		"endorsementsMap": {
+			"jewelry": "Scheduled jewelry",
+			"electronics": "Electronics",
+			"identityTheft": "Identity theft",
+			"waterBackup": "Water backup"
+		},
+		"buildingTypes": {
+			"apartment": "Apartment",
+			"condo": "Condo",
+			"house": "House"
+		},
+		"placeholders": {
+			"zip": "94105",
+			"email": "you@example.com",
+			"name": "Jane Doe",
+			"phone": "(555) 123-4567",
+			"typeOfLoss": "Water, fire, theft, etc.",
+			"desc": "Briefly describe the incident",
+			"notes": "Any special details about your rental"
+		},
+		"disclaimer": {
+			"default": "Coverage subject to terms. Availability varies by state.",
+			"CA": "CA: Not available in designated wildfire zones.",
+			"NY": "NY: Some endorsements not available.",
+			"TX": "TX: Wind/hail deductible may apply in coastal counties.",
+			"FL": "FL: Hurricane deductible may apply."
+		},
+		"cookie": {
+			"message": "We use cookies to improve your experience. See our <privacy>Privacy Policy</privacy>.",
+			"privacy": "Privacy Policy"
+		},
+		"a11y": {
+			"openMenu": "Open Menu"
+		},
+		"language": {
+			"label": "Language",
+			"en": "English",
+			"ko": "Korean"
+		},
+		"states": {
+			"CA": "CA",
+			"NY": "NY",
+			"TX": "TX",
+			"IL": "IL",
+			"FL": "FL",
+			"WA": "WA",
+			"MA": "MA",
+			"GA": "GA",
+			"PA": "PA",
+			"AZ": "AZ"
+		}
+	},
+	"Home": {
+		"heroTitle": "Protect what matters most.",
+		"heroDesc": "Affordable tenant insurance with fast claims, flexible coverage, and great support. Get a personalized quote in minutes.",
+		"bullets": [
+			"Coverage from $10/month",
+			"Cancel anytime",
+			"24/7 claims support"
+		],
+		"whyTitle": "Why 아무개 보험?",
+		"whyDesc": "Simple coverage for renters and tenants.",
+		"whyCards": {
+			"flexible": {
+				"title": "Flexible plans",
+				"desc": "Choose coverage levels that fit your life."
+			},
+			"fast": {
+				"title": "Fast claims",
+				"desc": "File online and track your claim status."
+			},
+			"support": {
+				"title": "Trusted support",
+				"desc": "Talk to licensed agents when you need help."
+			},
+			"bundle": {
+				"title": "Bundle & save",
+				"desc": "Discounts when you add additional products."
+			}
+		},
+		"popularPlans": "Popular Plans",
+		"plan": {
+			"Essential": "Essential",
+			"Standard": "Standard",
+			"Plus": "Plus",
+			"mo": "/mo",
+			"features": {
+				"essential": [
+					"$10k personal property",
+					"$100k liability",
+					"$500 deductible"
+				],
+				"standard": [
+					"$25k personal property",
+					"$300k liability",
+					"$500 deductible"
+				],
+				"plus": ["$50k personal property", "$500k liability", "$250 deductible"]
+			}
+		}
+	},
+	"Plans": {
+		"title": "Plans",
+		"desc": "Choose the plan that fits your needs. You can adjust limits later.",
+		"popular": "Popular",
+		"tagline": {
+			"Essential": "Core protection for everyday renters",
+			"Standard": "Best value for most tenants",
+			"Plus": "Extra coverage and lower deductible"
+		}
+	},
+	"PlanDetails": {
+		"tabs": {
+			"coverage": "Coverage",
+			"exclusions": "Exclusions",
+			"endorsements": "Endorsements",
+			"faq": "FAQ"
+		},
+		"terms": {
+			"Flood": "Flood",
+			"Earthquake": "Earthquake",
+			"Scheduled jewelry": "Scheduled jewelry",
+			"Electronics": "Electronics",
+			"Identity theft": "Identity theft",
+			"Water backup": "Water backup"
+		}
+	},
+	"Products": {
+		"title": "Products",
+		"desc": "Coverage options tailored for renters and property owners.",
+		"items": {
+			"renters": {
+				"name": "Renters Insurance",
+				"desc": "Protect personal property and liability at your rental.",
+				"cta": "Get a Quote"
+			},
+			"landlord": {
+				"name": "Landlord Insurance",
+				"desc": "Basic dwelling coverage for rental property owners.",
+				"cta": "Explore Plans"
+			},
+			"liability": {
+				"name": "Personal Liability",
+				"desc": "Extra liability coverage for peace of mind.",
+				"cta": "Explore Plans"
+			}
+		}
+	},
+	"Support": {
+		"title": "Support",
+		"desc": "Get help with claims, policies, and account questions.",
+		"items": {
+			"fileClaim": {
+				"title": "File a Claim",
+				"desc": "Start a new claim online in minutes.",
+				"href": "/claims"
+			},
+			"faq": {
+				"title": "FAQs",
+				"desc": "Answers to common questions about coverage and billing.",
+				"href": "/faq"
+			},
+			"agents": {
+				"title": "Find an Agent",
+				"desc": "Locate phone numbers and addresses for local offices.",
+				"href": "/agents"
+			},
+			"contact": {
+				"title": "Contact Support",
+				"desc": "Email or message our team for help.",
+				"href": "/contact"
+			}
+		}
+	},
+	"FAQ": {
+		"title": "FAQs",
+		"desc": "Answers to common questions.",
+		"items": [
+			{
+				"q": "What does renters insurance cover?",
+				"a": "Personal property (your stuff), personal liability, and additional living expenses if your home becomes uninhabitable due to a covered loss."
+			},
+			{
+				"q": "Is water damage covered?",
+				"a": "Sudden and accidental water damage is typically covered. Floods usually require separate coverage."
+			},
+			{
+				"q": "Can I cancel anytime?",
+				"a": "Yes. You can cancel your policy at any time with no fees."
+			}
+		]
+	},
+	"Claims": {
+		"title": "File a Claim",
+		"desc": "We’re here to help 24/7. Submit your details and an agent will reach out.",
+		"thanksTitle": "Thanks — we’ve got it.",
+		"thanksDesc": "Your claim number is {id}. An adjuster will contact you shortly.",
+		"details": {
+			"title": "Claim Details",
+			"desc": "Tell us what happened and how to reach you."
+		},
+		"toastOk": {
+			"title": "Claim submitted",
+			"desc": "Your claim number is {id}"
+		},
+		"toastErr": {
+			"title": "Could not submit claim",
+			"desc": "Please try again shortly."
+		},
+		"trackLink": "You can track your claim <here>here</here>.",
+		"here": "here"
+	},
+	"Track": {
+		"title": "Track a Claim",
+		"desc": "Enter your claim number to see the current status.",
+		"progressTitle": "Claim Progress",
+		"progressDesc": "Where your claim is in the process.",
+		"stages": ["Submitted", "Assigned", "In Review", "Approved", "Closed"]
+	},
+	"Agents": {
+		"title": "Find an Agent",
+		"desc": "Call or visit a local office for personalized help.",
+		"zipPrefix": "ZIPs starting with {prefix}"
+	},
+	"Contact": {
+		"title": "Contact Us",
+		"desc": "Questions about coverage, billing, or claims? We’re happy to help.",
+		"details": {
+			"title": "Contact Details",
+			"desc": "How to reach our team.",
+			"support": "Support:",
+			"claims": "Claims:",
+			"phone": "Phone:",
+			"hours": "Mon–Fri 8am–8pm, Sat 9am–3pm"
+		},
+		"form": {
+			"title": "Send us a message",
+			"desc": "We’ll reply by email.",
+			"message": "Message",
+			"help": "How can we help?"
+		}
+	},
+	"Legal": {
+		"privacyTitle": "Privacy Policy",
+		"privacyBody": "This is a demo site for an insurance company. Replace this page with your organization’s actual privacy policy.",
+		"termsTitle": "Terms of Service",
+		"termsBody": "This is a demo site for an insurance company. Replace this page with your organization’s actual terms of service.",
+		"disclosuresTitle": "Disclosures & Licensing",
+		"disclosuresBody": "아무개 보험 is a fictitious brand for demo purposes. Replace with your compliance and licensing details, including NAIC numbers, producer licenses, and state-specific disclosures.",
+		"disclosuresItems": [
+			"CA License 0A00000 (demo)",
+			"NY License BR-000000 (demo)"
+		]
+	},
+	"Quote": {
+		"title": "Get a Quote",
+		"desc": "Enter a few details to see your estimated monthly premium.",
+		"toastOk": {
+			"title": "Quote sent to {email}",
+			"desc": "{plan} plan estimated at ${price}/mo"
+		},
+		"toastErr": {
+			"title": "Could not submit quote",
+			"desc": "Please try again in a moment."
+		}
+	},
+	"Timer": {
+		"elapsed": "It took {time}!",
+		"task": "Task: {label}",
+		"runningDesc": "Complete a task to stop the timer."
+	},
+	"TaskSelector": {
+		"title": "Select a Task",
+		"desc": "Pick one to start the demo timer.",
+		"tasks": {
+			"t1": "1) Find Austin Phone Number",
+			"t2": "2) Track a Claim ACM-123456",
+			"t3": "3) Get a Quote with $20k Car and $1M Home in MA"
+		}
+	},
+	"Wizard": {
+		"title": "Get a Quote (Wizard)",
+		"desc": "A multi-step flow with validation and a rating breakdown.",
+		"steps": ["About you", "Location", "Coverage", "Review"],
+		"review": {
+			"helper": "Review your selections and estimated premium.",
+			"plan": "Plan:",
+			"zip": "ZIP:",
+			"state": "State:",
+			"property": "Property:",
+			"deductible": "Deductible:",
+			"estimated": "Estimated premium: ${price}/mo"
+		},
+		"table": { "endorsement": "Endorsement: {key}" },
+		"submitOk": {
+			"title": "Application submitted",
+			"desc": "An agent will contact you."
+		}
+	},
+	"NotFound": {
+		"title": "Page not found",
+		"desc": "The page you’re looking for doesn’t exist.",
+		"home": "Return home"
+	}
 }
