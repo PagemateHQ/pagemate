@@ -42,7 +42,7 @@ async def upstage_chat_completions(request: ChatCompletionRequest):
         }
 
         response = openai_client.chat.completions.create(**params)
-        content = response.choices[0].message["content"]
+        content = response.choices[0].message.content
 
         return content
 
