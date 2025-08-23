@@ -259,7 +259,7 @@ const StyledFloatingOrb = styled.div<{ $isDragging?: boolean }>`
       ? '0px 15px 30px 0px rgba(106, 219, 255, 0.45)'
       : '0px 10px 22px 0px rgba(106, 219, 255, 0.32)'};
   transform: ${(props) => (props.$isDragging ? 'scale(1.05)' : 'scale(1)')};
-  z-index: 9999;
+  z-index: 10000000000;
   cursor: ${(props) => (props.$isDragging ? 'grabbing' : 'pointer')};
 
   &:hover {
