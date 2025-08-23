@@ -8,9 +8,9 @@ import '@/styles/global.css';
 
 function MyApp({ Component, pageProps }: AppProps) {
   const defaultSuggestions = [
-    'Help me find a specific transaction',
-    'How can I transfer money between accounts?',
-    'How do I deposit a check?',
+    'What is the Austin Office Phone Number?',
+    'Are there any updates on the claim ACM-123456?',
+    'Insurance quote for $20k Car and $1M Home in MA',
   ];
 
   return (
