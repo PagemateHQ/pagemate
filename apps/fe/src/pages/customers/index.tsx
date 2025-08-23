@@ -55,9 +55,7 @@ const CustomersPage: React.FC = () => {
             <RetryButton onClick={loadTenants}>Retry</RetryButton>
           </ErrorContainer>
         ) : loading ? (
-          <EmptyState>
-            <EmptyStateTitle>Loading customers...</EmptyStateTitle>
-          </EmptyState>
+          <EmptyState>Loading customers...</EmptyState>
         ) : tenants.length === 0 ? (
           <EmptyState>
             <EmptyStateIcon>
