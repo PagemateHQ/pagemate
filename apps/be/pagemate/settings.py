@@ -1,8 +1,14 @@
+import pathlib
+
 from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
-    MOGNO_URL: str = "mongodb://localhost:27017"
+    mongo_url: str = "mongodb://localhost:27017"
+    file_storage_base_path_str: str = "/tmp/file-storage"
 
+    @property
+    def file_storage_base_path(self) -> pathlib.Path:
+        return pathlib.Path(self.file_storage_base_path_str)
 
 settings = Settings()
