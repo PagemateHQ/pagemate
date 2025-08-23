@@ -219,7 +219,7 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
               ...prev,
               { role: 'assistant', content: `${statusLine}${details}` },
             ]);
-            try { setSuppressActions(false); } catch {}
+            setTimeout(() => setSuppressActions(false), 0);
           } catch {}
           return { success: result.success, kind: tool.type, details: statusLine };
         } catch (e: any) {
@@ -370,11 +370,33 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
         if (e?.name === 'AbortError') return; // stopped externally
         throw e;
       }
+      
+      // Parse possible JSON action envelope (for tool calling)
+      let envelopeActions: ToolAction[] = [];
+      try {
+        const trimmed = (reply || '').trim();
+        if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
+          const obj = JSON.parse(trimmed);
+          if (obj && typeof obj === 'object') {
+            if (typeof obj.reply === 'string') reply = obj.reply;
+            if (obj.action && obj.action.verb) {
+              envelopeActions = parseAssistantActions(JSON.stringify(obj));
+            }
+          }
+        }
+      } catch {}
+      
       if (reply) {
         working = [...working, { role: 'assistant', content: reply }];
         messagesRef.current = working;
         setMessages(working);
-        try { setSuppressActions(false); } catch {}
+        setTimeout(() => setSuppressActions(false), 0);
+      }
+
+      // Execute tool actions if any
+      const actions = [...envelopeActions, ...parseAssistantActions(reply || '')];
+      for (const a of actions) {
+        await executeTool(a);
       }
 
       // No RETRIEVE tool. RAG is injected by server; do not loop.
