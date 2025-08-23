@@ -44,6 +44,7 @@ export default async function handler(
         'Example: ACTION SPOTLIGHT Start Building',
         'Keep replies concise and confirm actions you take (e.g., "Highlighting Start Building").',
         'When uncertain, ask a short clarifying question. Do not hallucinate UI that is not present.',
+        'Never use bold text in your response.',
       ].join(' ');
 
     const finalMessages = (() => {
