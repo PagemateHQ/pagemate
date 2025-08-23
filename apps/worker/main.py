@@ -1,4 +1,6 @@
 import os
+import re
+
 import sys
 import time
 import logging
@@ -6,6 +8,7 @@ from concurrent.futures import ThreadPoolExecutor, wait, FIRST_COMPLETED
 from datetime import datetime, timezone, timedelta
 from typing import Any, Dict, Optional, List, Tuple
 
+import requests
 from pymongo import MongoClient, ReturnDocument
 from pymongo.errors import PyMongoError
 from openai import OpenAI
@@ -14,7 +17,6 @@ from pathlib import Path
 import dotenv
 
 dotenv.load_dotenv()
-
 
 # Module-level logger (configured in setup_logging())
 logger = logging.getLogger("worker")
@@ -37,6 +39,8 @@ def setup_logging() -> None:
     logging.basicConfig(level=level, format=fmt, datefmt=datefmt)
     # Ensure module logger follows level
     logger.setLevel(level)
+
+    logging.getLogger("pymongo").setLevel(logging.WARNING)
 
 def utc_now() -> datetime:
     return datetime.now(timezone.utc)
@@ -123,20 +127,20 @@ def download_file_from_api(tenant_id: str, document_id: str, obj_path: str) -> b
     """Download file from API to local path. Returns True if successful."""
     import urllib.request
     import urllib.error
-    
-    api_url = f"https://api.pagemate.app/tenants/{tenant_id}/documents/{document_id}/attachment"
-    
+
+    api_url = f"http://localhost:8000/tenants/{tenant_id}/documents/{document_id}/attachment"
+
     try:
         logger.debug("Downloading file from API: %s", api_url)
-        
+
         # Create directory if it doesn't exist
         Path(obj_path).parent.mkdir(parents=True, exist_ok=True)
-        
+
         # Download the file
         urllib.request.urlretrieve(api_url, obj_path)
         logger.debug("Successfully downloaded file to: %s", obj_path)
         return True
-        
+
     except urllib.error.URLError as e:
         logger.warning("Failed to download file from API: %s", e)
         return False
@@ -168,6 +172,7 @@ def extract_text_for_embedding(doc_or_task: Dict[str, Any], documents_col) -> st
     if isinstance(obj_path, str) and obj_path:
         logger.debug("Attempting text extraction from provided object_path")
         from pathlib import Path
+
         p = Path(obj_path)
 
         try:
@@ -213,17 +218,30 @@ def extract_text_for_embedding(doc_or_task: Dict[str, Any], documents_col) -> st
         logger.debug("Attempting text extraction for document_id=%s", _short_id(doc_id))
         text = try_extract_text_from_document(documents_col, doc_id)
         if isinstance(text, str) and text.strip():
-            logger.debug("Text extracted (len=%d) for document_id=%s", len(text), _short_id(doc_id))
+            logger.debug(
+                "Text extracted (len=%d) for document_id=%s",
+                len(text),
+                _short_id(doc_id),
+            )
             return text
 
     raise ValueError("No text available for embedding")
 
 
 def try_extract_text_from_document(documents_col, doc_id: Any) -> Optional[str]:
-    enable = os.getenv("PDF_EXTRACT_ENABLE", "true").lower() in ("1", "true", "yes", "y")
-    src = documents_col.find_one({"_id": doc_id}, projection={"object_path": 1, "name": 1})
+    enable = os.getenv("PDF_EXTRACT_ENABLE", "true").lower() in (
+        "1",
+        "true",
+        "yes",
+        "y",
+    )
+    src = documents_col.find_one(
+        {"_id": doc_id}, projection={"object_path": 1, "name": 1}
+    )
     if not src:
-        logger.warning("Extraction: source document not found: _id=%s", _short_id(doc_id))
+        logger.warning(
+            "Extraction: source document not found: _id=%s", _short_id(doc_id)
+        )
         return None
     obj_path = src.get("object_path")
     name = str(src.get("name", ""))
@@ -233,10 +251,14 @@ def try_extract_text_from_document(documents_col, doc_id: Any) -> Optional[str]:
 
     path = Path(obj_path)
     if not path.exists() or not path.is_file():
-        logger.warning("Extraction: path not found %s for _id=%s", path, _short_id(doc_id))
+        logger.warning(
+            "Extraction: path not found %s for _id=%s", path, _short_id(doc_id)
+        )
         return None
 
-    ext = path.suffix.lower() or ("." + name.rsplit(".", 1)[-1].lower() if "." in name else "")
+    ext = path.suffix.lower() or (
+        "." + name.rsplit(".", 1)[-1].lower() if "." in name else ""
+    )
     try:
         if ext == ".pdf":
             if not enable:
@@ -247,7 +269,9 @@ def try_extract_text_from_document(documents_col, doc_id: Any) -> Optional[str]:
         if ext in (".txt", ".md"):
             logger.info("Extracting text from TXT: path=%s", path)
             return extract_text_from_txt(path)
-        logger.debug("Extraction: unsupported extension '%s' for _id=%s", ext, _short_id(doc_id))
+        logger.debug(
+            "Extraction: unsupported extension '%s' for _id=%s", ext, _short_id(doc_id)
+        )
         return None
     except Exception as e:
         logger.error("Extraction failed for %s: %s", path, e)
@@ -255,43 +279,28 @@ def try_extract_text_from_document(documents_col, doc_id: Any) -> Optional[str]:
 
 
 def extract_text_from_pdf(path: Path) -> str:
-    try:
-        from pypdf import PdfReader  # type: ignore
-    except Exception as e:
-        raise RuntimeError(
-            "pypdf is required for PDF extraction. Install in worker env: `uv add pypdf`"
-        ) from e
+    api_key = os.getenv("OPENAI_API_KEY")
 
-    max_pages = int(os.getenv("PDF_EXTRACT_MAX_PAGES", "30"))
-    max_chars = int(os.getenv("PDF_EXTRACT_MAX_CHARS", "50000"))
+    url = "https://api.upstage.ai/v1/document-digitization"
+    headers = {"Authorization": f"Bearer {api_key}"}
+    files = {"document": open(path, "rb")}
+    data = {
+        "model": "document-parse-250618",
+        "ocr": "auto",
+        "chart_recognition": False,
+        "coordinates": False,
+        "output_formats": '["markdown"]',
+        "base64_encoding": '["figure"]',
+    }
 
-    reader = PdfReader(str(path))
-    out: list[str] = []
-    cur = 0
-    pages = getattr(reader, "pages", [])
-    logger.debug(
-        "PDF reader initialized: path=%s, total_pages=%d, max_pages=%d, max_chars=%d",
-        path,
-        len(pages) if hasattr(pages, "__len__") else -1,
-        max_pages,
-        max_chars,
-    )
-    for i, page in enumerate(getattr(reader, "pages", [])):
-        if i >= max_pages:
-            break
-        try:
-            txt = page.extract_text() or ""
-        except Exception:
-            txt = ""
-        if txt:
-            out.append(txt)
-            cur += len(txt)
-            logger.debug("PDF page %d extracted len=%d (cum=%d)", i, len(txt), cur)
-            if cur >= max_chars:
-                break
-    content = "\n\n".join(out).strip()
-    content = "\n".join(line.strip() for line in content.splitlines())
-    logger.info("PDF extraction completed: chars=%d", len(content))
+    response = requests.post(url, headers=headers, files=files, data=data)
+    response = response.json()
+
+    content = response["content"]["markdown"]
+
+    image_pattern = r"!\[.*?\]\(.*?\)"
+    content = re.sub(image_pattern, "", content)
+
     return content
 
 
@@ -330,7 +339,12 @@ def requeue_one_failed(doc_col) -> bool:
 
     Returns True if a document was requeued, False otherwise.
     """
-    if os.getenv("RETRY_FAILED_ENABLE", "true").lower() not in ("1", "true", "yes", "y"):
+    if os.getenv("RETRY_FAILED_ENABLE", "true").lower() not in (
+        "1",
+        "true",
+        "yes",
+        "y",
+    ):
         return False
 
     max_attempts = int(os.getenv("RETRY_FAILED_MAX_ATTEMPTS", "3"))
@@ -338,8 +352,18 @@ def requeue_one_failed(doc_col) -> bool:
     filt = {
         "embedding_status": "failed",
         "$and": [
-            {"$or": [{"attempts": {"$exists": False}}, {"attempts": {"$lt": max_attempts}}]},
-            {"$or": [{"next_retry_at": {"$exists": False}}, {"next_retry_at": {"$lte": now}}]},
+            {
+                "$or": [
+                    {"attempts": {"$exists": False}},
+                    {"attempts": {"$lt": max_attempts}},
+                ]
+            },
+            {
+                "$or": [
+                    {"next_retry_at": {"$exists": False}},
+                    {"next_retry_at": {"$lte": now}},
+                ]
+            },
         ],
     }
     try:
@@ -439,27 +463,40 @@ def create_chunks_for_document(
         return
     tenant_id = doc.get("tenant_id")
     if not tenant_id:
-        logger.warning("Missing tenant_id for document_id=%s; skipping chunks", _short_id(doc_id))
+        logger.warning(
+            "Missing tenant_id for document_id=%s; skipping chunks", _short_id(doc_id)
+        )
         return
 
     chunks_col = get_chunks_collection(documents_col.database)
     # Remove existing chunks for idempotency
     delete_res = chunks_col.delete_many({"document_id": doc_id})
     try:
-        logger.debug("Deleted existing chunks for document_id=%s: count=%s", _short_id(doc_id), getattr(delete_res, "deleted_count", "?"))
+        logger.debug(
+            "Deleted existing chunks for document_id=%s: count=%s",
+            _short_id(doc_id),
+            getattr(delete_res, "deleted_count", "?"),
+        )
     except Exception:
         pass
 
     # Prefer token-based chunking to respect embedding context limits
     pieces = _chunk_text_tokens(full_text)
     if not pieces:
-        logger.warning("No chunk pieces generated for document_id=%s", _short_id(doc_id))
+        logger.warning(
+            "No chunk pieces generated for document_id=%s", _short_id(doc_id)
+        )
         return
 
     # Embed in batches to avoid large requests
     batch_size = int(os.getenv("CHUNK_EMBED_BATCH_SIZE", "16"))
     doc_id_str = str(doc_id)
-    logger.info("Creating chunks: document_id=%s, total_pieces=%d, batch_size=%d", _short_id(doc_id_str), len(pieces), batch_size)
+    logger.info(
+        "Creating chunks: document_id=%s, total_pieces=%d, batch_size=%d",
+        _short_id(doc_id_str),
+        len(pieces),
+        batch_size,
+    )
     now = utc_now()
     docs: List[Dict[str, Any]] = []
     idx_global = 0
@@ -505,7 +542,12 @@ def process_embedding(
     try:
         text = extract_text_for_embedding(doc, documents_col)
         # Optionally persist the resolved text onto the embedding document (truncated)
-        if os.getenv("EMBEDDING_SAVE_TEXT", "false").lower() in ("1", "true", "yes", "y"):
+        if os.getenv("EMBEDDING_SAVE_TEXT", "false").lower() in (
+            "1",
+            "true",
+            "yes",
+            "y",
+        ):
             try:
                 max_save = int(os.getenv("EMBEDDING_MAX_TEXT_SAVE_CHARS", "4000"))
                 save_text = text[:max_save]
@@ -645,7 +687,11 @@ def main() -> None:
                         inflight.add(fut)
                         submitted += 1
                     if submitted:
-                        logger.debug("Submitted %d task(s); inflight=%d", submitted, len(inflight))
+                        logger.debug(
+                            "Submitted %d task(s); inflight=%d",
+                            submitted,
+                            len(inflight),
+                        )
 
                     if not inflight and submitted == 0:
                         # Attempt to requeue a failed task if eligible
@@ -663,12 +709,20 @@ def main() -> None:
                             inflight.discard(f)
                             exc = f.exception()
                             if exc:
-                                logger.error("Worker task error: %s: %s", type(exc).__name__, exc)
+                                logger.error(
+                                    "Worker task error: %s: %s", type(exc).__name__, exc
+                                )
                         if done:
-                            logger.debug("Completed %d future(s); inflight=%d", len(done), len(inflight))
+                            logger.debug(
+                                "Completed %d future(s); inflight=%d",
+                                len(done),
+                                len(inflight),
+                            )
                     else:
                         # No work in flight; small pause to avoid tight loop
-                        logger.debug("No work in flight; sleeping for %.2fs", poll_interval)
+                        logger.debug(
+                            "No work in flight; sleeping for %.2fs", poll_interval
+                        )
                         time.sleep(poll_interval)
                 except KeyboardInterrupt:
                     # Graceful shutdown
@@ -677,6 +731,7 @@ def main() -> None:
                 except Exception as e:
                     logger.error("Polling loop error: %s", e)
                     time.sleep(10.0)
+
     run_polling_loop()
 
 
