@@ -11,11 +11,7 @@ import {CookieConsent} from '@/components/cookie-consent'
 import {GTM} from '@/components/gtm'
 import {DisclaimerBar} from '@/components/disclaimer-bar'
 
-export const dynamicParams = false
-
-export function generateStaticParams() {
-  return [{locale: 'en'}, {locale: 'ko'}]
-}
+// Locale routes render dynamically to simplify build.
 
 export default function LocaleLayout({
   children,

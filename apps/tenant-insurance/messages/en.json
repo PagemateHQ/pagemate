@@ -61,6 +61,17 @@
       "amount": "Amount",
       "step": "Step {step} of {total}: {label}"
     },
+    "endorsementsMap": {
+      "jewelry": "Scheduled jewelry",
+      "electronics": "Electronics",
+      "identityTheft": "Identity theft",
+      "waterBackup": "Water backup"
+    },
+    "buildingTypes": {
+      "apartment": "Apartment",
+      "condo": "Condo",
+      "house": "House"
+    },
     "placeholders": {
       "zip": "94105",
       "email": "you@example.com",

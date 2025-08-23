@@ -190,9 +190,9 @@ function WizardContent() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="apartment">Apartment</SelectItem>
-                    <SelectItem value="condo">Condo</SelectItem>
-                    <SelectItem value="house">House</SelectItem>
+                    <SelectItem value="apartment">{t('Common.buildingTypes.apartment')}</SelectItem>
+                    <SelectItem value="condo">{t('Common.buildingTypes.condo')}</SelectItem>
+                    <SelectItem value="house">{t('Common.buildingTypes.house')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

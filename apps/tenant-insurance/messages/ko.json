@@ -61,6 +61,17 @@
       "amount": "금액",
       "step": "{total}단계 중 {step}단계: {label}"
     },
+    "endorsementsMap": {
+      "jewelry": "명기 보석",
+      "electronics": "전자기기",
+      "identityTheft": "신원 도용",
+      "waterBackup": "역류수 보장"
+    },
+    "buildingTypes": {
+      "apartment": "아파트",
+      "condo": "콘도",
+      "house": "주택"
+    },
     "placeholders": {
       "zip": "94105",
       "email": "you@example.com",
