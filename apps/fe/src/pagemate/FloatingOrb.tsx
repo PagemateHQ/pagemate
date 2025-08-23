@@ -9,11 +9,17 @@ import { PagemateChat } from './PagemateChat';
 interface FloatingOrbProps {
   initialCorner?: CornerPosition;
   cornerGap?: number;
+  defaultSuggestions?: string[];
 }
 
 export const FloatingOrb: React.FC<FloatingOrbProps> = ({
   initialCorner = 'bottom-right',
   cornerGap = 48,
+  defaultSuggestions = [
+    'Help me find a specific transaction',
+    'How can I transfer money between accounts?',
+    'How do I deposit a check?',
+  ],
 }) => {
   const [showView, setShowView] = useState(false);
   const [viewPosition, setViewPosition] = useState<{
@@ -200,6 +206,7 @@ export const FloatingOrb: React.FC<FloatingOrbProps> = ({
             <PagemateChat
               isOpen={showView}
               onClose={() => setShowView(false)}
+              defaultSuggestions={defaultSuggestions}
             />
           </MotionViewContainerWrapper>
         )}

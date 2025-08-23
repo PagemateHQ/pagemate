@@ -6,11 +6,17 @@ interface IntroViewProps {
   onClose?: () => void;
   onSendMessage?: (message: string) => void;
   onSwitchToChat?: (initialMessage: string) => void;
+  suggestions?: string[];
 }
 
 export const IntroView: React.FC<IntroViewProps> = ({
   onSendMessage,
   onSwitchToChat,
+  suggestions = [
+    'Help me find a specific transaction',
+    'How can I transfer money between accounts?',
+    'How do I deposit a check?',
+  ],
 }) => {
   const handleSuggestionClick = (text: string) => {
     if (onSwitchToChat) {
@@ -72,40 +78,19 @@ export const IntroView: React.FC<IntroViewProps> = ({
       </LogoSection>
 
       <MotionSuggestionsContainer variants={itemVariants}>
-        <MotionSuggestionButton
-          whileHover={{
-            scale: 1.02,
-            backgroundColor: 'rgba(171, 220, 246, 0.45)',
-          }}
-          whileTap={{ scale: 0.98 }}
-          onClick={() =>
-            handleSuggestionClick('Help me find a specific transaction')
-          }
-        >
-          Help me find a specific transaction
-        </MotionSuggestionButton>
-        <MotionSuggestionButton
-          whileHover={{
-            scale: 1.02,
-            backgroundColor: 'rgba(171, 220, 246, 0.45)',
-          }}
-          whileTap={{ scale: 0.98 }}
-          onClick={() =>
-            handleSuggestionClick('How can I transfer money between accounts?')
-          }
-        >
-          How can I transfer money between accounts?
-        </MotionSuggestionButton>
-        <MotionSuggestionButton
-          whileHover={{
-            scale: 1.02,
-            backgroundColor: 'rgba(171, 220, 246, 0.45)',
-          }}
-          whileTap={{ scale: 0.98 }}
-          onClick={() => handleSuggestionClick('How do I deposit a check?')}
-        >
-          How do I deposit a check?
-        </MotionSuggestionButton>
+        {suggestions.map((suggestion, index) => (
+          <MotionSuggestionButton
+            key={index}
+            whileHover={{
+              scale: 1.02,
+              backgroundColor: 'rgba(171, 220, 246, 0.45)',
+            }}
+            whileTap={{ scale: 0.98 }}
+            onClick={() => handleSuggestionClick(suggestion)}
+          >
+            {suggestion}
+          </MotionSuggestionButton>
+        ))}
       </MotionSuggestionsContainer>
     </>
   );
