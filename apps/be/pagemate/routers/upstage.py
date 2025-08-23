@@ -20,7 +20,7 @@ async def upstage_chat_completions(request: Request):
         stream = body.get("stream", False)
         
         if stream:
-            response = openai_client.chat.completions.create(**body, stream=True)
+            response = openai_client.chat.completions.create(**body, stream=stream)
             
             async def generate():
                 for chunk in response:
