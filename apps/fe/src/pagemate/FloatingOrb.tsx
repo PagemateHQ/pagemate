@@ -103,24 +103,7 @@ export const FloatingOrb: React.FC<FloatingOrbProps> = ({
     };
   }, [showIntro, updateIntroPosition]);
 
-  // Handle click outside to close
-  useEffect(() => {
-    if (showIntro) {
-      const handleClickOutside = (e: MouseEvent) => {
-        const target = e.target as HTMLElement;
-        if (
-          !target.closest('.intro-view-container') &&
-          !dragRef.current?.contains(target)
-        ) {
-          setShowIntro(false);
-        }
-      };
-
-      document.addEventListener('mousedown', handleClickOutside);
-      return () =>
-        document.removeEventListener('mousedown', handleClickOutside);
-    }
-  }, [showIntro]);
+  // Removed click outside handler - view only closes when clicking the orb
 
   const handleOrbClick = () => {
     if (!isDragging) {
@@ -145,6 +128,7 @@ export const FloatingOrb: React.FC<FloatingOrbProps> = ({
               top: introPosition.top,
               left: introPosition.left,
               zIndex: 10000,
+              pointerEvents: 'none',
             }}
             initial={{
               opacity: 0,
@@ -163,7 +147,9 @@ export const FloatingOrb: React.FC<FloatingOrbProps> = ({
               scale: { duration: 0.4 },
             }}
           >
-            <IntroView onClose={() => setShowIntro(false)} />
+            <div style={{ pointerEvents: 'auto' }}>
+              <IntroView onClose={() => setShowIntro(false)} />
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
