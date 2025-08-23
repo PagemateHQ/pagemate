@@ -59,14 +59,12 @@ def get_db() -> tuple[MongoClient, Any, Any]:
         except Exception:
             db = client["pagemate"]
 
-    collection_name = os.getenv(
-        "MONGO_COLLECTION",
-        os.getenv("MONGO_EMBEDDINGS_COLLECTION", "document_embeddings"),
-    )
+    # Process documents directly (embedding status is on the document)
+    collection_name = os.getenv("MONGO_DOCUMENTS_COLLECTION", "documents")
     col = db[collection_name]
     try:
         logger.info(
-            "Connected to MongoDB: db='%s', embeddings_collection='%s'",
+            "Connected to MongoDB: db='%s', documents_collection='%s'",
             getattr(db, "name", "<unknown>"),
             collection_name,
         )
@@ -87,18 +85,24 @@ def get_chunks_collection(db: Any):
     return db[name]
 
 
-def claim_pending(emb_col) -> Optional[Dict[str, Any]]:
+def claim_pending(doc_col) -> Optional[Dict[str, Any]]:
     try:
         now = utc_now()
-        doc = emb_col.find_one_and_update(
-            {"status": "pending"},
-            {"$set": {"status": "processing", "startedAt": now, "updatedAt": now}},
+        doc = doc_col.find_one_and_update(
+            {"embedding_status": "pending"},
+            {
+                "$set": {
+                    "embedding_status": "processing",
+                    "startedAt": now,
+                    "updatedAt": now,
+                }
+            },
             return_document=ReturnDocument.AFTER,
         )
         if doc:
-            logger.info("Claimed pending embedding: _id=%s", _short_id(doc.get("_id")))
+            logger.info("Claimed pending document: _id=%s", _short_id(doc.get("_id")))
         else:
-            logger.debug("No pending embedding to claim")
+            logger.debug("No pending document to claim")
         return doc
     except PyMongoError as e:
         logger.error("Mongo error while claiming: %s", e)
@@ -115,10 +119,10 @@ def read_dotted(obj: Dict[str, Any], dotted: str) -> Optional[Any]:
     return cur
 
 
-def extract_text_for_embedding(emb_doc: Dict[str, Any], documents_col) -> str:
+def extract_text_for_embedding(doc_or_task: Dict[str, Any], documents_col) -> str:
     preferred_field = os.getenv("EMBEDDING_TEXT_FIELD")
     if preferred_field:
-        val = read_dotted(emb_doc, preferred_field)
+        val = read_dotted(doc_or_task, preferred_field)
         if isinstance(val, str) and val.strip():
             logger.debug(
                 "Text extracted from preferred field '%s' (len=%d)",
@@ -128,13 +132,27 @@ def extract_text_for_embedding(emb_doc: Dict[str, Any], documents_col) -> str:
             return val
 
     for key in ("text", "content", "input"):
-        v = emb_doc.get(key)
+        v = doc_or_task.get(key)
         if isinstance(v, str) and v.strip():
             logger.debug("Text extracted from key '%s' (len=%d)", key, len(v))
             return v
 
-    # Attempt to extract from the source document if it's a PDF
-    doc_id = emb_doc.get("document_id")
+    # If we already have the object_path in the payload, prefer it
+    obj_path = doc_or_task.get("object_path")
+    if isinstance(obj_path, str) and obj_path:
+        logger.debug("Attempting PDF text extraction from provided object_path")
+        try:
+            from pathlib import Path
+            text = extract_text_from_pdf(Path(obj_path))
+        except Exception as e:
+            logger.debug("Direct PDF extraction via object_path failed: %s", e)
+            text = None
+        if isinstance(text, str) and text.strip():
+            logger.debug("PDF text extracted (len=%d) via object_path", len(text))
+            return text
+
+    # Otherwise, determine the source document id and fetch
+    doc_id = doc_or_task.get("_id") or doc_or_task.get("document_id")
     if doc_id is not None:
         logger.debug("Attempting PDF text extraction for document_id=%s", _short_id(doc_id))
         text = try_extract_text_from_pdf(documents_col, doc_id)
@@ -231,7 +249,7 @@ def compute_next_retry(now: datetime, attempts: int) -> datetime:
     return now + timedelta(seconds=delay)
 
 
-def requeue_one_failed(emb_col) -> bool:
+def requeue_one_failed(doc_col) -> bool:
     """Requeue a single failed embedding if eligible (max attempts and time window).
 
     Returns True if a document was requeued, False otherwise.
@@ -242,22 +260,22 @@ def requeue_one_failed(emb_col) -> bool:
     max_attempts = int(os.getenv("RETRY_FAILED_MAX_ATTEMPTS", "3"))
     now = utc_now()
     filt = {
-        "status": "failed",
+        "embedding_status": "failed",
         "$and": [
             {"$or": [{"attempts": {"$exists": False}}, {"attempts": {"$lt": max_attempts}}]},
             {"$or": [{"nextRetryAt": {"$exists": False}}, {"nextRetryAt": {"$lte": now}}]},
         ],
     }
     try:
-        doc = emb_col.find_one_and_update(
+        doc = doc_col.find_one_and_update(
             filt,
-            {"$set": {"status": "pending", "updatedAt": now}},
+            {"$set": {"embedding_status": "pending", "updatedAt": now}},
             return_document=ReturnDocument.AFTER,
         )
         if doc is not None:
-            logger.info("Requeued failed embedding: _id=%s", _short_id(doc.get("_id")))
+            logger.info("Requeued failed document: _id=%s", _short_id(doc.get("_id")))
             return True
-        logger.debug("No eligible failed embedding to requeue")
+        logger.debug("No eligible failed document to requeue")
         return False
     except Exception as e:
         logger.error("Requeue failed error: %s", e)
@@ -333,22 +351,20 @@ def _embed_batch(client: OpenAI, model: str, texts: List[str]) -> List[List[floa
 
 def create_chunks_for_document(
     documents_col,
-    emb_col,
-    emb_doc: Dict[str, Any],
+    doc: Dict[str, Any],
     full_text: str,
     client: OpenAI,
     model: str,
 ) -> None:
-    doc_id = emb_doc.get("document_id")
+    # The document itself is the task source
+    doc_id = doc.get("_id")
     if not doc_id:
-        logger.warning("Embedding missing document_id; skipping chunk creation for _id=%s", _short_id(emb_doc.get("_id")))
+        logger.warning("Missing _id on document; skipping chunk creation")
         return
-    # Fetch tenant id
-    doc = documents_col.find_one({"_id": doc_id}, projection={"tenant_id": 1})
-    if not doc or "tenant_id" not in doc:
-        logger.warning("No tenant_id found for document_id=%s; skipping chunks", _short_id(doc_id))
+    tenant_id = doc.get("tenant_id")
+    if not tenant_id:
+        logger.warning("Missing tenant_id for document_id=%s; skipping chunks", _short_id(doc_id))
         return
-    tenant_id = doc["tenant_id"]
 
     chunks_col = get_chunks_collection(documents_col.database)
     # Remove existing chunks for idempotency
@@ -405,34 +421,41 @@ def create_chunks_for_document(
 
 
 def process_embedding(
-    emb_col, documents_col, emb_doc: Dict[str, Any], client: OpenAI, model: str
+    documents_col, doc: Dict[str, Any], client: OpenAI, model: str
 ) -> None:
-    emb_id = emb_doc.get("_id")
-    logger.info("Processing embedding: _id=%s", _short_id(emb_id))
+    emb_id = doc.get("_id")
+    logger.info("Processing document embedding: _id=%s", _short_id(emb_id))
     try:
-        text = extract_text_for_embedding(emb_doc, documents_col)
+        text = extract_text_for_embedding(doc, documents_col)
         # Optionally persist the resolved text onto the embedding document (truncated)
         if os.getenv("EMBEDDING_SAVE_TEXT", "false").lower() in ("1", "true", "yes", "y"):
             try:
                 max_save = int(os.getenv("EMBEDDING_MAX_TEXT_SAVE_CHARS", "4000"))
                 save_text = text[:max_save]
-                emb_col.update_one(
+                documents_col.update_one(
                     {"_id": emb_id},
                     {"$set": {"text": save_text, "updatedAt": utc_now()}},
                 )
                 logger.debug(
-                    "Saved text snapshot to embedding _id=%s (len=%d)",
+                    "Saved text snapshot to document _id=%s (len=%d)",
                     _short_id(emb_id),
                     len(save_text),
                 )
             except Exception:
                 pass
     except Exception as e:
-        logger.error("Embedding %s: invalid payload: %s", _short_id(emb_id), e)
+        logger.error("Document %s: invalid payload: %s", _short_id(emb_id), e)
         try:
-            emb_col.update_one(
+            documents_col.update_one(
                 {"_id": emb_id},
-                {"$set": {"status": "failed", "error": str(e), "failedAt": utc_now()}},
+                {
+                    "$set": {
+                        "embedding_status": "failed",
+                        "error": str(e),
+                        "failedAt": utc_now(),
+                        "updatedAt": utc_now(),
+                    }
+                },
             )
         except Exception:
             pass
@@ -444,37 +467,36 @@ def process_embedding(
             logger.debug("Chunking+embedding enabled for _id=%s", _short_id(emb_id))
             create_chunks_for_document(
                 documents_col=documents_col,
-                emb_col=emb_col,
-                emb_doc=emb_doc,
+                doc=doc,
                 full_text=text,
                 client=client,
                 model=model,
             )
 
         # Mark task completed (document-level embedding is optional per schema)
-        emb_col.update_one(
+        documents_col.update_one(
             {"_id": emb_id},
             {
                 "$set": {
-                    "status": "completed",
+                    "embedding_status": "completed",
                     "completedAt": utc_now(),
                     "updatedAt": utc_now(),
                 },
                 "$unset": {"embedding": ""},
             },
         )
-        logger.info("Completed embedding %s (chunked)", _short_id(emb_id))
+        logger.info("Completed embedding for document %s (chunked)", _short_id(emb_id))
     except Exception as e:
-        logger.error("Embedding %s failed: %s", _short_id(emb_id), e)
+        logger.error("Embedding for document %s failed: %s", _short_id(emb_id), e)
         try:
-            attempts_prev = int(emb_doc.get("attempts", 0) or 0)
+            attempts_prev = int(doc.get("attempts", 0) or 0)
             attempts = attempts_prev + 1
             next_retry = compute_next_retry(utc_now(), attempts)
-            emb_col.update_one(
+            documents_col.update_one(
                 {"_id": emb_id},
                 {
                     "$set": {
-                        "status": "failed",
+                        "embedding_status": "failed",
                         "error": f"{type(e).__name__}: {e}",
                         "failedAt": utc_now(),
                         "updatedAt": utc_now(),
@@ -507,8 +529,7 @@ def main() -> None:
         sys.exit(1)
     embedding_model = os.getenv("EMBEDDING_MODEL", "solar-embedding-1-large-query")
     poll_interval = float(os.getenv("POLL_INTERVAL", "1.0"))
-    client, db, emb_col = get_db()
-    documents_col = get_documents_collection(db)
+    client, db, documents_col = get_db()
     chunks_col = get_chunks_collection(db)
     oa_client = OpenAI(api_key=openai_api_key, base_url="https://api.upstage.ai/v1")
 
@@ -522,7 +543,7 @@ def main() -> None:
 
     def run_polling_loop():
         logger.info(
-            "Polling for pending embeddings every %.2fs with concurrency=%d",
+            "Polling for pending documents every %.2fs with concurrency=%d",
             poll_interval,
             concurrency,
         )
@@ -533,12 +554,11 @@ def main() -> None:
                     # Fill the pool up to the concurrency limit
                     submitted = 0
                     while len(inflight) < concurrency:
-                        emb = claim_pending(emb_col)
+                        emb = claim_pending(documents_col)
                         if not emb:
                             break
                         fut = executor.submit(
                             process_embedding,
-                            emb_col,
                             documents_col,
                             emb,
                             oa_client,
@@ -551,7 +571,7 @@ def main() -> None:
 
                     if not inflight and submitted == 0:
                         # Attempt to requeue a failed task if eligible
-                        if not requeue_one_failed(emb_col):
+                        if not requeue_one_failed(documents_col):
                             logger.debug("Idle: sleeping for %.2fs", poll_interval)
                             time.sleep(poll_interval)
                         continue

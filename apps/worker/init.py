@@ -15,9 +15,8 @@ def resolve_mongo_from_env(
     url: Optional[str],
     db_name: Optional[str],
     docs_col: Optional[str],
-    embs_col: Optional[str],
     tenants_col: Optional[str],
-) -> Tuple[str, str, str, str, str]:
+) -> Tuple[str, str, str, str]:
     resolved_url = url or os.getenv("MONGO_URL")
     if not resolved_url:
         print("ERROR: MONGO_URL is required (pass --mongo-url or set env).", file=sys.stderr)
@@ -25,14 +24,8 @@ def resolve_mongo_from_env(
 
     resolved_db = db_name or os.getenv("MONGO_DB") or "pagemate"
     resolved_docs = docs_col or os.getenv("MONGO_DOCUMENTS_COLLECTION") or "documents"
-    resolved_embs = (
-        embs_col
-        or os.getenv("MONGO_COLLECTION")
-        or os.getenv("MONGO_EMBEDDINGS_COLLECTION")
-        or "document_embeddings"
-    )
     resolved_tenants = tenants_col or os.getenv("MONGO_TENANTS_COLLECTION") or "tenants"
-    return resolved_url, resolved_db, resolved_docs, resolved_embs, resolved_tenants
+    return resolved_url, resolved_db, resolved_docs, resolved_tenants
 
 
 def slugify(name: str) -> str:
@@ -84,9 +77,7 @@ def write_to_storage(root: Path, tenant_id: str, document_id: str, filename: str
 def seed(db, storage_root: Path) -> None:
     tenants_col = db[os.getenv("MONGO_TENANTS_COLLECTION", "tenants")]
     documents_col = db[os.getenv("MONGO_DOCUMENTS_COLLECTION", "documents")]
-    embeddings_col = db[
-        os.getenv("MONGO_COLLECTION", os.getenv("MONGO_EMBEDDINGS_COLLECTION", "document_embeddings"))
-    ]
+    # Embedding status is now tracked directly on documents
 
     tenants_docs: Dict[str, List[str]] = {
         "Apple": [
@@ -116,7 +107,7 @@ def seed(db, storage_root: Path) -> None:
                 filename = filename_from_url(url)
                 document_id = uuid.uuid4().hex
                 dest = write_to_storage(storage_root, tenant_id, document_id, filename, data)
-                # Insert doc + embedding (use the dest we just wrote)
+                # Insert document with embedding status on the same record
                 # Keeping document_id used in path consistent with record id makes it easier to reason.
                 # So we pass size and the actual object path.
                 now = utc_now()
@@ -128,20 +119,11 @@ def seed(db, storage_root: Path) -> None:
                     "size": len(data),
                     "createdAt": now,
                     "updatedAt": now,
+                    "embedding_status": "pending",
                 }
                 documents_col.insert_one(doc_payload)
-                emb_id = uuid.uuid4().hex
-                embeddings_col.insert_one(
-                    {
-                        "_id": emb_id,
-                        "document_id": document_id,
-                        "status": "pending",
-                        "createdAt": now,
-                        "updatedAt": now,
-                    }
-                )
                 print(
-                    f"  Added document _id={document_id} ({len(data)} bytes), embedding _id={emb_id}"
+                    f"  Added document _id={document_id} ({len(data)} bytes), embedding_status=pending"
                 )
             except Exception as e:
                 print(f"  Failed to add from {url}: {e}", file=sys.stderr)
@@ -161,11 +143,6 @@ def main(argv: Optional[list[str]] = None) -> int:
         help="Documents collection name (default: documents)",
     )
     parser.add_argument(
-        "--embeddings-collection",
-        dest="embs_col",
-        help="Embeddings collection name (default: document_embeddings)",
-    )
-    parser.add_argument(
         "--tenants-collection",
         dest="tenants_col",
         help="Tenants collection name (default: tenants)",
@@ -180,8 +157,8 @@ def main(argv: Optional[list[str]] = None) -> int:
     args = parser.parse_args(argv)
 
     # Resolve Mongo params
-    mongo_url, db_name, _, _, _ = resolve_mongo_from_env(
-        args.mongo_url, args.mongo_db, args.docs_col, args.embs_col, args.tenants_col
+    mongo_url, db_name, _, _ = resolve_mongo_from_env(
+        args.mongo_url, args.mongo_db, args.docs_col, args.tenants_col
     )
 
     # Connect to Mongo
