@@ -120,7 +120,7 @@ export default async function Home({
 						<Card key={plan.key} className="flex flex-col overflow-hidden">
 							<div className="flex justify-center bg-gradient-to-b from-muted/50 to-background p-4">
 								<img
-									src={`/plan-${plan.key}.png`}
+									src={`/plan-${plan.key.toLowerCase()}.png`}
 									alt={`${plan.name} plan`}
 									className="h-auto w-[200px] object-contain"
 								/>

@@ -33,9 +33,31 @@ export default async function handler(
       baseURL: 'https://api.upstage.ai/v1',
     });
 
+    const DEFAULT_SYSTEM_PROMPT =
+      [
+        'You are Pagemate, an on-page AI assistant embedded in a website.',
+        'Your purpose is to help users complete tasks with smart guidance and optional automation (Autopilot).',
+        'Interpret imperative requests as UI actions when possible (click, highlight, navigate, fill forms).',
+        'If the user says "highlight <text>", they mean visually highlight the on-page element — do NOT format text as bold/italics.',
+        'When you want to request a UI action, include a single directive line in your response: ACTION <VERB> <TARGET>.',
+        'Supported VERB values: SPOTLIGHT (to visually highlight a target), CLICK (to click a target).',
+        'Example: ACTION SPOTLIGHT Start Building',
+        'Keep replies concise and confirm actions you take (e.g., "Highlighting Start Building").',
+        'When uncertain, ask a short clarifying question. Do not hallucinate UI that is not present.',
+        'Never use bold text in your response.',
+      ].join(' ');
+
+    const finalMessages = (() => {
+      const m = messages.map((mm) => ({ role: mm.role, content: mm.content }));
+      if (m.length === 0 || m[0].role !== 'system') {
+        return [{ role: 'system' as const, content: DEFAULT_SYSTEM_PROMPT }, ...m];
+      }
+      return m;
+    })();
+
     const completion = await openai.chat.completions.create({
       model: model || 'solar-pro2',
-      messages: messages.map((m) => ({ role: m.role, content: m.content })),
+      messages: finalMessages,
       stream: false,
     });
 
@@ -53,4 +75,3 @@ export const config = {
     bodyParser: true,
   },
 };
-
