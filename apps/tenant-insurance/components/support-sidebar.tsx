@@ -5,7 +5,6 @@ import { usePathname } from "next/navigation"
 
 const items = [
   { href: "/claims", label: "File a Claim" },
-  { href: "/claims/track", label: "Track Claim" },
   { href: "/faq", label: "FAQs" },
   { href: "/agents", label: "Find an Agent" },
   { href: "/contact", label: "Contact" },
@@ -32,4 +31,3 @@ export function SupportSidebar() {
     </aside>
   )
 }
-

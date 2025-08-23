@@ -16,6 +16,11 @@ export default function ClaimsTrackPage() {
     const sum = id.split("").reduce((a, c) => a + c.charCodeAt(0), 0)
     const step = sum % stages.length
     setCurrent(step)
+    // If this task is selected, stop the global timer when the target ID is used
+    if (id.trim().toUpperCase() === "ACM-123456") {
+      const { useTaskStore } = await import("@/lib/task-store")
+      useTaskStore.getState().stop()
+    }
   }
 
   return (

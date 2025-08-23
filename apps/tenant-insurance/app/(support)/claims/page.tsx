@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import Link from "next/link"
 
 export default function ClaimsPage() {
   const [submitted, setSubmitted] = React.useState(false)
@@ -94,6 +95,10 @@ export default function ClaimsPage() {
           </>
         )}
       </Card>
+
+      <p className="text-xs text-muted-foreground">
+        You can track your claim <Link href="/claims/track" className="underline">here</Link>.
+      </p>
     </div>
   )
 }

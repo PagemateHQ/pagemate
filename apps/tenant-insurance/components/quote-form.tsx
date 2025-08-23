@@ -54,8 +54,27 @@ export default function QuoteForm({ initialPlan }: { initialPlan: string }) {
       toast.success(`Quote sent to ${email}`, {
         description: `${plan} plan estimated at $${quote}/mo`,
       })
-      // Stop the global demo timer when task completes
-      useTaskStore.getState().stop()
+      // Detect Task 3 completion via ZIP + notes
+      const note = (notes || "").toLowerCase()
+      const mentionsCar = /car/.test(note)
+      const mentionsHome = /home/.test(note)
+      const mentions20k = /(\$?\s*20k|\$?\s*20[, ]?000)/i.test(note)
+      const mentions1m = /(\$?\s*1m|\$?\s*1[, ]?000[, ]?000)/i.test(note)
+      const selectedState = typeof window !== "undefined" ? localStorage.getItem("state-selector:v1") : null
+      const isMA = selectedState === "MA"
+      const matched = isMA && mentionsCar && mentions20k && mentionsHome && mentions1m
+      if (matched) {
+        useTaskStore.getState().stop()
+        try {
+          const mod = await import("canvas-confetti")
+          const confetti = mod.default
+          confetti({ particleCount: 80, spread: 60, origin: { y: 0.6 } })
+          setTimeout(() => confetti({ particleCount: 60, spread: 80, origin: { y: 0.6 } }), 200)
+          setTimeout(() => confetti({ particleCount: 40, spread: 120, origin: { y: 0.7 } }), 400)
+        } catch {
+          // ignore if confetti fails
+        }
+      }
     } catch (_err) {
       const { toast } = await import("@/components/ui/sonner")
       toast.error("Could not submit quote", {

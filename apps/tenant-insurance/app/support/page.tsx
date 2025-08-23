@@ -9,11 +9,6 @@ const items = [
     desc: "Start a new claim online in minutes.",
   },
   {
-    href: "/claims/track",
-    title: "Track a Claim",
-    desc: "Check the status of an existing claim.",
-  },
-  {
     href: "/faq",
     title: "FAQs",
     desc: "Answers to common questions about coverage and billing.",
