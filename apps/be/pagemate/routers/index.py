@@ -8,5 +8,5 @@ router = APIRouter()
 async def index():
     """Index Page of the API."""
     return """
-    <a href="/docs">Go to API Documentation</a>
+    <a href="/scalar">Go to API Documentation</a>
     """
