@@ -61,7 +61,14 @@ export default async function PlansPage({
 						href={{ pathname: "/quote", query: { plan: p.key } }}
 						key={p.key}
 					>
-						<Card className="flex flex-col h-full">
+						<Card className="flex flex-col h-full overflow-hidden">
+							<div className="flex justify-center bg-gradient-to-b from-muted/50 to-background p-4">
+								<img
+									src={`/plan-${p.key.toLowerCase()}.png`}
+									alt={`${p.name} plan`}
+									className="h-auto w-[200px] object-contain"
+								/>
+							</div>
 							<CardHeader>
 								<div className="flex items-start justify-between gap-2">
 									<div>
