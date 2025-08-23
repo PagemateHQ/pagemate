@@ -1,16 +1,17 @@
 "use client"
 
-import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { Link, usePathname } from "@/i18n/routing"
+import {useTranslations} from 'next-intl'
 
 const items = [
-  { href: "/claims", label: "File a Claim" },
-  { href: "/faq", label: "FAQs" },
-  { href: "/agents", label: "Find an Agent" },
-  { href: "/contact", label: "Contact" },
+  { href: "/claims", labelKey: "Support.items.fileClaim.title" },
+  { href: "/faq", labelKey: "Support.items.faq.title" },
+  { href: "/agents", labelKey: "Support.items.agents.title" },
+  { href: "/contact", labelKey: "Support.items.contact.title" },
 ]
 
 export function SupportSidebar() {
+  const t = useTranslations()
   const pathname = usePathname()
   return (
     <aside className="sticky top-20 hidden h-[calc(100vh-5rem)] w-64 shrink-0 pr-4 pt-2 md:block">
@@ -23,7 +24,7 @@ export function SupportSidebar() {
               href={i.href}
               className={`rounded px-2 py-1.5 ${active ? "bg-muted text-foreground" : "text-muted-foreground hover:text-foreground"}`}
             >
-              {i.label}
+              {t(i.labelKey)}
             </Link>
           )
         })}

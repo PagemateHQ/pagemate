@@ -1,14 +1,7 @@
 import type { Metadata } from "next"
 import { Geist, Geist_Mono } from "next/font/google"
 import "./globals.css"
-import { SiteHeader } from "@/components/site-header"
-import { SiteFooter } from "@/components/site-footer"
-import { ThemeProvider } from "@/components/theme-provider"
-import { Toaster } from "@/components/ui/sonner"
-import { TaskTimer } from "@/components/task-timer"
-import { CookieConsent } from "@/components/cookie-consent"
-import { GTM } from "@/components/gtm"
-import { DisclaimerBar } from "@/components/disclaimer-bar"
+import { getLocale } from "next-intl/server"
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -43,28 +36,16 @@ export const metadata: Metadata = {
   },
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode
 }>) {
+  const locale = await getLocale()
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang={locale} suppressHydrationWarning>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        <ThemeProvider>
-          <GTM />
-          <div className="flex min-h-screen flex-col">
-            <DisclaimerBar />
-            <SiteHeader />
-            <main className="container mx-auto w-full max-w-6xl flex-1 px-4 py-8 sm:px-6 lg:px-8">
-              {children}
-            </main>
-            <SiteFooter />
-          </div>
-          <Toaster richColors position="bottom-center" />
-          <TaskTimer />
-          <CookieConsent />
-        </ThemeProvider>
+        {children}
       </body>
     </html>
   )

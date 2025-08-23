@@ -1,18 +1,21 @@
 "use client"
 
-import Link from "next/link"
+import {Link} from "@/i18n/routing"
 import { NavigationMenuDemo } from "@/components/site-nav"
 import { ModeToggle } from "@/components/mode-toggle"
 import { MobileNav } from "@/components/site-mobile-nav"
 import { LocationSelector } from "@/components/location-selector"
+import { LanguageSwitcher } from "@/components/language-switcher"
+import {useTranslations} from 'next-intl'
 
 export function SiteHeader() {
+  const t = useTranslations()
   return (
     <header className="relative z-50 border-b bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6 lg:px-8">
         <Link href="/" className="flex items-center gap-2 font-semibold">
           <span className="inline-block size-6 rounded-full bg-primary" />
-          <span className="text-base">Acme Insurance</span>
+          <span className="text-base">{t('Common.brand')}</span>
         </Link>
         <div className="flex items-center gap-2">
           <nav className="hidden md:block">
@@ -20,6 +23,9 @@ export function SiteHeader() {
           </nav>
           <div className="hidden sm:block">
             <LocationSelector />
+          </div>
+          <div className="hidden sm:block">
+            <LanguageSwitcher />
           </div>
           <ModeToggle />
           <div className="md:hidden">

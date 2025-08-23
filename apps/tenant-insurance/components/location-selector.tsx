@@ -2,10 +2,12 @@
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useEffect, useState } from "react"
+import {useTranslations} from 'next-intl'
 
 const states = ["CA","NY","TX","IL","FL","WA","MA","GA","PA","AZ"]
 
 export function LocationSelector() {
+  const t = useTranslations()
   const [state, setState] = useState<string>("CA")
   useEffect(() => {
     // Always default to CA on (re)load for the demo
@@ -20,7 +22,7 @@ export function LocationSelector() {
   }
   return (
     <Select value={state} onValueChange={onChange}>
-      <SelectTrigger className="w-[120px]"><SelectValue placeholder="State" /></SelectTrigger>
+      <SelectTrigger className="w-[160px]"><SelectValue placeholder={t('Common.labels.state')} /></SelectTrigger>
       <SelectContent>
         {states.map((s) => (
           <SelectItem key={s} value={s}>{s}</SelectItem>

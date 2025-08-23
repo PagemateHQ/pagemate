@@ -10,8 +10,10 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
+import {useTranslations} from 'next-intl'
 
 export function TaskSelector() {
+  const t = useTranslations()
   const running = useTaskStore((s) => s.running)
   const finishedAt = useTaskStore((s) => s.finishedAt)
   const begin = useTaskStore((s) => s.begin)
@@ -32,18 +34,18 @@ export function TaskSelector() {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Select a Task</DialogTitle>
-          <DialogDescription>Pick one to start the demo timer.</DialogDescription>
+          <DialogTitle>{t('TaskSelector.title')}</DialogTitle>
+          <DialogDescription>{t('TaskSelector.desc')}</DialogDescription>
         </DialogHeader>
         <div className="grid gap-2">
-          <Button onClick={() => startTask("Find Austin Phone Number")}>
-            1) Find Austin Phone Number
+          <Button onClick={() => startTask(t('TaskSelector.tasks.t1'))}>
+            {t('TaskSelector.tasks.t1')}
           </Button>
-          <Button onClick={() => startTask("Track a Claim ACM-123456")}>
-            2) Track a Claim ACM-123456
+          <Button onClick={() => startTask(t('TaskSelector.tasks.t2'))}>
+            {t('TaskSelector.tasks.t2')}
           </Button>
-          <Button onClick={() => startTask("Get a Quote with $20k Car and $1M Home in MA")}>
-            3) Get a Quote with $20k Car and $1M Home in MA
+          <Button onClick={() => startTask(t('TaskSelector.tasks.t3'))}>
+            {t('TaskSelector.tasks.t3')}
           </Button>
         </div>
       </DialogContent>

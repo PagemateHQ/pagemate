@@ -11,7 +11,9 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
+import { fireConfetti } from "@/lib/confetti"
 import { useTaskStore } from "@/lib/task-store"
+import {useTranslations} from 'next-intl'
 
 function formatElapsed(ms: number) {
   const totalSeconds = Math.max(0, Math.floor(ms / 1000))
@@ -23,6 +25,7 @@ function formatElapsed(ms: number) {
 }
 
 export function TaskTimer() {
+  const t = useTranslations()
   const running = useTaskStore((s) => s.running)
   const startedAt = useTaskStore((s) => s.startedAt)
   const finishedAt = useTaskStore((s) => s.finishedAt)
@@ -43,7 +46,7 @@ export function TaskTimer() {
       // Create or update the long-lived toast
       if (idRef.current == null) {
         idRef.current = toast.info(`00:00`, {
-          description: label ? `Task: ${label}` : "Complete a task to stop the timer.",
+          description: label ? t('Timer.task', {label}) : t('Timer.runningDesc'),
           duration: 1_000_000,
         })
       }
@@ -54,7 +57,7 @@ export function TaskTimer() {
           const elapsed = Date.now() - startedAt
           toast.info(`${formatElapsed(elapsed)}`, {
             id: idRef.current,
-            description: label ? `Task: ${label}` : "Complete a task to stop the timer.",
+            description: label ? t('Timer.task', {label}) : t('Timer.runningDesc'),
             duration: 1_000_000,
           })
         }, 1000)
@@ -89,6 +92,8 @@ export function TaskTimer() {
       }
       setFinalMs(finishedAt - startedAt)
       setOpen(true)
+      // Celebrate task completion 🎉
+      fireConfetti()
     }
   }, [finishedAt, startedAt])
 
@@ -96,15 +101,15 @@ export function TaskTimer() {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>It took {formatElapsed(finalMs)}!</DialogTitle>
+          <DialogTitle>{t('Timer.elapsed', {time: formatElapsed(finalMs)})}</DialogTitle>
           {label && (
             <DialogDescription>
-              Task: <span className="font-medium">{label}</span>
+              {t('Timer.task', {label})}
             </DialogDescription>
           )}
         </DialogHeader>
         <DialogFooter>
-          <Button onClick={() => setOpen(false)}>Close</Button>
+          <Button onClick={() => setOpen(false)}>{t('Common.actions.close')}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

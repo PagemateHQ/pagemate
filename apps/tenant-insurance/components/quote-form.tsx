@@ -14,6 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { useTaskStore } from "@/lib/task-store"
+import {useTranslations} from 'next-intl'
 
 function estimateMonthlyPremium({
   propertyValue,
@@ -32,6 +33,7 @@ function estimateMonthlyPremium({
 }
 
 export default function QuoteForm({ initialPlan }: { initialPlan: string }) {
+  const t = useTranslations()
   const [plan, setPlan] = React.useState(initialPlan)
   const [zip, setZip] = React.useState("")
   const [propertyValue, setPropertyValue] = React.useState(25000)
@@ -51,8 +53,8 @@ export default function QuoteForm({ initialPlan }: { initialPlan: string }) {
       const { premium: serverPremium } = await res.json()
       const quote = serverPremium ?? premium
       const { toast } = await import("@/components/ui/sonner")
-      toast.success(`Quote sent to ${email}`, {
-        description: `${plan} plan estimated at $${quote}/mo`,
+      toast.success(t('Quote.toastOk.title', {email}), {
+        description: t('Quote.toastOk.desc', {plan, price: quote}),
       })
       // Detect Task 3 completion via ZIP + notes
       const note = (notes || "").toLowerCase()
@@ -68,8 +70,8 @@ export default function QuoteForm({ initialPlan }: { initialPlan: string }) {
       }
     } catch (_err) {
       const { toast } = await import("@/components/ui/sonner")
-      toast.error("Could not submit quote", {
-        description: "Please try again in a moment.",
+      toast.error(t('Quote.toastErr.title'), {
+        description: t('Quote.toastErr.desc'),
       })
     }
   }
@@ -77,42 +79,40 @@ export default function QuoteForm({ initialPlan }: { initialPlan: string }) {
   return (
     <div className="grid gap-6 md:grid-cols-2">
       <div className="space-y-1">
-        <h1 className="text-2xl font-semibold tracking-tight">Get a Quote</h1>
-        <p className="text-muted-foreground">
-          Enter a few details to see your estimated monthly premium.
-        </p>
+        <h1 className="text-2xl font-semibold tracking-tight">{t('Quote.title')}</h1>
+        <p className="text-muted-foreground">{t('Quote.desc')}</p>
       </div>
 
       <Card className="md:col-span-2">
         <CardContent className="p-6">
           <form className="grid gap-4 sm:grid-cols-2" onSubmit={onSubmit}>
             <div className="grid gap-2">
-              <Label htmlFor="plan">Plan</Label>
+              <Label htmlFor="plan">{t('Common.labels.plan')}</Label>
               <Select value={plan} onValueChange={setPlan}>
                 <SelectTrigger id="plan" aria-label="Plan">
-                  <SelectValue placeholder="Select a plan" />
+                  <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Essential">Essential</SelectItem>
-                  <SelectItem value="Standard">Standard</SelectItem>
-                  <SelectItem value="Plus">Plus</SelectItem>
+                  <SelectItem value="Essential">{t('Home.plan.Essential')}</SelectItem>
+                  <SelectItem value="Standard">{t('Home.plan.Standard')}</SelectItem>
+                  <SelectItem value="Plus">{t('Home.plan.Plus')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="zip">ZIP code</Label>
+              <Label htmlFor="zip">{t('Common.labels.zip')}</Label>
               <Input
                 id="zip"
                 inputMode="numeric"
                 maxLength={5}
                 value={zip}
                 onChange={(e) => setZip(e.target.value.replace(/[^0-9]/g, ""))}
-                placeholder="94105"
+                placeholder={t('Common.placeholders.zip')}
                 required
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="propertyValue">Personal property ($)</Label>
+              <Label htmlFor="propertyValue">{t('Common.labels.personalProperty')}</Label>
               <Input
                 id="propertyValue"
                 inputMode="numeric"
@@ -125,30 +125,30 @@ export default function QuoteForm({ initialPlan }: { initialPlan: string }) {
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">{t('Common.labels.email')}</Label>
               <Input
                 id="email"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@example.com"
+                placeholder={t('Common.placeholders.email')}
                 required
               />
             </div>
             <div className="grid gap-2 sm:col-span-2">
-              <Label htmlFor="notes">Notes (optional)</Label>
+              <Label htmlFor="notes">{t('Common.labels.notes')}</Label>
               <Textarea
                 id="notes"
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                placeholder="Any special details about your rental"
+                placeholder={t('Common.placeholders.notes')}
               />
             </div>
             <div className="sm:col-span-2 flex items-center justify-between">
               <div className="text-sm text-muted-foreground">
-                Estimated premium: <span className="font-medium">${premium}/mo</span>
+                {t('Common.labels.estimatedPremium')}: <span className="font-medium">${premium}{t('Home.plan.mo')}</span>
               </div>
-              <Button type="submit">Email me my quote</Button>
+              <Button type="submit">{t('Common.actions.emailQuote')}</Button>
             </div>
           </form>
         </CardContent>
