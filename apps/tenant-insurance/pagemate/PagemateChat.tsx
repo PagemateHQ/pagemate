@@ -44,7 +44,6 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
     | { type: 'highlightByText'; text: string }
     | { type: 'clickBySelector'; selector: string }
     | { type: 'highlightBySelector'; selector: string }
-    | { type: 'retrieve'; query: string; limit?: number; documentId?: string | null }
     | { type: 'autofill'; spec?: string; fields?: Record<string, string> };
 
   type ToolExecResult = {
@@ -78,10 +77,6 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
     if (m3) return { type: 'highlightByText', text: m3[1] }; // default to highlight mode
 
     // Note: XPath commands removed. No parsing for xpath-based actions.
-
-    // Match: retrieve/search <query>
-    const r1 = text.match(/^(?:retrieve|search)\s+(.+)/i);
-    if (r1) return { type: 'retrieve', query: r1[1].trim() };
 
     // Match: autofill <spec>
     const a1 = text.match(/^autofill\s+([\s\S]+)/i);
@@ -184,26 +179,6 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
         }
       }
       // XPath-based actions have been removed
-      case 'retrieve': {
-        try {
-          const { query, limit = 5, documentId = null } = tool;
-          const chunks = await fetchRetrieval(query, { limit, documentId });
-          const summary = formatRetrievalSummary(query, chunks);
-          setMessages((prev) => [
-            ...prev,
-            { role: 'assistant', content: summary },
-          ]);
-          try { setSuppressActions(false); } catch {}
-          const ragText = buildRagContextFromChunks(query, chunks);
-          return { success: true, kind: tool.type, ragContext: ragText };
-        } catch (e: any) {
-          setMessages((prev) => [
-            ...prev,
-            { role: 'assistant', content: `⚠️ Retrieval failed: ${e?.message || 'Unknown error'}` },
-          ]);
-          return { success: false, kind: tool.type };
-        }
-      }
       case 'autofill': {
         try {
           const fields = tool.fields || parseAutofillSpec(tool.spec);
@@ -258,7 +233,7 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
                 : { type: 'highlightByText', text: target },
             );
           } else if (verb === 'RETRIEVE') {
-            actions.push({ type: 'retrieve', query: target });
+            // Ignore RETRIEVE (server injects RAG automatically)
           } else if (verb === 'AUTOFILL') {
             const fields = parseAutofillSpec(target);
             actions.push({ type: 'autofill', spec: target, fields });
@@ -292,7 +267,7 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
         // Default to highlight mode instead of clicking
         actions.push({ type: 'highlightByText', text: target });
       } else if (verb === 'RETRIEVE') {
-        actions.push({ type: 'retrieve', query: target });
+        // Ignore RETRIEVE actions
       } else if (verb === 'AUTOFILL') {
         const fields = parseAutofillSpec(target);
         actions.push({ type: 'autofill', spec: target, fields });
@@ -360,38 +335,7 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
         try { setSuppressActions(false); } catch {}
       }
 
-      const maxFollowups = 3;
-      let followups = 0;
-      while (followups < maxFollowups) {
-        if (abortControllerRef.current?.signal.aborted) return;
-        const actions = parseAssistantActions(reply || '');
-        if (!actions.length) break;
-        let rag: string | null = null;
-        for (const a of actions) {
-          const res = await executeTool(a);
-          if (res.kind === 'retrieve' && res.ragContext) {
-            rag = rag ? `${rag}\n${res.ragContext}` : res.ragContext;
-          }
-        }
-        if (!rag) break;
-        try {
-          try { refreshInjectedHtml(); } catch {}
-          reply = await callAI(working, {
-            ragContext: rag,
-            signal: abortControllerRef.current?.signal,
-          });
-        } catch (e: any) {
-          if (e?.name === 'AbortError') return;
-          throw e;
-        }
-        if (reply) {
-          working = [...working, { role: 'assistant', content: reply }];
-          messagesRef.current = working;
-          setMessages(working);
-          try { setSuppressActions(false); } catch {}
-        }
-        followups++;
-      }
+      // No RETRIEVE tool. RAG is injected by server; do not loop.
     } finally {
       restartPendingRef.current = false;
       setLoading(false);
@@ -949,16 +893,11 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
         abortControllerRef.current = new AbortController();
         try { refreshInjectedHtml(); } catch {}
 
-        // 1) If the user message is a tool command, execute it.
+        // 1) If the user message is a tool command, execute it (no RETRIEVE tool).
         const tool = parseToolIntent(text);
-        let pendingRag: string | null | undefined = null;
         if (tool) {
           const result = await executeTool(tool);
-          if (tool.type === 'retrieve') {
-            // Retrieval already appended a summary message
-            // Capture rag context for a follow-up call
-            pendingRag = result.ragContext ?? null;
-          } else if (tool.type === 'autofill') {
+          if (tool.type === 'autofill') {
             // Detailed message already appended inside executeTool('autofill')
             // Sync workingMessages to the latest state
             workingMessages = messagesRef.current;
@@ -974,56 +913,6 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
             messagesRef.current = workingMessages;
             setMessages(workingMessages);
             try { setSuppressActions(false); } catch {}
-          }
-          // Only call the agent again after a RETRIEVE tool
-          if (tool.type === 'retrieve') {
-            const maxFollowups = 3;
-            let followups = 0;
-            while (followups < maxFollowups) {
-              if (abortControllerRef.current?.signal.aborted) return;
-              try { refreshInjectedHtml(); } catch {}
-              let reply = await callAI(workingMessages, { ragContext: pendingRag });
-              // Parse possible JSON action envelope
-              let envelopeActions: ToolAction[] = [];
-              try {
-                const trimmed = (reply || '').trim();
-                if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
-                  const obj = JSON.parse(trimmed);
-                  if (obj && typeof obj === 'object') {
-                    if (typeof obj.reply === 'string') reply = obj.reply;
-                    if (obj.action && obj.action.verb) {
-                      envelopeActions = parseAssistantActions(JSON.stringify(obj));
-                    }
-                  }
-                }
-              } catch {}
-              if (reply) {
-                workingMessages = [
-                  ...workingMessages,
-                  { role: 'assistant', content: reply },
-                ];
-                messagesRef.current = workingMessages;
-                setMessages(workingMessages);
-                try { setSuppressActions(false); } catch {}
-              }
-              // Parse and execute any ACTION directives
-              const actions = [...envelopeActions, ...parseAssistantActions(reply)];
-              if (!actions.length) break;
-              // Execute tools; only continue if at least one RETRIEVE occurred
-              pendingRag = null;
-              let executedRetrieve = false;
-              for (const a of actions) {
-                const res = await executeTool(a);
-                if (res.kind === 'retrieve' && res.ragContext) {
-                  executedRetrieve = true;
-                  pendingRag = pendingRag
-                    ? `${pendingRag}\n${res.ragContext}`
-                    : res.ragContext;
-                }
-              }
-              if (!executedRetrieve) break;
-              followups++;
-            }
           }
           return;
         }
@@ -1055,46 +944,10 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
           try { setSuppressActions(false); } catch {}
         }
 
-        const maxFollowups = 3;
-        let followups = 0;
-        while (followups < maxFollowups) {
-          const actions = [...envelopeActions, ...parseAssistantActions(reply)];
-          if (!actions.length) break;
-          let rag: string | null = null;
-          for (const a of actions) {
-            const res = await executeTool(a);
-            if (res.kind === 'retrieve' && res.ragContext) {
-              rag = rag ? `${rag}\n${res.ragContext}` : res.ragContext;
-            }
-          }
-          // Only call AI again if a RETRIEVE tool provided context
-          if (!rag) break;
-          if (abortControllerRef.current?.signal.aborted) return;
-          try { refreshInjectedHtml(); } catch {}
-          reply = await callAI(workingMessages, { ragContext: rag });
-          envelopeActions = [];
-          try {
-            const trimmed = (reply || '').trim();
-            if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
-              const obj = JSON.parse(trimmed);
-              if (obj && typeof obj === 'object') {
-                if (typeof obj.reply === 'string') reply = obj.reply;
-                if (obj.action && obj.action.verb) {
-                  envelopeActions = parseAssistantActions(JSON.stringify(obj));
-                }
-              }
-            }
-          } catch {}
-          if (reply) {
-            workingMessages = [
-              ...workingMessages,
-              { role: 'assistant', content: reply },
-            ];
-            messagesRef.current = workingMessages;
-            setMessages(workingMessages);
-            try { setSuppressActions(false); } catch {}
-          }
-          followups++;
+        // No RETRIEVE follow-up loops; execute at most one round of actions.
+        const actions = [...envelopeActions, ...parseAssistantActions(reply)];
+        for (const a of actions) {
+          await executeTool(a);
         }
       } catch (e: any) {
         console.error(e);
