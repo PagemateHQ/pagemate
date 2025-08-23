@@ -168,7 +168,7 @@ export const IntroView: React.FC<IntroViewProps> = () => {
         if (!el) return false;
         try {
           el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          flashHighlight(el);
+          showSpotlight(el);
           return true;
         } catch {
           return false;
@@ -245,6 +245,81 @@ export const IntroView: React.FC<IntroViewProps> = () => {
       highlight.style.opacity = '0';
       setTimeout(() => highlight.remove(), 450);
     }, 600);
+  };
+
+  // Persistent spotlight that pulses indefinitely until replaced/removed
+  let activeSpotlightOverlay: HTMLDivElement | null = null;
+  let activeSpotlightTarget: HTMLElement | null = null;
+  let spotlightInterval: ReturnType<typeof setInterval> | null = null;
+
+  const ensureSpotlightStyles = () => {
+    if (document.getElementById('pagemate-spotlight-styles')) return;
+    const style = document.createElement('style');
+    style.id = 'pagemate-spotlight-styles';
+    style.textContent = `
+      @keyframes pagemate-pulse {
+        0%, 100% { box-shadow: 0 0 0 2px rgba(0,147,246,0.85), 0 0 16px rgba(0,147,246,0.55); }
+        50% { box-shadow: 0 0 0 4px rgba(0,147,246,1), 0 0 28px rgba(0,147,246,0.8); }
+      }
+      .pagemate-spotlight-overlay {
+        animation: pagemate-pulse 1.6s ease-in-out infinite;
+      }
+    `;
+    document.head.appendChild(style);
+  };
+
+  const positionSpotlight = () => {
+    if (!activeSpotlightOverlay || !activeSpotlightTarget) return;
+    const rect = activeSpotlightTarget.getBoundingClientRect();
+    const radius = window.getComputedStyle(activeSpotlightTarget).borderRadius || '8px';
+    Object.assign(activeSpotlightOverlay.style, {
+      left: `${rect.left - 6}px`,
+      top: `${rect.top - 6}px`,
+      width: `${rect.width + 12}px`,
+      height: `${rect.height + 12}px`,
+      borderRadius: radius,
+    } as CSSStyleDeclaration);
+  };
+
+  const removeSpotlight = () => {
+    if (spotlightInterval) {
+      clearInterval(spotlightInterval);
+      spotlightInterval = null;
+    }
+    if (activeSpotlightOverlay) {
+      activeSpotlightOverlay.remove();
+      activeSpotlightOverlay = null;
+    }
+    activeSpotlightTarget = null;
+    window.removeEventListener('scroll', positionSpotlight, true);
+    window.removeEventListener('resize', positionSpotlight);
+  };
+
+  const showSpotlight = (el: HTMLElement) => {
+    ensureSpotlightStyles();
+    removeSpotlight();
+    activeSpotlightTarget = el;
+
+    const overlay = document.createElement('div');
+    overlay.className = 'pagemate-spotlight-overlay';
+    Object.assign(overlay.style, {
+      position: 'fixed',
+      left: '0px',
+      top: '0px',
+      width: '0px',
+      height: '0px',
+      borderRadius: '8px',
+      pointerEvents: 'none',
+      zIndex: '2147483647',
+    } as CSSStyleDeclaration);
+    document.body.appendChild(overlay);
+    activeSpotlightOverlay = overlay as HTMLDivElement;
+    positionSpotlight();
+
+    // Keep aligned on scroll/resize and periodically in case of layout changes
+    window.addEventListener('scroll', positionSpotlight, true);
+    window.addEventListener('resize', positionSpotlight);
+    spotlightInterval = setInterval(positionSpotlight, 300);
   };
 
   return (
