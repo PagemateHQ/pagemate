@@ -1,8 +1,9 @@
 import styled from '@emotion/styled';
 import { AnimatePresence } from 'framer-motion';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import { CornerPosition, useDraggable } from '@/hooks/useDraggable';
+
 import { PagemateChat } from './PagemateChat';
 
 interface FloatingOrbProps {
@@ -18,6 +19,7 @@ export const FloatingOrb: React.FC<FloatingOrbProps> = ({
   const [introPosition, setIntroPosition] = useState({ top: 0, left: 0 });
   const [currentCorner, setCurrentCorner] =
     useState<CornerPosition>(initialCorner);
+  const dragStartPosRef = useRef<{ x: number; y: number } | null>(null);
 
   const {
     ref: dragRef,
@@ -42,7 +44,7 @@ export const FloatingOrb: React.FC<FloatingOrbProps> = ({
     const isLeft = orbRect.left < window.innerWidth / 2;
     const corner: CornerPosition =
       `${isTop ? 'top' : 'bottom'}-${isLeft ? 'left' : 'right'}` as CornerPosition;
-    
+
     let top = 0;
     let left = 0;
 
@@ -83,6 +85,8 @@ export const FloatingOrb: React.FC<FloatingOrbProps> = ({
     }
   }, [style.left, style.top]); // Depend on position changes
 
+  // Don't track dragging, instead track on mouse events directly
+
   // Handle window resize with throttling
   useEffect(() => {
     if (!showIntro) return;
@@ -104,10 +108,31 @@ export const FloatingOrb: React.FC<FloatingOrbProps> = ({
 
   // Removed click outside handler - view only closes when clicking the orb
 
-  const handleOrbClick = () => {
-    if (!isDragging) {
-      setShowIntro(!showIntro);
+  const handleMouseDown = (e: React.MouseEvent) => {
+    // Record the start position
+    dragStartPosRef.current = { x: e.clientX, y: e.clientY };
+  };
+
+  const handleOrbClick = (e: React.MouseEvent) => {
+    // Don't toggle if currently dragging
+    if (isDragging) {
+      return;
     }
+
+    // Check if the mouse moved significantly (dragged)
+    if (dragStartPosRef.current) {
+      const dx = Math.abs(e.clientX - dragStartPosRef.current.x);
+      const dy = Math.abs(e.clientY - dragStartPosRef.current.y);
+      const threshold = 5; // pixels
+      
+      if (dx > threshold || dy > threshold) {
+        // This was a drag, not a click
+        dragStartPosRef.current = null;
+        return;
+      }
+    }
+
+    setShowIntro(!showIntro);
   };
 
   return (
@@ -116,6 +141,7 @@ export const FloatingOrb: React.FC<FloatingOrbProps> = ({
         ref={dragRef}
         style={style}
         $isDragging={isDragging}
+        onMouseDown={handleMouseDown}
         onClick={handleOrbClick}
       />
       <AnimatePresence>
@@ -126,7 +152,10 @@ export const FloatingOrb: React.FC<FloatingOrbProps> = ({
               left: introPosition.left,
             }}
           >
-            <PagemateChat isOpen={showIntro} onClose={() => setShowIntro(false)} />
+            <PagemateChat
+              isOpen={showIntro}
+              onClose={() => setShowIntro(false)}
+            />
           </ViewContainerWrapper>
         )}
       </AnimatePresence>
