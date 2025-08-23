@@ -46,17 +46,17 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
     // Match: click button with text '...'
     const re1 = /click\s+(?:the\s+)?button\s+with\s+text\s+["']([^"']+)["']/i;
     const m1 = text.match(re1);
-    if (m1) return { type: 'clickByText', text: m1[1] };
+    if (m1) return { type: 'highlightByText', text: m1[1] }; // default to highlight mode
 
     // Match: click '...'
     const re2 = /click\s+["']([^"']+)["']/i;
     const m2 = text.match(re2);
-    if (m2) return { type: 'clickByText', text: m2[1] };
+    if (m2) return { type: 'highlightByText', text: m2[1] }; // default to highlight mode
 
     // Match: click ... button
     const re3 = /click\s+(.+?)\s+button/i;
     const m3 = text.match(re3);
-    if (m3) return { type: 'clickByText', text: m3[1] };
+    if (m3) return { type: 'highlightByText', text: m3[1] }; // default to highlight mode
 
     // Match: click xpath <...> or click <xpath>
     const cx =
@@ -64,7 +64,7 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
       text.match(/click\s+(\/\/|\.\/\/|\/).+$/i);
     if (cx) {
       const xpath = (cx[1] ? cx[1] : text.replace(/^[Cc]lick\s+/, '')).trim();
-      return { type: 'clickByXPath', xpath };
+      return { type: 'highlightByXPath', xpath }; // default to highlight mode
     }
 
     // Match: highlight xpath <...> or highlight <xpath>
@@ -184,13 +184,15 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
           actions.push({ type: 'highlightByXPath', xpath: target });
         else actions.push({ type: 'highlightByText', text: target });
       } else if (verb === 'CLICK') {
+        // Default to highlight mode instead of clicking
         if (isLikelyXPath(target))
-          actions.push({ type: 'clickByXPath', xpath: target });
-        else actions.push({ type: 'clickByText', text: target });
+          actions.push({ type: 'highlightByXPath', xpath: target });
+        else actions.push({ type: 'highlightByText', text: target });
       } else if (verb === 'RETRIEVE') {
         actions.push({ type: 'retrieve', query: target });
       } else if (verb === 'CLICK_XPATH')
-        actions.push({ type: 'clickByXPath', xpath: target });
+        // Default to highlight mode for explicit xpath clicks, too
+        actions.push({ type: 'highlightByXPath', xpath: target });
       else if (verb === 'SPOTLIGHT_XPATH')
         actions.push({ type: 'highlightByXPath', xpath: target });
     }
