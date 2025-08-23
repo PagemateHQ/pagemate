@@ -1,81 +1,53 @@
-import { css } from '@emotion/react';
 import styled from '@emotion/styled';
 import Link from 'next/link';
 import React from 'react';
 
-interface HeaderProps {
-  variant?: 'home' | 'default';
-}
-
-export const Header: React.FC<HeaderProps> = ({ variant = 'default' }) => {
-  const isHome = variant === 'home';
-
+export const Header: React.FC = () => {
   return (
-    <StyledHeader $isHome={isHome}>
-      <HeaderContent $isHome={isHome}>
+    <StyledHeader>
+      <HeaderContent>
         <Link href="/" style={{ textDecoration: 'none' }}>
-          <LogoGroup>
-            <HeaderLogoBlur src="/assets/logo.png" alt="" />
-            <HeaderLogo src="/assets/logo.png" alt="Pagemate" />
-            <PagemateText src="/assets/pagemate-text.svg" alt="Pagemate" />
-          </LogoGroup>
+          <HeaderLogo src="/assets/full-logo.png" alt="Pagemate" />
         </Link>
       </HeaderContent>
     </StyledHeader>
   );
 };
 
-const StyledHeader = styled.header<{ $isHome: boolean }>`
+const StyledHeader = styled.header`
   width: 100%;
   height: 64px;
-  border-bottom: 1px solid #c4e2f1;
   z-index: 100;
+
   position: fixed;
   left: 0;
   top: 0;
-  background: rgba(232, 247, 255, 0.95);
+
+  background: rgba(232, 247, 255, 0.8);
   backdrop-filter: blur(10px);
+  border-bottom: 1px solid #c4e2f1;
+
+  padding: 0 20px;
 `;
 
-const HeaderContent = styled.div<{ $isHome: boolean }>`
+const HeaderContent = styled.div`
+  max-width: 1200px;
+  width: 100%;
+  margin: 0 auto;
+
   height: 64px;
-  padding: 0 24px;
   display: flex;
   align-items: center;
   justify-content: flex-start;
-  max-width: 1200px;
-  margin: 0 auto;
-`;
-
-const LogoGroup = styled.div`
-  position: relative;
-  display: flex;
-  align-items: center;
-  gap: 2px;
-  cursor: pointer;
-`;
-
-const HeaderLogoBlur = styled.img`
-  position: absolute;
-  left: -3.27px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 42.968px;
-  height: 42.968px;
-  filter: blur(4.655px);
-  opacity: 0.47;
 `;
 
 const HeaderLogo = styled.img`
-  width: 37px;
-  height: 37px;
-  position: relative;
-  z-index: 1;
-`;
+  margin-left: -18px;
+  margin-bottom: -6px;
 
-const PagemateText = styled.img`
-  width: 92.269px;
-  height: 25.12px;
-  position: relative;
-  z-index: 1;
+  width: 173px;
+  min-width: 173px;
+  height: 50px;
+  min-height: 50px;
+  object-fit: cover;
 `;

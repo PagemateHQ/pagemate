@@ -230,7 +230,7 @@ const Content = styled.div`
 
   display: flex;
   gap: 25px;
-  padding: 24px;
+  padding: 88px 24px 24px;
 `;
 
 const Sidebar = styled.aside`
