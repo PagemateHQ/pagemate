@@ -1,9 +1,9 @@
 from typing import List, Literal
 
 import openai
-from fastapi import APIRouter, HTTPException, Query
-from fastapi.responses import StreamingResponse
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
+from starlette.responses import PlainTextResponse
 
 from pagemate.settings import settings
 
@@ -23,7 +23,7 @@ class ChatCompletionRequest(BaseModel):
     messages: List[Message]
 
 
-@router.post("/v1/chat/completions")
+@router.post("/v1/chat/completions", response_class=PlainTextResponse)
 async def upstage_chat_completions(request: ChatCompletionRequest):
     """Proxy for Upstage chat completions endpoint."""
     try:
