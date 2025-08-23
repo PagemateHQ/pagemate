@@ -2,12 +2,15 @@ from http.client import HTTPException
 
 from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError
+from scalar_fastapi import get_scalar_api_reference
 
 from pagemate import routers
 from pagemate.assemble import middleware, exception
 
+TITLE = "PageMate API"
+
 app = FastAPI(
-    title="PageMate API",
+    title=TITLE,
     middleware=[
         middleware.cors_middleware,
         middleware.context_middleware,
@@ -19,5 +22,14 @@ app = FastAPI(
     },
     docs_url="/docs",
 )
+
+
+@app.get("/scalar", include_in_schema=False)
+async def scalar_docs():
+    """Scalar FastAPI Docs"""
+    return get_scalar_api_reference(
+        title=TITLE,
+        openapi_url="/openapi.json",
+    )
 
 app.include_router(routers.index.router)
