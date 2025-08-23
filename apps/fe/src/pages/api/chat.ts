@@ -117,10 +117,12 @@ async function handler(
     };
 
     let content: string;
+    let structured: { reply: string; action: { verb: z.infer<typeof ActionVerb>; target: string } } | null = null;
     try {
       const parsedJson = JSON.parse(raw);
       const validated = AssistantSchema.safeParse(parsedJson);
       if (validated.success) {
+        structured = { reply: validated.data.reply, action: validated.data.action };
         content = toTextWithSingleAction(validated.data);
       } else {
         // Fallback: attempt to sanitize a free-text response into a single ACTION
@@ -169,7 +171,7 @@ async function handler(
         content = raw.trim();
       }
     }
-    return res.status(200).json({ content });
+    return res.status(200).json({ content, structured: structured ?? undefined });
   } catch (err: any) {
     console.error('API /api/chat error:', err);
     const message = err?.response?.data || err?.message || 'Unknown error';
