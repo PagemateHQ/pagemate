@@ -1,7 +1,7 @@
 import asyncio
 from typing import Literal
 
-from openai import OpenAI, api_key
+from openai import OpenAI
 
 from pagemate.settings import settings
 

@@ -36,4 +36,4 @@ async def scalar_docs():
 app.include_router(routers.index.router)
 app.include_router(routers.tenant.router)
 app.include_router(routers.document.router)
-app.include_router(routers.retrival.router)
+app.include_router(routers.retrieval.router)

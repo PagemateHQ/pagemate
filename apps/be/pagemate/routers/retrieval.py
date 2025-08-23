@@ -1,13 +1,14 @@
 from fastapi import Query, APIRouter
 
-from pagemate.schema import Document
+from pagemate.schema import DocumentChunk
 from pagemate.services import embedding_service, document_service
 
-router = APIRouter(prefix="/tenants/{tenant_id}/documents", tags=["retrival"])
+router = APIRouter(prefix="/tenants/{tenant_id}", tags=["retrieval"])
 
 
-@router.get("/retrival", response_model=list[Document])
-async def retrival(
+@router.get("/retrieval", response_model=list[DocumentChunk])
+async def retrieval(
+    tenant_id: str,
     query: str = Query(..., description="Query text to embed and search"),
     limit: int = Query(10, description="Number of results"),
     document_id: str | None = Query(None, description="Filter by document_id"),

@@ -29,5 +29,9 @@ async def list_document_chunks(
     if document_id:
         condition["document_id"] = document_id
 
-    cursor = col.find(condition).skip(offset).limit(limit)
-    return await cursor.to_list(length=limit)
+    cursor = col.find(condition).skip(offset)
+
+    if limit is not None:
+        cursor = cursor.limit(limit)
+
+    return await cursor.to_list()
