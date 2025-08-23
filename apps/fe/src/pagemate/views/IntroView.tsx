@@ -1,92 +1,20 @@
 import styled from '@emotion/styled';
 import { motion } from 'framer-motion';
-import React, { useCallback, useRef, useState } from 'react';
-
-import { SparkleIcon } from '@/components/icons/SparkleIcon';
+import React from 'react';
 
 interface IntroViewProps {
   onClose?: () => void;
+  onSendMessage?: (message: string) => void;
+  onSwitchToChat?: (initialMessage: string) => void;
 }
 
-type ChatMessage = {
-  role: 'user' | 'assistant' | 'system';
-  content: string;
-};
-
-export const IntroView: React.FC<IntroViewProps> = () => {
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [input, setInput] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const chatScrollRef = useRef<HTMLDivElement | null>(null);
-
-  const scrollToBottom = useCallback(() => {
-    requestAnimationFrame(() => {
-      try {
-        chatScrollRef.current?.scrollTo({
-          top: chatScrollRef.current.scrollHeight,
-          behavior: 'smooth',
-        });
-      } catch {}
-    });
-  }, []);
-
-  const sendMessage = useCallback(
-    async (text: string) => {
-      if (!text.trim() || loading) return;
-      setError(null);
-      setLoading(true);
-
-      const nextMessages: ChatMessage[] = [
-        ...messages,
-        { role: 'user', content: text.trim() },
-      ];
-      setMessages(nextMessages);
-      setInput('');
-      scrollToBottom();
-
-      try {
-        const resp = await fetch('/api/chat', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ messages: nextMessages, model: 'solar-pro2' }),
-        });
-        const data = await resp.json();
-        if (!resp.ok) throw new Error(data?.error || 'Failed to fetch');
-
-        const reply = data?.content ?? '';
-        if (reply) {
-          setMessages((prev) => [...prev, { role: 'assistant', content: reply }]);
-          scrollToBottom();
-        }
-      } catch (e: any) {
-        console.error(e);
-        setError(e?.message || 'Failed to fetch response');
-      } finally {
-        setLoading(false);
-      }
-    },
-    [loading, messages, scrollToBottom]
-  );
-
-  const handleSubmit = useCallback(
-    (e: React.FormEvent) => {
-      e.preventDefault();
-      if (input.trim()) {
-        sendMessage(input);
-      }
-    },
-    [input, sendMessage]
-  );
-
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1,
-      },
-    },
+export const IntroView: React.FC<IntroViewProps> = ({ onSendMessage, onSwitchToChat }) => {
+  const handleSuggestionClick = (text: string) => {
+    if (onSwitchToChat) {
+      onSwitchToChat(text);
+    } else if (onSendMessage) {
+      onSendMessage(text);
+    }
   };
 
   const itemVariants = {
@@ -102,166 +30,70 @@ export const IntroView: React.FC<IntroViewProps> = () => {
   };
 
   return (
-    <MotionContainer
-      variants={containerVariants}
-      initial="hidden"
-      animate="visible"
-    >
-      <CircleGlow />
+    <>
+      <LogoSection>
+        <LogoWrapper>
+          <LogoBlur />
+          <Logo />
+          <LogoOverlay>
+            <div className="blur-layer" />
+            <div className="blur-layer" />
+            <div className="blur-layer" />
+            <div className="blur-layer" />
+            <div className="blur-layer" />
+            <div className="blur-layer" />
+            <div className="blur-layer" />
+            <div className="blur-layer" />
+            <div className="blur-layer" />
+            <div className="blur-layer" />
+            <div className="blur-layer" />
+            <div className="blur-layer" />
+          </LogoOverlay>
+        </LogoWrapper>
+        <MotionTextContent variants={itemVariants}>
+          <Title>
+            Pagemate is here
+            <br />
+            to guide you
+          </Title>
+          <Subtitle>
+            <HighlightedText>
+              Hi, I'm Pagemate, your own AI Agent!
+            </HighlightedText>
+            <br />
+            Ask me anything about the product,
+            <br />
+            such as but not limited to:
+          </Subtitle>
+        </MotionTextContent>
+      </LogoSection>
 
-      <Content>
-        <LogoSection>
-          <LogoWrapper>
-            <LogoBlur />
-            <Logo />
-            <LogoOverlay>
-              <div className="blur-layer" />
-              <div className="blur-layer" />
-              <div className="blur-layer" />
-              <div className="blur-layer" />
-              <div className="blur-layer" />
-              <div className="blur-layer" />
-              <div className="blur-layer" />
-              <div className="blur-layer" />
-              <div className="blur-layer" />
-              <div className="blur-layer" />
-              <div className="blur-layer" />
-              <div className="blur-layer" />
-            </LogoOverlay>
-          </LogoWrapper>
-          <MotionTextContent variants={itemVariants}>
-            <Title>
-              Pagemate is here
-              <br />
-              to guide you
-            </Title>
-            <Subtitle>
-              <HighlightedText>
-                Hi, I'm Pagemate, your own AI Agent!
-              </HighlightedText>
-              <br />
-              Ask me anything about the product,
-              <br />
-              such as but not limited to:
-            </Subtitle>
-          </MotionTextContent>
-        </LogoSection>
-
-        <MotionSuggestionsContainer variants={itemVariants}>
-          <MotionSuggestionButton
-            whileHover={{ scale: 1.02, backgroundColor: 'rgba(171, 220, 246, 0.45)' }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => setInput('Help me find a specific transaction')}
-          >
-            Help me find a specific transaction
-          </MotionSuggestionButton>
-          <MotionSuggestionButton
-            whileHover={{ scale: 1.02, backgroundColor: 'rgba(171, 220, 246, 0.45)' }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => setInput('How can I transfer money between accounts?')}
-          >
-            How can I transfer money between accounts?
-          </MotionSuggestionButton>
-          <MotionSuggestionButton
-            whileHover={{ scale: 1.02, backgroundColor: 'rgba(171, 220, 246, 0.45)' }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => setInput('How do I deposit a check?')}
-          >
-            How do I deposit a check?
-          </MotionSuggestionButton>
-        </MotionSuggestionsContainer>
-
-        <ChatArea ref={chatScrollRef}>
-          {messages.length === 0 ? (
-            <EmptyState>Start the conversation below.</EmptyState>
-          ) : (
-            messages.map((m, i) => (
-              <Bubble key={i} data-role={m.role}>
-                <BubbleRole data-role={m.role}>{m.role === 'user' ? 'You' : 'Pagemate'}</BubbleRole>
-                <BubbleText>{m.content}</BubbleText>
-              </Bubble>
-            ))
-          )}
-          {loading && <LoadingText>Thinking…</LoadingText>}
-          {error && <ErrorText>{error}</ErrorText>}
-        </ChatArea>
-
-        <form onSubmit={handleSubmit} style={{ width: '100%' }}>
-          <MotionInputContainer variants={itemVariants}>
-            <InputIcon>
-              <SparkleIcon />
-            </InputIcon>
-            <InputContent>
-              <InputField
-                placeholder="Ask anything about your product…"
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    if (!loading) handleSubmit(e as unknown as React.FormEvent);
-                  }
-                }}
-                disabled={loading}
-              />
-              <InputLabel>{loading ? 'Generating…' : 'Turbo Mode'}</InputLabel>
-            </InputContent>
-            <SendButton type="submit" disabled={!input.trim() || loading}>
-              {loading ? '…' : 'Send'}
-            </SendButton>
-          </MotionInputContainer>
-        </form>
-      </Content>
-
-      <BottomBlurImage src="/assets/intro-bottom-blur.png" alt="" />
-    </MotionContainer>
+      <MotionSuggestionsContainer variants={itemVariants}>
+        <MotionSuggestionButton
+          whileHover={{ scale: 1.02, backgroundColor: 'rgba(171, 220, 246, 0.45)' }}
+          whileTap={{ scale: 0.98 }}
+          onClick={() => handleSuggestionClick('Help me find a specific transaction')}
+        >
+          Help me find a specific transaction
+        </MotionSuggestionButton>
+        <MotionSuggestionButton
+          whileHover={{ scale: 1.02, backgroundColor: 'rgba(171, 220, 246, 0.45)' }}
+          whileTap={{ scale: 0.98 }}
+          onClick={() => handleSuggestionClick('How can I transfer money between accounts?')}
+        >
+          How can I transfer money between accounts?
+        </MotionSuggestionButton>
+        <MotionSuggestionButton
+          whileHover={{ scale: 1.02, backgroundColor: 'rgba(171, 220, 246, 0.45)' }}
+          whileTap={{ scale: 0.98 }}
+          onClick={() => handleSuggestionClick('How do I deposit a check?')}
+        >
+          How do I deposit a check?
+        </MotionSuggestionButton>
+      </MotionSuggestionsContainer>
+    </>
   );
 };
-
-const _Container = styled.div`
-  position: relative;
-  width: 471px;
-  height: 577px;
-  overflow: hidden;
-
-  border-radius: 12px;
-  border: 1px solid #abdcf6;
-  background:
-    linear-gradient(
-      0deg,
-      rgba(236, 250, 255, 0.33) 0%,
-      rgba(236, 250, 255, 0.33) 100%
-    ),
-    rgba(234, 249, 255, 0.6);
-  box-shadow: 0 10px 32px 0 rgba(106, 219, 255, 0.3);
-
-  /* TODO: if hardware acceleration is enabled, make backdrop filter to blur(8px) */
-  backdrop-filter: blur(4px);
-`;
-const MotionContainer = motion(_Container);
-
-const CircleGlow = styled.div`
-  position: absolute;
-  width: 403px;
-  height: 359px;
-  top: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  background: url('/assets/intro-circle.svg');
-  background-size: cover;
-  background-position: top center;
-  background-repeat: no-repeat;
-`;
-
-const Content = styled.div`
-  padding: 16px 8px 8px;
-  height: 100%;
-
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-`;
 
 const LogoSection = styled.div`
   padding-top: 32px;
@@ -533,142 +365,3 @@ const SuggestionButton = styled.button`
 `;
 
 const MotionSuggestionButton = motion(SuggestionButton);
-
-const InputContainer = styled.div`
-  position: absolute;
-  bottom: 8px;
-  left: 8px;
-  right: 8px;
-
-  display: flex;
-  align-items: center;
-  gap: 8px;
-
-  padding: 12px;
-  background: linear-gradient(
-    180deg,
-    rgba(234, 248, 255, 0.88) 0%,
-    rgba(238, 250, 255, 0.88) 100%
-  );
-  border-radius: 8px;
-  box-shadow: 0px 4px 9.9px 0px #bae3f8;
-`;
-
-const MotionInputContainer = motion(InputContainer);
-
-const InputIcon = styled.div`
-  width: 24px;
-  height: 24px;
-  flex-shrink: 0;
-`;
-
-const InputContent = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  flex: 1;
-`;
-const InputField = styled.input`
-  font-size: 16px;
-  font-weight: 400;
-  letter-spacing: -0.64px;
-  color: #000000;
-  border: none;
-  outline: none;
-  background: transparent;
-  width: 100%;
-  ::placeholder {
-    color: #6c8bab;
-  }
-`;
-const InputLabel = styled.span`
-  font-size: 12px;
-  font-weight: 400;
-  letter-spacing: -0.48px;
-  color: #0093f6;
-`;
-
-const SendButton = styled.button`
-  flex-shrink: 0;
-  padding: 8px 12px;
-  border-radius: 6px;
-  border: 1px solid rgba(0, 147, 246, 0.16);
-  background: rgba(171, 220, 246, 0.31);
-  color: #0093f6;
-  font-size: 14px;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-  &:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-  }
-  &:not(:disabled):hover {
-    background: rgba(171, 220, 246, 0.45);
-  }
-`;
-
-const BottomBlurImage = styled.img`
-  width: 377px;
-  height: 212px;
-
-  object-fit: contain;
-  object-position: bottom center;
-
-  position: absolute;
-  left: 50%;
-  bottom: -1px;
-  transform: translateX(-50%);
-  z-index: -1;
-`;
-
-const ChatArea = styled.div`
-  width: 100%;
-  max-width: 407px;
-  margin: 8px auto 68px; /* leave space for input */
-  flex: 1;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-`;
-
-const Bubble = styled.div`
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  padding: 10px 12px;
-  border-radius: 8px;
-  border: 1px solid rgba(0, 147, 246, 0.16);
-  background: rgba(171, 220, 246, 0.2);
-  &[data-role='user'] {
-    background: rgba(171, 220, 246, 0.31);
-  }
-`;
-
-const BubbleRole = styled.span`
-  font-size: 12px;
-  color: #6c8bab;
-`;
-
-const BubbleText = styled.span`
-  font-size: 14px;
-  color: #0b3668;
-  white-space: pre-wrap;
-`;
-
-const LoadingText = styled.span`
-  font-size: 12px;
-  color: #6c8bab;
-`;
-
-const ErrorText = styled.span`
-  font-size: 12px;
-  color: #c0392b;
-`;
-
-const EmptyState = styled.span`
-  font-size: 12px;
-  color: #6c8bab;
-  text-align: center;
-`;

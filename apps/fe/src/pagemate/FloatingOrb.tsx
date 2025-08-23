@@ -1,10 +1,9 @@
 import styled from '@emotion/styled';
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence } from 'framer-motion';
 import React, { useCallback, useEffect, useState } from 'react';
 
 import { CornerPosition, useDraggable } from '@/hooks/useDraggable';
-
-import { IntroView } from './views';
+import { PagemateChat } from './PagemateChat';
 
 interface FloatingOrbProps {
   initialCorner?: CornerPosition;
@@ -121,41 +120,24 @@ export const FloatingOrb: React.FC<FloatingOrbProps> = ({
       />
       <AnimatePresence>
         {showIntro && (
-          <motion.div
-            className="intro-view-container"
+          <ViewContainerWrapper
             style={{
-              position: 'fixed',
               top: introPosition.top,
               left: introPosition.left,
-              zIndex: 10000,
-              pointerEvents: 'none',
-            }}
-            initial={{
-              opacity: 0,
-              y: currentCorner.includes('bottom') ? 10 : -10,
-              scale: 0.95,
-            }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{
-              opacity: 0,
-              y: currentCorner.includes('bottom') ? 10 : -10,
-              scale: 0.95,
-            }}
-            transition={{
-              duration: 0.3,
-              ease: [0.4, 0.0, 0.2, 1] as [number, number, number, number],
-              scale: { duration: 0.4 },
             }}
           >
-            <div style={{ pointerEvents: 'auto' }}>
-              <IntroView onClose={() => setShowIntro(false)} />
-            </div>
-          </motion.div>
+            <PagemateChat isOpen={showIntro} onClose={() => setShowIntro(false)} />
+          </ViewContainerWrapper>
         )}
       </AnimatePresence>
     </>
   );
 };
+
+const ViewContainerWrapper = styled.div`
+  position: fixed;
+  z-index: 10000;
+`;
 
 const StyledFloatingOrb = styled.div<{ $isDragging?: boolean }>`
   width: 64px;
