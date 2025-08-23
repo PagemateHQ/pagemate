@@ -180,7 +180,7 @@ async function handler(
 
     const locallyValidateOrSanitize = (
       raw: string,
-    ): { content: string; structured: { reply: string; action: { verb: z.infer<typeof ActionVerb>; target: string } } | null } => {
+    ): { content: string; structured: { reply: string; action: { verb: z.infer<typeof ActionVerb>; target: string | Record<string, any> } } | null } => {
       try {
         const parsedJson = JSON.parse(raw);
         const validated = AssistantSchema.safeParse(parsedJson);
