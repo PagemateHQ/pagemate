@@ -57,8 +57,11 @@ if (typeof window !== "undefined") {
 			.catch(() => {});
 	};
 	// Use requestIdleCallback if available, otherwise a short timeout.
-	if (typeof (window as any).requestIdleCallback === "function") {
-		(window as any).requestIdleCallback(prewarm);
+	const w = window as unknown as {
+		requestIdleCallback?: (cb: () => void) => number;
+	};
+	if (typeof w.requestIdleCallback === "function") {
+		w.requestIdleCallback(prewarm);
 	} else {
 		window.setTimeout(prewarm, 500);
 	}
