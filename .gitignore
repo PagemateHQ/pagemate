@@ -1,3 +1,5 @@
+apps/worker/storage
+
 # moon
 .moon/cache
 .moon/docker
