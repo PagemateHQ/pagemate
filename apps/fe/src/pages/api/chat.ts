@@ -220,7 +220,7 @@ async function handler(
     if (openaiKey && isOpenAIModel) {
       const oai = new OpenAI({ apiKey: openaiKey });
       try {
-        const completion: any = await oai.chat.completions.parse({
+        const completion: any = await oai.chat.completions.create({
           model: mname,
           messages: finalMessages,
           response_format: zodResponseFormat(AssistantSchema, 'assistant_reply'),
