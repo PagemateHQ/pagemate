@@ -1,37 +1,17 @@
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.middleware import Middleware
+import logging
 import uvicorn
 
-app = FastAPI(
-    title="PageMate API", description="Backend API for PageMate", version="0.1.0"
-)
+from pagemate import app
 
-# Configure CORS
-cors_middleware = Middleware(
-    CORSMiddleware, # type: ignore
-    allow_origins=["*"],
-    allow_methods=["*"],
-    allow_headers=["*"],
-    allow_credentials=True,
-)
-
-app.add_middleware(cors_middleware) # type: ignore
-
-@app.get("/")
-async def root():
-    return {"message": "Welcome to PageMate API"}
-
-
-@app.get("/health")
-async def health_check():
-    return {"status": "healthy"}
-
-
-@app.get("/api/test")
-async def test_endpoint():
-    return {"message": "Test endpoint working", "data": {"test": True}}
-
+logger = logging.getLogger(__name__)
 
 if __name__ == "__main__":
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+    logger.info(f"Running on app: {app}")
+
+    uvicorn.run(
+        app=app,
+        host="127.0.0.1",
+        port=8000,
+        log_level="debug",
+        reload=False,
+    )
