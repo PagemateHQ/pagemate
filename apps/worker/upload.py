@@ -2,8 +2,13 @@ import argparse
 import os
 import sys
 import uuid
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
+
+
+def utc_now():
+    return datetime.now(timezone.utc)
 
 
 def resolve_mongo_from_env(
@@ -111,6 +116,8 @@ def main(argv: Optional[list[str]] = None) -> int:
         "name": base_name,
         "object_path": str(dest_path),
         "size": len(data),
+        "createdAt": utc_now(),
+        "updatedAt": utc_now(),
     }
     documents_col.insert_one(doc_payload)
 
@@ -119,6 +126,8 @@ def main(argv: Optional[list[str]] = None) -> int:
         "_id": embedding_id,
         "document_id": document_id,
         "status": "pending",
+        "createdAt": utc_now(),
+        "updatedAt": utc_now(),
     }
     text_preview = try_read_text_preview(src_path)
     if text_preview:
@@ -142,4 +151,3 @@ def main(argv: Optional[list[str]] = None) -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-
