@@ -7,9 +7,10 @@ from typing import Any, Dict, Optional
 from pymongo import MongoClient, ReturnDocument
 from pymongo.errors import PyMongoError
 from openai import OpenAI
-from dotenv import load_dotenv
-from pathlib import Path
 
+import dotenv
+
+dotenv.load_dotenv()
 
 def utc_now() -> datetime:
     return datetime.now(timezone.utc)
@@ -23,7 +24,6 @@ def get_db() -> tuple[MongoClient, Any, Any]:
 
     client = MongoClient(mongo_url, tz_aware=True)
 
-    # Resolve database
     db_name = os.getenv("MONGO_DB")
     if db_name:
         db = client[db_name]
@@ -33,7 +33,6 @@ def get_db() -> tuple[MongoClient, Any, Any]:
         except Exception:
             db = client["pagemate"]
 
-    # Resolve embeddings collection
     collection_name = os.getenv(
         "MONGO_COLLECTION",
         os.getenv("MONGO_EMBEDDINGS_COLLECTION", "document_embeddings"),
@@ -70,31 +69,16 @@ def read_dotted(obj: Dict[str, Any], dotted: str) -> Optional[Any]:
 
 
 def extract_text_for_embedding(emb_doc: Dict[str, Any], documents_col) -> str:
-    # Preferred: explicit field on embedding doc (configurable)
     preferred_field = os.getenv("EMBEDDING_TEXT_FIELD")
     if preferred_field:
         val = read_dotted(emb_doc, preferred_field)
         if isinstance(val, str) and val.strip():
             return val
 
-    # Common fallbacks on embedding doc
     for key in ("text", "content", "input"):
         v = emb_doc.get(key)
         if isinstance(v, str) and v.strip():
             return v
-
-    # Optional: fallback to the related document name
-    if os.getenv("FALLBACK_TO_DOCUMENT_NAME", "false").lower() in (
-        "1",
-        "true",
-        "yes",
-        "y",
-    ):
-        doc_id = emb_doc.get("document_id")
-        if doc_id:
-            src = documents_col.find_one({"_id": doc_id}, projection={"name": 1})
-            if src and isinstance(src.get("name"), str) and src["name"].strip():
-                return src["name"]
 
     raise ValueError("No text available for embedding")
 
@@ -153,80 +137,42 @@ def _short_id(val: Any) -> str:
 
 
 def main() -> None:
-    # Load environment variables from the .env file next to this app (does not override existing)
-    load_dotenv(dotenv_path=Path(__file__).resolve().parent / ".env")
-
-    # Config
     openai_api_key = os.getenv("OPENAI_API_KEY")
     if not openai_api_key:
         print("ERROR: OPENAI_API_KEY is required in environment.", file=sys.stderr)
         sys.exit(1)
-
     embedding_model = os.getenv("EMBEDDING_MODEL", "solar-embedding-1-large-query")
-    drain_backlog = os.getenv("DRAIN_BACKLOG_ON_STARTUP", "true").lower() in (
-        "1",
-        "true",
-        "yes",
-        "y",
-    )
-    max_await_ms = int(os.getenv("WATCH_MAX_AWAIT_MS", "5000"))
-
-    # Clients
+    poll_interval = float(os.getenv("POLL_INTERVAL", "1.0"))
     client, db, emb_col = get_db()
     documents_col = get_documents_collection(db)
     oa_client = OpenAI(api_key=openai_api_key)
 
     print(
-        f"Worker started: watching '{emb_col.name}' for pending embeddings; model={embedding_model}"
+        f"Worker started: model={embedding_model}"
     )
 
-    # Optional: drain any existing backlog before watching
-    if drain_backlog:
+    def run_polling_loop():
+        print(f"Polling for pending embeddings every {poll_interval}s…")
         while True:
-            emb = claim_pending(emb_col)
-            if not emb:
-                break
-            process_embedding(emb_col, documents_col, emb, oa_client, embedding_model)
-
-    # Change stream watch for new/updated pending tasks
-    pipeline = [
-        {"$match": {"operationType": {"$in": ["insert", "update", "replace"]}}},
-        {
-            "$match": {
-                "$or": [
-                    {"fullDocument.status": "pending"},
-                    {"updateDescription.updatedFields.status": "pending"},
-                ]
-            }
-        },
-    ]
-
-    while True:
-        try:
-            with emb_col.watch(
-                pipeline=pipeline,
-                full_document="updateLookup",
-                max_await_time_ms=max_await_ms,
-            ) as stream:
-                for change in stream:
-                    full = change.get("fullDocument") or {}
-                    emb_id = full.get("_id") or change.get("documentKey", {}).get("_id")
-                    if emb_id is None:
-                        continue
-                    # Atomic claim: only proceed if still pending
-                    claimed = emb_col.find_one_and_update(
-                        {"_id": emb_id, "status": "pending"},
-                        {"$set": {"status": "processing", "startedAt": utc_now()}},
-                        return_document=ReturnDocument.AFTER,
-                    )
-                    if not claimed:
-                        continue
+            try:
+                did_work = False
+                while True:
+                    emb = claim_pending(emb_col)
+                    if not emb:
+                        break
+                    did_work = True
                     process_embedding(
-                        emb_col, documents_col, claimed, oa_client, embedding_model
+                        emb_col, documents_col, emb, oa_client, embedding_model
                     )
-        except Exception as e:
-            print(f"Change stream error: {e}. Reconnecting shortly…", file=sys.stderr)
-            time.sleep(1.5)
+
+                if not did_work:
+                    time.sleep(poll_interval)
+            except KeyboardInterrupt:
+                raise
+            except Exception as e:
+                print(f"Polling loop error: {e}", file=sys.stderr)
+                time.sleep(1.0)
+    run_polling_loop()
 
 
 if __name__ == "__main__":
