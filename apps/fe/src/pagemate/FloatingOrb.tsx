@@ -15,26 +15,19 @@ export const FloatingOrb: React.FC<FloatingOrbProps> = ({
   initialCorner = 'bottom-right',
   cornerGap = 48,
 }) => {
-  const [showIntro, setShowIntro] = useState(false);
-  const [introPosition, setIntroPosition] = useState({ top: 0, left: 0 });
+  const [showView, setShowView] = useState(false);
+  const [viewPosition, setViewPosition] = useState({ top: 0, left: 0 });
   const [currentCorner, setCurrentCorner] =
     useState<CornerPosition>(initialCorner);
   const dragStartPosRef = useRef<{ x: number; y: number } | null>(null);
 
-  const {
-    ref: dragRef,
-    style,
-    isDragging,
-  } = useDraggable({
-    snapToCorners: true,
-    cornerGap,
-    initialCorner,
-  });
+  // We need to define dragRef before using it in updateViewPosition
+  const dragRefInternal = useRef<HTMLDivElement>(null);
 
-  const updateIntroPosition = useCallback(() => {
-    if (!dragRef.current) return;
+  const updateViewPosition = useCallback(() => {
+    if (!dragRefInternal.current) return;
 
-    const orbRect = dragRef.current.getBoundingClientRect();
+    const orbRect = dragRefInternal.current.getBoundingClientRect();
     const viewWidth = 471;
     const viewHeight = 577;
     const gap = 24;
@@ -68,34 +61,49 @@ export const FloatingOrb: React.FC<FloatingOrbProps> = ({
     left = Math.max(8, Math.min(left, window.innerWidth - viewWidth - 8));
     top = Math.max(8, Math.min(top, window.innerHeight - viewHeight - 8));
 
-    setIntroPosition({ top, left });
+    setViewPosition({ top, left });
     setCurrentCorner(corner);
   }, []);
 
-  useEffect(() => {
-    if (showIntro) {
-      updateIntroPosition();
-    }
-  }, [showIntro, updateIntroPosition]);
+  const {
+    ref: dragRef,
+    style,
+    isDragging,
+  } = useDraggable({
+    snapToCorners: true,
+    cornerGap,
+    initialCorner,
+    onDragEnd: () => {
+      // Update view position when drag ends
+      if (showView) {
+        setTimeout(() => {
+          updateViewPosition();
+        }, 300);
+      }
+    },
+  });
 
-  // Update position when orb moves
+  // Connect the internal ref with the draggable ref
   useEffect(() => {
-    if (showIntro) {
-      updateIntroPosition();
-    }
-  }, [style.left, style.top]); // Depend on position changes
+    dragRefInternal.current = dragRef.current;
+  }, [dragRef]);
 
-  // Don't track dragging, instead track on mouse events directly
+  // Update view position when it becomes visible
+  useEffect(() => {
+    if (showView) {
+      updateViewPosition();
+    }
+  }, [showView, updateViewPosition]);
 
   // Handle window resize with throttling
   useEffect(() => {
-    if (!showIntro) return;
+    if (!showView) return;
 
     let resizeTimer: NodeJS.Timeout;
     const handleResize = () => {
       clearTimeout(resizeTimer);
       resizeTimer = setTimeout(() => {
-        updateIntroPosition();
+        updateViewPosition();
       }, 100); // Throttle to 100ms
     };
 
@@ -104,7 +112,7 @@ export const FloatingOrb: React.FC<FloatingOrbProps> = ({
       clearTimeout(resizeTimer);
       window.removeEventListener('resize', handleResize);
     };
-  }, [showIntro, updateIntroPosition]);
+  }, [showView, updateViewPosition]);
 
   // Removed click outside handler - view only closes when clicking the orb
 
@@ -124,7 +132,7 @@ export const FloatingOrb: React.FC<FloatingOrbProps> = ({
       const dx = Math.abs(e.clientX - dragStartPosRef.current.x);
       const dy = Math.abs(e.clientY - dragStartPosRef.current.y);
       const threshold = 5; // pixels
-      
+
       if (dx > threshold || dy > threshold) {
         // This was a drag, not a click
         dragStartPosRef.current = null;
@@ -132,7 +140,7 @@ export const FloatingOrb: React.FC<FloatingOrbProps> = ({
       }
     }
 
-    setShowIntro(!showIntro);
+    setShowView(!showView);
   };
 
   return (
@@ -145,16 +153,16 @@ export const FloatingOrb: React.FC<FloatingOrbProps> = ({
         onClick={handleOrbClick}
       />
       <AnimatePresence>
-        {showIntro && (
+        {showView && (
           <ViewContainerWrapper
             style={{
-              top: introPosition.top,
-              left: introPosition.left,
+              top: viewPosition.top,
+              left: viewPosition.left,
             }}
           >
             <PagemateChat
-              isOpen={showIntro}
-              onClose={() => setShowIntro(false)}
+              isOpen={showView}
+              onClose={() => setShowView(false)}
             />
           </ViewContainerWrapper>
         )}
