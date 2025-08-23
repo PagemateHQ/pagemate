@@ -20,14 +20,12 @@ export const FloatingOrb: React.FC<FloatingOrbProps> = ({
   const [currentCorner, setCurrentCorner] =
     useState<CornerPosition>(initialCorner);
   const dragStartPosRef = useRef<{ x: number; y: number } | null>(null);
-
-  // We need to define dragRef before using it in updateViewPosition
-  const dragRefInternal = useRef<HTMLDivElement>(null);
+  const orbElementRef = useRef<HTMLDivElement | null>(null);
 
   const updateViewPosition = useCallback(() => {
-    if (!dragRefInternal.current) return;
+    if (!orbElementRef.current) return;
 
-    const orbRect = dragRefInternal.current.getBoundingClientRect();
+    const orbRect = orbElementRef.current.getBoundingClientRect();
     const viewWidth = 471;
     const viewHeight = 577;
     const gap = 24;
@@ -83,10 +81,12 @@ export const FloatingOrb: React.FC<FloatingOrbProps> = ({
     },
   });
 
-  // Connect the internal ref with the draggable ref
+  // Sync orbElementRef with dragRef
   useEffect(() => {
-    dragRefInternal.current = dragRef.current;
-  }, [dragRef]);
+    if (dragRef.current) {
+      orbElementRef.current = dragRef.current;
+    }
+  }, [dragRef, style]); // Update when style changes too
 
   // Update view position when it becomes visible
   useEffect(() => {
