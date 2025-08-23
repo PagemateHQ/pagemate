@@ -10,7 +10,7 @@ export async function SiteFooter() {
 				<div className="flex flex-col gap-6">
 					<div className="flex justify-center">
 						<Image
-							src="/logo.svg"
+							src="/logo.png"
 							alt="Acme Insurance"
 							width={200}
 							height={60}
