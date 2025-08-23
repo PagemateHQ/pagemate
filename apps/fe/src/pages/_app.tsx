@@ -1,5 +1,6 @@
 import { AppProps } from 'next/app';
 import React from 'react';
+import { Provider } from 'jotai';
 
 import { FloatingOrb } from '@/pagemate/FloatingOrb';
 import { InstrumentSans } from '@/styles/fonts';
@@ -7,7 +8,7 @@ import '@/styles/global.css';
 
 function MyApp({ Component, pageProps }: AppProps) {
   return (
-    <React.Fragment>
+    <Provider>
       <Component {...pageProps} />
       <FloatingOrb />
 
@@ -20,7 +21,7 @@ function MyApp({ Component, pageProps }: AppProps) {
       `}</style>
 
       <div id="portal" />
-    </React.Fragment>
+    </Provider>
   );
 }
 
