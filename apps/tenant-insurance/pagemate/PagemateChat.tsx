@@ -741,7 +741,12 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
           suggestions={defaultSuggestions}
         />
       ) : (
-        <ChatView messages={messages} loading={loading} error={error} />
+        <ChatView
+          messages={messages}
+          loading={loading}
+          error={error}
+          suppressActions={suppressActions}
+        />
       )}
     </ViewContainer>
   );
