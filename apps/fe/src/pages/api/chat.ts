@@ -1,5 +1,4 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import OpenAI from 'openai';
 import { z } from 'zod';
 
 import { stripJunk } from '../../utils/stripJunk';
@@ -32,20 +31,13 @@ async function handler(
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
 
-  const apiKey = process.env.UPSTAGE_API_KEY;
-  if (!apiKey) {
-    return res.status(500).json({ error: 'Missing UPSTAGE_API_KEY' });
-  }
-
   try {
     const {
       messages,
-      model,
       pageHtml,
       ragContext,
     }: {
       messages: ChatMessage[];
-      model?: string;
       pageHtml?: string;
       ragContext?: string;
     } = req.body || {};
@@ -53,10 +45,6 @@ async function handler(
     if (!Array.isArray(messages) || messages.length === 0) {
       return res.status(400).json({ error: 'messages[] is required' });
     }
-
-    const upstageClient = new OpenAI({ apiKey, 
-      baseURL: process.env.UPSTAGE_BASE_URL || 'https://api.upstage.ai/v1'
-    });
 
     const DEFAULT_SYSTEM_PROMPT = [
       'You are Pagemate, an on-page AI assistant embedded in a website.',
@@ -215,15 +203,19 @@ async function handler(
       return { content: raw.trim(), structured: null };
     };
 
-    const mname = (model || 'solar-pro2').trim();
-    
-    const completion = await upstageClient.chat.completions.create({
-      model: mname,
-      messages: finalMessages,
-      stream: false,
+    const response = await fetch('https://api.pagemate.app/upstage/v1/chat/completions', {
+      method: 'POST',
+      body: JSON.stringify({
+        messages: finalMessages,
+      }),
     });
-    
-    const raw = completion.choices?.[0]?.message?.content ?? '';
+
+    if (!response.ok) {
+      const errorData = await response.text();
+      throw new Error(`API request failed: ${response.status} ${errorData}`);
+    }
+
+    const raw = await response.text();
     const { content, structured } = locallyValidateOrSanitize(raw);
 
     return res.status(200).json({ content, structured: structured ?? undefined });
