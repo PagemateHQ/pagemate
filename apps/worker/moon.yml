@@ -1,0 +1,41 @@
+# https://moonrepo.dev/docs/config/project
+$schema: 'https://moonrepo.dev/schemas/project.json'
+
+type: 'application'
+platform: 'python'
+language: 'python'
+
+workspace:
+  inheritedTasks:
+    exclude: ['install']
+
+tasks:
+  install:
+    command: 'uv sync'
+    platform: 'python'
+  
+  dev:
+    command: 'uv run main.py'
+    platform: 'python'
+    deps:
+      - '~:mongo-up'
+    
+  lint:
+    command: 'uv run ruff check . && uv run pyrefly check .'
+    platform: 'python'
+    
+  format:
+    command: 'uv run ruff format .'
+    platform: 'python'
+
+  mongo-up:
+    command: 'docker compose --env-file .env -f docker-compose.mongodb.yml up -d'
+    platform: 'system'
+    options:
+      cache: false
+
+  mongo-down:
+    command: 'docker compose -f docker-compose.mongodb.yml down'
+    platform: 'system'
+    options:
+      cache: false
