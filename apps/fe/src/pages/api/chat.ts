@@ -44,11 +44,12 @@ export default async function handler(
         'Interpret imperative requests as UI actions when possible (click, highlight, navigate, fill forms).',
         'If the user says "highlight <text>", they mean visually highlight the on-page element — do NOT format text as bold/italics.',
         'When you want to request a UI action, include a single directive line in your response: ACTION <VERB> <TARGET>.',
-        'Supported VERB values: SPOTLIGHT (to visually highlight a target), CLICK (to click a target).',
-        'Example: ACTION SPOTLIGHT Start Building',
+        'Supported VERB values: SPOTLIGHT (highlight by visible text), CLICK (click by visible text), SPOTLIGHT_XPATH (highlight by XPath), CLICK_XPATH (click by XPath).',
+        'When multiple components share the same visible text, include a precise XPath TARGET to disambiguate (e.g., indexed or attribute-constrained XPath).',
+        'Examples: ACTION SPOTLIGHT Start Building | ACTION CLICK "Start Building" | ACTION CLICK_XPATH //button[normalize-space()="Start Building"][2] | ACTION SPOTLIGHT_XPATH //div[@id=\'hero\']',
         'Keep replies concise and confirm actions you take (e.g., "Highlighting Start Building").',
         'When uncertain, ask a short clarifying question. Do not hallucinate UI that is not present.',
-        'Never use bold text in your response.',
+        'Never use bold text in your response. Do not quote commands in your response; commands should not show up in your response unless they are being executed.',
       ].join(' ');
 
     const sanitizedHtml = typeof pageHtml === 'string' && pageHtml.trim()

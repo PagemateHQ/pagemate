@@ -1,5 +1,5 @@
 import styled from '@emotion/styled';
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, Fragment } from 'react';
 
 export type ChatMessage = {
   role: 'user' | 'assistant' | 'system';
@@ -38,7 +38,7 @@ export const ChatView: React.FC<ChatViewProps> = ({
         messages.map((m, i) => (
           <Bubble key={i} data-role={m.role}>
             <BubbleRole data-role={m.role}>{m.role === 'user' ? 'You' : 'Pagemate'}</BubbleRole>
-            <BubbleText>{m.content}</BubbleText>
+            <BubbleText>{renderMessageContent(m.content)}</BubbleText>
           </Bubble>
         ))
       )}
@@ -79,10 +79,13 @@ const BubbleRole = styled.span`
   color: #6c8bab;
 `;
 
-const BubbleText = styled.span`
+const BubbleText = styled.div`
   font-size: 14px;
   color: #0b3668;
   white-space: pre-wrap;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 `;
 
 const LoadingText = styled.span`
@@ -100,3 +103,65 @@ const EmptyState = styled.span`
   color: #6c8bab;
   text-align: center;
 `;
+
+// --- Helpers to render commands nicely ---
+
+const CommandRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  border: 1px dashed rgba(0, 147, 246, 0.35);
+  background: rgba(171, 220, 246, 0.16);
+`;
+
+const CommandVerb = styled.span`
+  font-size: 11px;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: #074780;
+  background: #e3f3ff;
+  border: 1px solid rgba(0, 147, 246, 0.4);
+  padding: 2px 6px;
+  border-radius: 999px;
+  white-space: nowrap;
+`;
+
+const CommandTarget = styled.code`
+  font-size: 12px;
+  color: #0b3668;
+  white-space: pre-wrap;
+`;
+
+function renderMessageContent(content: string) {
+  const lines = content.split(/\r?\n/);
+  const out: React.ReactNode[] = [];
+  const actionRe = /^(?:\s*)ACTION\s+([A-Z_]+)\s*[:\-]?\s*(.+)$/i;
+
+  for (let idx = 0; idx < lines.length; idx++) {
+    const line = lines[idx];
+    const m = line.match(actionRe);
+    if (m) {
+      const verb = (m[1] || '').toUpperCase();
+      let target = (m[2] || '').trim();
+      if (
+        (target.startsWith('"') && target.endsWith('"')) ||
+        (target.startsWith("'") && target.endsWith("'")) ||
+        (target.startsWith('`') && target.endsWith('`'))
+      ) {
+        target = target.slice(1, -1);
+      }
+      out.push(
+        <CommandRow key={`cmd-${idx}`}>
+          <CommandVerb>{verb}</CommandVerb>
+          <CommandTarget>{target}</CommandTarget>
+        </CommandRow>
+      );
+    } else {
+      out.push(<Fragment key={`ln-${idx}`}>{line}</Fragment>);
+    }
+  }
+
+  return out;
+}
