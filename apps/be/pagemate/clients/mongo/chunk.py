@@ -35,3 +35,13 @@ async def list_document_chunks(
         cursor = cursor.limit(limit)
 
     return await cursor.to_list()
+
+
+async def delete_chunks_by_document_id(document_id: str, *, tenant_id: str) -> bool:
+    """Deletes all chunks for the given document_id and tenant_id and returns deletion success status."""
+    col = get_chunks_collection()
+    result = await col.delete_many({
+        "document_id": document_id,
+        "tenant_id": tenant_id,
+    })
+    return result.deleted_count > 0
