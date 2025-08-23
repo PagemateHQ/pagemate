@@ -16,21 +16,27 @@ export const FloatingOrb: React.FC<FloatingOrbProps> = ({
   cornerGap = 48,
 }) => {
   const [showView, setShowView] = useState(false);
-  const [viewPosition, setViewPosition] = useState({ top: 0, left: 0 });
+  const [viewPosition, setViewPosition] = useState<{
+    top: number;
+    left: number;
+  }>({ top: 0, left: 0 });
   const [currentCorner, setCurrentCorner] =
     useState<CornerPosition>(initialCorner);
   const dragStartPosRef = useRef<{ x: number; y: number } | null>(null);
   const orbElementRef = useRef<HTMLDivElement | null>(null);
+  const viewElementRef = useRef<HTMLDivElement | null>(null);
 
   const updateViewPosition = useCallback(() => {
     if (!orbElementRef.current) return;
 
     const orbRect = orbElementRef.current.getBoundingClientRect();
-    const viewWidth = 471;
-    const viewHeight = 577;
     const gap = 24;
+    
+    // Get actual view dimensions or use defaults
+    const viewWidth = viewElementRef.current?.offsetWidth || 471;
+    const viewHeight = viewElementRef.current?.offsetHeight || 577;
 
-    // Determine current corner based on position
+    // Determine current corner based on orb position
     const isTop = orbRect.top < window.innerHeight / 2;
     const isLeft = orbRect.left < window.innerWidth / 2;
     const corner: CornerPosition =
@@ -39,19 +45,21 @@ export const FloatingOrb: React.FC<FloatingOrbProps> = ({
     let top = 0;
     let left = 0;
 
+    // Vertical positioning
     if (corner.includes('bottom')) {
-      // Position above the orb
+      // Orb is at bottom - position view above the orb
       top = orbRect.top - viewHeight - gap;
     } else {
-      // Position below the orb
+      // Orb is at top - position view below the orb
       top = orbRect.bottom + gap;
     }
 
+    // Horizontal positioning
     if (corner.includes('right')) {
-      // Align to the right edge of the orb
+      // Orb is at right - align view's right edge with orb's right edge
       left = orbRect.right - viewWidth;
     } else {
-      // Align to the left edge of the orb
+      // Orb is at left - align view's left edge with orb's left edge
       left = orbRect.left;
     }
 
@@ -95,21 +103,39 @@ export const FloatingOrb: React.FC<FloatingOrbProps> = ({
     }
   }, [showView, updateViewPosition]);
 
-  // Handle window resize with throttling
+  // Handle window resize with proper debouncing
   useEffect(() => {
     if (!showView) return;
 
-    let resizeTimer: NodeJS.Timeout;
+    let resizeTimer: NodeJS.Timeout | null = null;
+    let isResizing = false;
+
     const handleResize = () => {
-      clearTimeout(resizeTimer);
+      // Mark that we're resizing
+      isResizing = true;
+
+      // Clear existing timer
+      if (resizeTimer) {
+        clearTimeout(resizeTimer);
+      }
+
+      // Set new timer for debounce
       resizeTimer = setTimeout(() => {
         updateViewPosition();
-      }, 100); // Throttle to 100ms
+        isResizing = false;
+      }, 300); // Debounce delay
     };
 
     window.addEventListener('resize', handleResize);
+
     return () => {
-      clearTimeout(resizeTimer);
+      // Cleanup: if still resizing, do final update
+      if (resizeTimer) {
+        clearTimeout(resizeTimer);
+        if (isResizing) {
+          updateViewPosition();
+        }
+      }
       window.removeEventListener('resize', handleResize);
     };
   }, [showView, updateViewPosition]);
@@ -155,6 +181,7 @@ export const FloatingOrb: React.FC<FloatingOrbProps> = ({
       <AnimatePresence>
         {showView && (
           <MotionViewContainerWrapper
+            ref={viewElementRef}
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{
               opacity: 1,
