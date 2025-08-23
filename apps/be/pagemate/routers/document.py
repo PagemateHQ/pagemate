@@ -26,7 +26,8 @@ async def create_document(tenant_id: str, file: UploadFile = File(...)):
         raise HTTPException(status_code=400, detail="Only .txt, .md, or .pdf files are supported")
 
     # Save file to storage and get path and size
-    object_path, file_size = await storage_service.save_text_file(content)
+    file_ext = file.filename.split(".")[-1]
+    object_path, file_size = await storage_service.save_file(content, extension=file_ext)
 
     # Create document record (embedding_status is set to pending in service)
     document = await document_service.create_document(
