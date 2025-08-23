@@ -44,12 +44,14 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
     | { type: 'highlightByText'; text: string }
     | { type: 'clickBySelector'; selector: string }
     | { type: 'highlightBySelector'; selector: string }
-    | { type: 'retrieve'; query: string; limit?: number; documentId?: string | null };
+    | { type: 'retrieve'; query: string; limit?: number; documentId?: string | null }
+    | { type: 'autofill'; spec?: string; fields?: Record<string, string> };
 
   type ToolExecResult = {
     success: boolean;
     kind: ToolAction['type'];
     ragContext?: string | null;
+    details?: string;
   };
 
   const parseToolIntent = (raw: string): ToolAction | null => {
@@ -81,7 +83,56 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
     const r1 = text.match(/^(?:retrieve|search)\s+(.+)/i);
     if (r1) return { type: 'retrieve', query: r1[1].trim() };
 
+    // Match: autofill <spec>
+    const a1 = text.match(/^autofill\s+([\s\S]+)/i);
+    if (a1) {
+      const spec = a1[1].trim();
+      const fields = parseAutofillSpec(spec);
+      return { type: 'autofill', spec, fields };
+    }
+
     return null;
+  };
+
+  const parseAutofillSpec = (raw: string | undefined | null): Record<string, string> => {
+    const out: Record<string, string> = {};
+    const s = String(raw || '').trim();
+    if (!s) return out;
+    // Try JSON object first
+    try {
+      if (s.startsWith('{') && s.endsWith('}')) {
+        const obj = JSON.parse(s);
+        if (obj && typeof obj === 'object') {
+          for (const [k, v] of Object.entries(obj)) {
+            if (typeof v === 'string' || typeof v === 'number' || typeof v === 'boolean') {
+              out[String(k)] = String(v);
+            }
+          }
+          return out;
+        }
+      }
+    } catch {}
+    // Fallback: parse key=value or key: value pairs separated by semicolons or newlines
+    const normalized = s.replace(/\r/g, '\n');
+    const lines = normalized
+      .split(/\n|;/)
+      .map((l) => l.trim())
+      .filter(Boolean);
+    for (const line of lines) {
+      const m = line.match(/^([^:=]+)\s*[:=]\s*([\s\S]+)$/);
+      if (!m) continue;
+      let key = (m[1] || '').trim();
+      let val = (m[2] || '').trim();
+      if (
+        (val.startsWith('"') && val.endsWith('"')) ||
+        (val.startsWith("'") && val.endsWith("'")) ||
+        (val.startsWith('`') && val.endsWith('`'))
+      ) {
+        val = val.slice(1, -1);
+      }
+      if (key) out[key] = val;
+    }
+    return out;
   };
 
   const executeTool = async (tool: ToolAction): Promise<ToolExecResult> => {
@@ -153,6 +204,30 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
           return { success: false, kind: tool.type };
         }
       }
+      case 'autofill': {
+        try {
+          const fields = tool.fields || parseAutofillSpec(tool.spec);
+          const result = autofillFields(fields);
+          const statusLine = result.success
+            ? `✅ Autofilled ${result.filledCount} ${result.filledCount === 1 ? 'field' : 'fields'}`
+            : `⚠️ Autofill failed: ${result.error || 'No matching fields'}`;
+          const details = result.filled.length
+            ? `\n${result.filled
+                .map((f) => `- ${f.label || f.key}: ${truncateText(f.value, 80)}`)
+                .join('\n')}`
+            : '';
+          try {
+            setMessages((prev) => [
+              ...prev,
+              { role: 'assistant', content: `${statusLine}${details}` },
+            ]);
+            try { setSuppressActions(false); } catch {}
+          } catch {}
+          return { success: result.success, kind: tool.type, details: statusLine };
+        } catch (e: any) {
+          return { success: false, kind: tool.type, details: e?.message };
+        }
+      }
       default:
         return { success: false, kind: 'clickByText' };
     }
@@ -184,6 +259,9 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
             );
           } else if (verb === 'RETRIEVE') {
             actions.push({ type: 'retrieve', query: target });
+          } else if (verb === 'AUTOFILL') {
+            const fields = parseAutofillSpec(target);
+            actions.push({ type: 'autofill', spec: target, fields });
           }
         }
       }
@@ -215,6 +293,9 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
         actions.push({ type: 'highlightByText', text: target });
       } else if (verb === 'RETRIEVE') {
         actions.push({ type: 'retrieve', query: target });
+      } else if (verb === 'AUTOFILL') {
+        const fields = parseAutofillSpec(target);
+        actions.push({ type: 'autofill', spec: target, fields });
       } else if (verb === 'CLICK_XPATH' || verb === 'SPOTLIGHT_XPATH') {
         // Ignore XPath-specific directives
       }
@@ -453,6 +534,223 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
     }
   };
 
+  // --- Autofill helpers ---
+  const truncateText = (s: string, max = 80): string => {
+    const t = String(s);
+    return t.length > max ? `${t.slice(0, max - 1)}…` : t;
+  };
+
+  const normText = (s: string): string => s.replace(/\s+/g, ' ').trim().toLowerCase();
+
+  const getAssociatedLabel = (el: HTMLElement): string => {
+    try {
+      // label[for] association
+      const id = el.getAttribute('id');
+      if (id) {
+        const lab = document.querySelector(`label[for="${CSS.escape(id)}"]`);
+        if (lab) return (lab.textContent || '').trim();
+      }
+      // wrapped by <label>
+      let parent: HTMLElement | null = el;
+      while (parent) {
+        if (parent.tagName.toLowerCase() === 'label') {
+          return (parent.textContent || '').trim();
+        }
+        parent = parent.parentElement;
+      }
+      // aria-label
+      const aria = el.getAttribute('aria-label');
+      if (aria) return aria.trim();
+      // aria-labelledby
+      const labelledby = el.getAttribute('aria-labelledby');
+      if (labelledby) {
+        const ids = labelledby.split(/\s+/).filter(Boolean);
+        const texts: string[] = [];
+        ids.forEach((i) => {
+          const ref = document.getElementById(i);
+          if (ref) texts.push((ref.textContent || '').trim());
+        });
+        if (texts.length) return texts.join(' ').trim();
+      }
+    } catch {}
+    return '';
+  };
+
+  const collectFormFields = (): Array<{
+    el: HTMLElement;
+    tag: string;
+    type: string;
+    label: string;
+    placeholder: string;
+    name: string;
+    id: string;
+    scoreWith: (key: string) => number;
+  }> => {
+    const list: Array<{
+      el: HTMLElement;
+      tag: string;
+      type: string;
+      label: string;
+      placeholder: string;
+      name: string;
+      id: string;
+      scoreWith: (key: string) => number;
+    }> = [];
+    const nodes = Array.from(
+      document.querySelectorAll<HTMLElement>(
+        'input:not([type="hidden"]):not([disabled]), textarea:not([disabled]), select:not([disabled])',
+      ),
+    );
+    for (const n of nodes) {
+      if (!isVisible(n)) continue;
+      const tag = n.tagName.toLowerCase();
+      const type = (n as HTMLInputElement).type?.toLowerCase?.() || tag;
+      const label = getAssociatedLabel(n) || '';
+      const placeholder = (n.getAttribute('placeholder') || '').trim();
+      const name = (n.getAttribute('name') || '').trim();
+      const id = (n.getAttribute('id') || '').trim();
+      const aliases = [
+        label,
+        placeholder,
+        name,
+        id,
+        n.getAttribute('autocomplete') || '',
+        type,
+      ]
+        .map((x) => normText(String(x || '')))
+        .filter(Boolean);
+      const uniqueAliases = Array.from(new Set(aliases));
+      const scoreWith = (key: string): number => {
+        const k = normText(key);
+        if (!k) return 0;
+        let best = 0;
+        for (const a of uniqueAliases) {
+          if (!a) continue;
+          if (a === k) best = Math.max(best, 100);
+          else if (a.includes(k) || k.includes(a)) best = Math.max(best, 60);
+          else {
+            // token overlap
+            const at = new Set(a.split(/[^a-z0-9]+/g).filter(Boolean));
+            const kt = new Set(k.split(/[^a-z0-9]+/g).filter(Boolean));
+            const inter = Array.from(kt).filter((t) => at.has(t));
+            if (inter.length) best = Math.max(best, Math.min(50, inter.length * 10));
+          }
+        }
+        return best;
+      };
+      list.push({ el: n, tag, type, label, placeholder, name, id, scoreWith });
+    }
+    return list;
+  };
+
+  const setElementValue = (el: HTMLElement, value: string): boolean => {
+    try {
+      if (el instanceof HTMLInputElement) {
+        const t = (el.type || '').toLowerCase();
+        if (t === 'checkbox') {
+          const truthy = /^(1|y|yes|true|on|checked)$/i.test(String(value));
+          if (el.checked !== truthy) {
+            el.checked = truthy;
+            el.dispatchEvent(new Event('input', { bubbles: true }));
+            el.dispatchEvent(new Event('change', { bubbles: true }));
+          }
+          return true;
+        }
+        if (t === 'radio') {
+          // choose radio in the same group by matching value or label text
+          const name = el.name;
+          const group = Array.from(
+            document.querySelectorAll<HTMLInputElement>(`input[type="radio"][name="${CSS.escape(name)}"]`),
+          );
+          const targetVal = String(value).trim().toLowerCase();
+          for (const r of group) {
+            const lab = getAssociatedLabel(r).toLowerCase();
+            if (
+              (r.value && r.value.toLowerCase() === targetVal) ||
+              (lab && (lab === targetVal || lab.includes(targetVal)))
+            ) {
+              if (!r.checked) {
+                r.checked = true;
+                r.dispatchEvent(new Event('input', { bubbles: true }));
+                r.dispatchEvent(new Event('change', { bubbles: true }));
+              }
+              flashHighlight(r);
+              return true;
+            }
+          }
+          return false;
+        }
+        el.value = String(value);
+        el.dispatchEvent(new Event('input', { bubbles: true }));
+        el.dispatchEvent(new Event('change', { bubbles: true }));
+        el.blur?.();
+        return true;
+      }
+      if (el instanceof HTMLTextAreaElement) {
+        el.value = String(value);
+        el.dispatchEvent(new Event('input', { bubbles: true }));
+        el.dispatchEvent(new Event('change', { bubbles: true }));
+        el.blur?.();
+        return true;
+      }
+      if (el instanceof HTMLSelectElement) {
+        const val = String(value).trim().toLowerCase();
+        let matched = false;
+        for (const opt of Array.from(el.options)) {
+          const txt = (opt.textContent || '').trim().toLowerCase();
+          const v = (opt.value || '').trim().toLowerCase();
+          if (v === val || txt === val || txt.includes(val)) {
+            el.value = opt.value;
+            matched = true;
+            break;
+          }
+        }
+        if (!matched) el.value = String(value);
+        el.dispatchEvent(new Event('input', { bubbles: true }));
+        el.dispatchEvent(new Event('change', { bubbles: true }));
+        el.blur?.();
+        return true;
+      }
+      return false;
+    } catch {
+      return false;
+    }
+  };
+
+  const autofillFields = (
+    fields: Record<string, string> | undefined | null,
+  ): {
+    success: boolean;
+    filledCount: number;
+    filled: Array<{ key: string; label: string; value: string }>;
+    error?: string;
+  } => {
+    const mapping = fields || {};
+    const entries = Object.entries(mapping)
+      .map(([k, v]) => [k.trim(), String(v)] as const)
+      .filter(([k]) => !!k);
+    if (!entries.length) return { success: false, filledCount: 0, filled: [], error: 'No fields provided' };
+
+    const candidates = collectFormFields();
+    const filled: Array<{ key: string; label: string; value: string }> = [];
+    for (const [key, value] of entries) {
+      // rank candidates by score
+      const ranked = candidates
+        .map((c) => ({ c, s: c.scoreWith(key) }))
+        .filter((x) => x.s > 0)
+        .sort((a, b) => b.s - a.s);
+      if (!ranked.length) continue;
+      const target = ranked[0].c.el;
+      const ok = setElementValue(target as any, value);
+      if (ok) {
+        const label = getAssociatedLabel(target) || (target.getAttribute('placeholder') || '') || '';
+        try { flashHighlight(target); } catch {}
+        filled.push({ key, label, value });
+      }
+    }
+    return { success: filled.length > 0, filledCount: filled.length, filled };
+  };
+
   const isVisible = (el: HTMLElement): boolean => {
     const style = window.getComputedStyle(el);
     const rect = el.getBoundingClientRect();
@@ -660,6 +958,10 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
             // Retrieval already appended a summary message
             // Capture rag context for a follow-up call
             pendingRag = result.ragContext ?? null;
+          } else if (tool.type === 'autofill') {
+            // Detailed message already appended inside executeTool('autofill')
+            // Sync workingMessages to the latest state
+            workingMessages = messagesRef.current;
           } else {
             const verb = tool.type === 'highlightByText' ? 'Highlighted' : 'Clicked';
             const successText = result.success

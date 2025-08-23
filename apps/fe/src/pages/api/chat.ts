@@ -11,7 +11,7 @@ type ChatMessage = {
 };
 
 // Structured output schema and helpers
-const ActionVerb = z.enum(['SPOTLIGHT', 'CLICK', 'RETRIEVE']);
+const ActionVerb = z.enum(['SPOTLIGHT', 'CLICK', 'RETRIEVE', 'AUTOFILL']);
 const ActionSchema = z.object({ verb: ActionVerb, target: z.string().min(1) });
 const AssistantSchema = z.object({ reply: z.string().min(1), action: ActionSchema });
 const toTextWithSingleAction = (obj: z.infer<typeof AssistantSchema>): string => {
@@ -55,13 +55,15 @@ async function handler(
 
     const DEFAULT_SYSTEM_PROMPT = [
       'You are Pagemate, an on-page AI assistant embedded in a website.',
-      'Interpret imperative requests as UI actions when possible (click, highlight, navigate, fill forms).',
+      'Interpret imperative requests as UI actions when possible (click, highlight, retrieve, fill forms).',
       'If the user says "highlight <text>", they mean visually highlight the on-page element — do NOT format text as bold/italics.',
       'You MUST respond as a strict JSON object, no markdown/code fences, no extra text. JSON ONLY.',
-      'Schema: { "reply": string, "action": { "verb": "SPOTLIGHT"|"CLICK"|"RETRIEVE", "target": string } }',
-      'CLICK should follow with the text of the element to click, not URL.',
+      'Schema: { "reply": string, "action": { "verb": "SPOTLIGHT"|"CLICK"|"RETRIEVE"|"AUTOFILL", "target": string } }',
+      'CLICK: set target to the visible text (or a clear label) of the element to click, not a URL.',
+      'RETRIEVE: set target to a search query describing what to look up in product docs.',
+      'AUTOFILL: use when the user asks to fill a form. Set target to a JSON object mapping fields to values (prefer visible labels/placeholders or names). Example: {"Full Name":"Jane Roe","Email":"jane@acme.com"}. Keep mappings minimal and only for fields visible or clearly requested.',
       'Exactly one action is required. Think carefully and choose one.',
-      'Keep the "reply" concise and confirm the action (e.g., "Highlighting Start Building").',
+      'Keep the "reply" concise and confirm the chosen action (e.g., "Filling your details now").',
       'When uncertain, ask a short clarifying question in "reply". Do not hallucinate UI that is not present.',
       'Never use bold text or emojis. Do not include an ACTION line; JSON only.',
     ].join(' ');

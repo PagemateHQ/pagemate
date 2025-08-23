@@ -156,7 +156,7 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
               const data = await resp.json();
               if (resp.ok) {
                 const structured = data?.structured as
-                  | { reply: string; action: { verb: 'SPOTLIGHT' | 'CLICK' | 'RETRIEVE'; target: string } }
+                  | { reply: string; action: { verb: 'SPOTLIGHT' | 'CLICK' | 'RETRIEVE' | 'AUTOFILL'; target: string } }
                   | undefined;
                 if (structured && structured.reply) {
                   setMessages((prev) => [
@@ -456,7 +456,7 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
         if (!resp.ok) throw new Error(data?.error || 'Failed to fetch');
 
         const structured = data?.structured as
-          | { reply: string; action: { verb: 'SPOTLIGHT' | 'CLICK' | 'RETRIEVE'; target: string } }
+          | { reply: string; action: { verb: 'SPOTLIGHT' | 'CLICK' | 'RETRIEVE' | 'AUTOFILL'; target: string } }
           | undefined;
 
         if (structured && structured.reply) {
