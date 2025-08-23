@@ -3,7 +3,6 @@ import Image from 'next/image';
 import React from 'react';
 
 import { Header } from '@/components/Header';
-import { FloatingOrb } from '@/pagemate/FloatingOrb';
 
 const DEMO_ITEMS: {
   title: string;
@@ -27,8 +26,6 @@ const HomePage = () => {
   return (
     <Container>
       <Header variant="home" />
-
-      <FloatingOrb />
 
       <ContentWrapper>
         <HeroSection>
@@ -331,4 +328,3 @@ const DemoCardTitle = styled.span`
   letter-spacing: -0.8px;
   color: #6ab9e1;
 `;
-
