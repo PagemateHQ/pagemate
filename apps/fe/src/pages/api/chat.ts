@@ -203,6 +203,9 @@ async function handler(
       return { content: raw.trim(), structured: null };
     };
 
+    console.log({
+        messages: finalMessages,
+    });
     const response = await fetch('https://api.pagemate.app/upstage/v1/chat/completions', {
       method: 'POST',
       body: JSON.stringify({
