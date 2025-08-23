@@ -1,7 +1,7 @@
 # The Worst UX Challenge (Tenant Insurance)
 
 Focus on overall flow and state management, not pixel‑level component tweaks.
-Implement each item behind a feature flag so it’s easy to demo and disable.
+Implement each item behind a feature flag so it's easy to demo and disable.
 
 - Feature flag: enable via query `?worst=1` and/or env `WORST_UX=1`.
 - Persistence: when enabled, persist the flag for the session (e.g., localStorage).
@@ -10,7 +10,7 @@ Implement each item behind a feature flag so it’s easy to demo and disable.
 ## Challenges (5 tasks)
 
 ### 1) Hidden Prerequisite Gate (State)
-Block progress on an invisible prerequisite that doesn’t exist in the current step.
+Block progress on an invisible prerequisite that doesn't exist in the current step.
 
 - Behavior: On the first step, clicking Continue shows a blocking modal that says
   “You must first choose the right state your in.” (intentional grammar).
@@ -60,7 +60,7 @@ Show coverage and teaser price before address; entering address invalidates choi
 
 - Behavior: Start with coverage selection and a low teaser price. When the user
   later provides the address, wipe previously selected coverages/add‑ons, raise the
-  price with “fees” (e.g., +$7–$19), and require re‑selection. Changing address
+  price with “fees” (e.g., +$7-$19), and require re‑selection. Changing address
   again repeats the wipe.
 - Acceptance:
   - Coverage appears before address when flag is on.

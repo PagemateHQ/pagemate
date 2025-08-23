@@ -255,8 +255,8 @@
 	},
 	"Claims": {
 		"title": "File a Claim",
-		"desc": "We’re here to help 24/7. Submit your details and an agent will reach out.",
-		"thanksTitle": "Thanks — we’ve got it.",
+		"desc": "We're here to help 24/7. Submit your details and an agent will reach out.",
+		"thanksTitle": "Thanks — we've got it.",
 		"thanksDesc": "Your claim number is {id}. An adjuster will contact you shortly.",
 		"details": {
 			"title": "Claim Details",
@@ -287,27 +287,27 @@
 	},
 	"Contact": {
 		"title": "Contact Us",
-		"desc": "Questions about coverage, billing, or claims? We’re happy to help.",
+		"desc": "Questions about coverage, billing, or claims? We're happy to help.",
 		"details": {
 			"title": "Contact Details",
 			"desc": "How to reach our team.",
 			"support": "Support:",
 			"claims": "Claims:",
 			"phone": "Phone:",
-			"hours": "Mon–Fri 8am–8pm, Sat 9am–3pm"
+			"hours": "Mon-Fri 8am-8pm, Sat 9am-3pm"
 		},
 		"form": {
 			"title": "Send us a message",
-			"desc": "We’ll reply by email.",
+			"desc": "We'll reply by email.",
 			"message": "Message",
 			"help": "How can we help?"
 		}
 	},
 	"Legal": {
 		"privacyTitle": "Privacy Policy",
-		"privacyBody": "This is a demo site for an insurance company. Replace this page with your organization’s actual privacy policy.",
+		"privacyBody": "This is a demo site for an insurance company. Replace this page with your organization's actual privacy policy.",
 		"termsTitle": "Terms of Service",
-		"termsBody": "This is a demo site for an insurance company. Replace this page with your organization’s actual terms of service.",
+		"termsBody": "This is a demo site for an insurance company. Replace this page with your organization's actual terms of service.",
 		"disclosuresTitle": "Disclosures & Licensing",
 		"disclosuresBody": "Acme Insurance is a fictitious brand for demo purposes. Replace with your compliance and licensing details, including NAIC numbers, producer licenses, and state-specific disclosures.",
 		"disclosuresItems": [
@@ -366,7 +366,7 @@
 	},
 	"NotFound": {
 		"title": "Page not found",
-		"desc": "The page you’re looking for doesn’t exist.",
+		"desc": "The page you're looking for doesn't exist.",
 		"home": "Return home"
 	}
 }
