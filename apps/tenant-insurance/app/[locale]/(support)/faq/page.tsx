@@ -5,6 +5,11 @@ import {
 	AccordionItem,
 	AccordionTrigger,
 } from "@/components/ui/accordion";
+import { locales } from "@/i18n/routing";
+
+export function generateStaticParams() {
+	return locales.map((locale) => ({ locale }));
+}
 
 export default async function FAQPage({
 	params,

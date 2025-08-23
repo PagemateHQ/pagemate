@@ -6,7 +6,7 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
-import { Link } from "@/i18n/routing";
+import { Link, locales } from "@/i18n/routing";
 
 export default async function SupportPage({
 	params,

@@ -317,7 +317,7 @@ function WizardContent() {
 													});
 												}}
 											/>
-											<span>{t(`Common.endorsementsMap.${key}` as any)}</span>
+											<span>{t(`Common.endorsementsMap.${key}`)}</span>
 										</label>
 									))}
 								</div>
@@ -412,9 +412,7 @@ function WizardContent() {
 												<TableRow key={`endorse-${String(k)}`}>
 													<TableCell className="capitalize">
 														{t("Wizard.table.endorsement", {
-															key: t(
-																`Common.endorsementsMap.${String(k)}` as any,
-															),
+															key: t(`Common.endorsementsMap.${String(k)}`),
 														})}
 													</TableCell>
 													<TableCell className="text-right">${v}</TableCell>

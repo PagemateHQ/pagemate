@@ -10,6 +10,11 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { locales } from "@/i18n/routing";
+
+export function generateStaticParams() {
+	return locales.map((locale) => ({ locale }));
+}
 
 export default async function ContactPage() {
 	const t = await getTranslations();
