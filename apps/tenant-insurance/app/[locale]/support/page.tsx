@@ -1,8 +1,10 @@
-import {getTranslations} from 'next-intl/server'
+import {getTranslations, setRequestLocale} from 'next-intl/server'
 import {Link} from '@/i18n/routing'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 
-export default async function SupportPage() {
+export default async function SupportPage({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale } = await params
+  setRequestLocale(locale)
   const t = await getTranslations()
   const items = [
     { href: "/claims", key: 'fileClaim' },
@@ -33,4 +35,3 @@ export default async function SupportPage() {
     </div>
   )
 }
-

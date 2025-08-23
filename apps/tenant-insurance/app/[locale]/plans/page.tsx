@@ -1,9 +1,11 @@
-import {getTranslations} from 'next-intl/server'
+import {getTranslations, setRequestLocale} from 'next-intl/server'
 import {Link} from '@/i18n/routing'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 
-export default async function PlansPage() {
+export default async function PlansPage({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale } = await params
+  setRequestLocale(locale)
   const t = await getTranslations()
 
   const plans = [
@@ -68,4 +70,3 @@ export default async function PlansPage() {
     </div>
   )
 }
-

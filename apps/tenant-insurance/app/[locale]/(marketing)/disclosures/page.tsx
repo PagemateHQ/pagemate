@@ -1,6 +1,8 @@
-import {getTranslations} from 'next-intl/server'
+import {getTranslations, setRequestLocale} from 'next-intl/server'
 
-export default async function DisclosuresPage() {
+export default async function DisclosuresPage({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale } = await params
+  setRequestLocale(locale)
   const t = await getTranslations()
   const items = t.raw('Legal.disclosuresItems') as string[]
   return (
@@ -15,4 +17,3 @@ export default async function DisclosuresPage() {
     </div>
   )
 }
-

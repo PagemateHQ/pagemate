@@ -1,7 +1,9 @@
-import {getTranslations} from 'next-intl/server'
+import {getTranslations, setRequestLocale} from 'next-intl/server'
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 
-export default async function FAQPage() {
+export default async function FAQPage({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale } = await params
+  setRequestLocale(locale)
   const t = await getTranslations()
   const items = t.raw('FAQ.items') as Array<{q: string; a: string}>
   return (
@@ -21,4 +23,3 @@ export default async function FAQPage() {
     </div>
   )
 }
-

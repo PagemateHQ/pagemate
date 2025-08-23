@@ -1,5 +1,5 @@
 import {notFound} from 'next/navigation'
-import {getTranslations} from 'next-intl/server'
+import {getTranslations, setRequestLocale} from 'next-intl/server'
 import {Link} from '@/i18n/routing'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
@@ -8,9 +8,10 @@ import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbP
 
 type PlanKey = 'Essential' | 'Standard' | 'Plus'
 
-export default async function PlanDetail({ params }: { params: Promise<{ plan: string }> }) {
+export default async function PlanDetail({ params }: { params: Promise<{ plan: string; locale: string }> }) {
+  const { plan, locale } = await params
+  setRequestLocale(locale)
   const t = await getTranslations()
-  const { plan } = await params
   const key = plan as PlanKey
   const valid: PlanKey[] = ['Essential','Standard','Plus']
   if (!valid.includes(key)) return notFound()

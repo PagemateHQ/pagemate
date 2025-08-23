@@ -1,9 +1,11 @@
-import {getTranslations} from 'next-intl/server'
+import {getTranslations, setRequestLocale} from 'next-intl/server'
 import {Link} from '@/i18n/routing'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 
-export default async function ProductsPage() {
+export default async function ProductsPage({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale } = await params
+  setRequestLocale(locale)
   const t = await getTranslations()
   const items = [
     { key: 'renters', href: '/quote' },
@@ -36,4 +38,3 @@ export default async function ProductsPage() {
     </div>
   )
 }
-
