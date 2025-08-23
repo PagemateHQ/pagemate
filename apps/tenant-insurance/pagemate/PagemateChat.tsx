@@ -116,6 +116,7 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
             ...prev,
             { role: 'assistant', content: summary },
           ]);
+          try { setSuppressActions(false); } catch {}
           const ragText = buildRagContextFromChunks(query, chunks);
           return { success: true, kind: tool.type, ragContext: ragText };
         } catch (e: any) {
@@ -599,6 +600,7 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
           ];
           messagesRef.current = workingMessages;
           setMessages(workingMessages);
+          try { setSuppressActions(false); } catch {}
         }
 
         const maxFollowups = 3;
@@ -624,6 +626,7 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
             ];
             messagesRef.current = workingMessages;
             setMessages(workingMessages);
+            try { setSuppressActions(false); } catch {}
           }
           followups++;
         }
