@@ -2,6 +2,7 @@ import styled from '@emotion/styled';
 import Link from 'next/link';
 import React, { useEffect, useState } from 'react';
 
+import { Header } from '@/components/Header';
 import { Tenant, tenantService } from '@/services/api';
 
 const CustomersPage: React.FC = () => {
@@ -36,128 +37,125 @@ const CustomersPage: React.FC = () => {
 
   return (
     <Container>
-      <Header>
-        <HeaderContent>
-          <LogoWrapper>
-            <LogoContainer>
-              <LogoImage src="/logo.png" alt="Pagemate" />
-              <LogoText>Pagemate</LogoText>
-            </LogoContainer>
-          </LogoWrapper>
-        </HeaderContent>
-      </Header>
+      <Header />
 
-      <HeroSection>
-        <HeroTitle>Start Building with</HeroTitle>
-        <PagemateBadge>
-          <BadgeIcon>⚡</BadgeIcon>
-          <BadgeText>Pagemate</BadgeText>
-        </PagemateBadge>
-      </HeroSection>
+      <Content>
+        <HeroSection>
+          <HeroTitle>
+            Start Building with <span className="sr-only">Pagemate</span>
+          </HeroTitle>
+          <PagemateBadge>
+            <PagemateBadgeLogo
+              src="/app/logo-pagemate-tight.png"
+              alt="Pagemate"
+            />
+          </PagemateBadge>
+        </HeroSection>
 
-      <MainContent>
-        <LeftSection>
-          <SectionHeader>
-            <SectionTitle>Customers</SectionTitle>
-            <SectionCount>({tenants.length})</SectionCount>
-          </SectionHeader>
+        <MainContent>
+          <LeftSection>
+            <SectionHeader>
+              <SectionTitle>Customers</SectionTitle>
+              <SectionCount>({tenants.length})</SectionCount>
+            </SectionHeader>
 
-          {error ? (
-            <ErrorContainer>
-              <ErrorMessage>{error}</ErrorMessage>
-              <RetryButton onClick={loadTenants}>Retry</RetryButton>
-            </ErrorContainer>
-          ) : loading ? (
-            <LoadingState>Loading customers...</LoadingState>
-          ) : tenants.length === 0 ? (
-            <EmptyState>
-              <EmptyStateIcon>
-                <svg
-                  width="64"
-                  height="64"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    d="M3 21h18M5 21V7l8-4v18M19 21V11l-6-3M9 9v.01M9 12v.01M9 15v.01M9 18v.01"
-                    stroke="#6c8bab"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              </EmptyStateIcon>
-              <EmptyStateTitle>No customers yet</EmptyStateTitle>
-              <EmptyStateDescription>
-                Create your first customer to get started
-              </EmptyStateDescription>
-            </EmptyState>
-          ) : (
-            <CustomerGrid>
-              {tenants.map((tenant) => (
-                <CustomerCard key={tenant._id}>
-                  <CardContent>
-                    <CompanyLogo src="/logo.png" alt={tenant.name} />
-                    <Divider />
-                  </CardContent>
-                  <CompanyDetails>
-                    <CompanyInfo>
-                      <CompanyCategory>Insurance & Finance</CompanyCategory>
-                      <CompanyName>{tenant.name}</CompanyName>
-                      <CompanyCreated>
-                        Created {formatDate(tenant.created_at)}
-                      </CompanyCreated>
-                    </CompanyInfo>
-                    <Link
-                      href={`/customer/${tenant._id}`}
-                      passHref
-                      legacyBehavior
-                    >
-                      <ViewDetailsButton>View Details</ViewDetailsButton>
-                    </Link>
-                  </CompanyDetails>
-                </CustomerCard>
-              ))}
-            </CustomerGrid>
-          )}
-        </LeftSection>
+            {error ? (
+              <ErrorContainer>
+                <ErrorMessage>{error}</ErrorMessage>
+                <RetryButton onClick={loadTenants}>Retry</RetryButton>
+              </ErrorContainer>
+            ) : loading ? (
+              <LoadingState>Loading customers...</LoadingState>
+            ) : tenants.length === 0 ? (
+              <EmptyState>
+                <EmptyStateIcon>
+                  <svg
+                    width="64"
+                    height="64"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M3 21h18M5 21V7l8-4v18M19 21V11l-6-3M9 9v.01M9 12v.01M9 15v.01M9 18v.01"
+                      stroke="#6c8bab"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </EmptyStateIcon>
+                <EmptyStateTitle>No customers yet</EmptyStateTitle>
+                <EmptyStateDescription>
+                  Create your first customer to get started
+                </EmptyStateDescription>
+              </EmptyState>
+            ) : (
+              <CustomerGrid>
+                {tenants.map((tenant) => (
+                  <CustomerCard key={tenant._id}>
+                    <CardContent>
+                      <CompanyLogo
+                        src="/app/logo-acme-insurance.png"
+                        alt={tenant.name}
+                      />
+                      <Divider />
+                    </CardContent>
+                    <CompanyDetails>
+                      <CompanyInfo>
+                        <CompanyCategory>Insurance & Finance</CompanyCategory>
+                        <CompanyName>{tenant.name}</CompanyName>
+                        <CompanyCreated>
+                          Created {formatDate(tenant.created_at)}
+                        </CompanyCreated>
+                      </CompanyInfo>
+                      <Link href={`/customer/${tenant._id}`}>
+                        <ViewDetailsButton>View Details</ViewDetailsButton>
+                      </Link>
+                    </CompanyDetails>
+                  </CustomerCard>
+                ))}
+              </CustomerGrid>
+            )}
+          </LeftSection>
 
-        <VerticalDivider />
+          <VerticalDivider />
 
-        <RightSection>
-          <IntegrationCard>
-            <IntegrationHeader>
-              <IntegrationSubtitle>Get started in minutes</IntegrationSubtitle>
-              <IntegrationTitle>Ready to integrate?</IntegrationTitle>
-            </IntegrationHeader>
-            <IntegrationContent>
-              <IntegrationStep>
-                <StepNumber>1</StepNumber>
-                <StepContent>
-                  <StepTitle>Install the package</StepTitle>
-                  <CodeBlock>
-                    <CodeHeader>
-                      <PackageManager>npm</PackageManager>
-                    </CodeHeader>
-                    <CodeContent>
-                      <CodeText>yarn add @pagemate/sdk</CodeText>
-                    </CodeContent>
-                  </CodeBlock>
-                </StepContent>
-              </IntegrationStep>
-              <StepConnector />
-              <IntegrationStep>
-                <StepNumber $active>2</StepNumber>
-                <StepContent>
-                  <StepTitle $active>Add widget from Pagemate SDK</StepTitle>
-                  <CodeBlock>
-                    <CodeHeader>
-                      <PackageManager>React</PackageManager>
-                    </CodeHeader>
-                    <CodeContent>
-                      <CodeText>
-                        {`<Pagemate.FloatingOrb
+          <RightSection>
+            <IntegrationCard>
+              <IntegrationHeader>
+                <IntegrationSubtitle>
+                  Get started in minutes
+                </IntegrationSubtitle>
+                <IntegrationTitle>Ready to integrate?</IntegrationTitle>
+              </IntegrationHeader>
+              <IntegrationContent>
+                <IntegrationStep>
+                  <StepNumber>1</StepNumber>
+                  <StepContent>
+                    <StepTitle>Install the package</StepTitle>
+                    <CodeBlock>
+                      <CodeHeader>
+                        <PackageManager>npm</PackageManager>
+                      </CodeHeader>
+                      <CodeContent>
+                        <CodeText>yarn add @pagemate/sdk</CodeText>
+                      </CodeContent>
+                    </CodeBlock>
+                  </StepContent>
+                </IntegrationStep>
+                <StepConnector />
+                <IntegrationStep>
+                  <StepNumber $active>2</StepNumber>
+                  <StepContent>
+                    <StepTitle $active>Add widget from Pagemate SDK</StepTitle>
+                    <CodeBlock>
+                      <CodeHeader>
+                        <PackageManager>React</PackageManager>
+                      </CodeHeader>
+                      <CodeContent>
+                        <CodeText>
+                          {`<Pagemate.FloatingOrb
   initialCorner="bottom-right"
   defaultSuggestions={[
     'What is the Austin Office Phone Number?',
@@ -165,15 +163,16 @@ const CustomersPage: React.FC = () => {
     'Insurance quote for $20k Car and $1M Home in MA',
   ]}
 />`}
-                      </CodeText>
-                    </CodeContent>
-                  </CodeBlock>
-                </StepContent>
-              </IntegrationStep>
-            </IntegrationContent>
-          </IntegrationCard>
-        </RightSection>
-      </MainContent>
+                        </CodeText>
+                      </CodeContent>
+                    </CodeBlock>
+                  </StepContent>
+                </IntegrationStep>
+              </IntegrationContent>
+            </IntegrationCard>
+          </RightSection>
+        </MainContent>
+      </Content>
     </Container>
   );
 };
@@ -181,102 +180,63 @@ const CustomersPage: React.FC = () => {
 // Styled Components
 const Container = styled.div`
   min-height: 100vh;
+  padding: 0 20px;
   width: 100%;
-  background: #e8f7ff;
 `;
-
-const Header = styled.header`
-  position: relative;
-  height: 64px;
-  background: transparent;
-  border-bottom: 1px solid #c4e2f1;
-`;
-
-const HeaderContent = styled.div`
+const Content = styled.div`
   max-width: 1200px;
+  width: 100%;
   margin: 0 auto;
-  height: 100%;
+
   display: flex;
-  align-items: center;
-  padding: 0 8px;
-`;
-
-const LogoWrapper = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 8px;
-`;
-
-const LogoContainer = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 4px;
-`;
-
-const LogoImage = styled.img`
-  width: 37px;
-  height: 37px;
-`;
-
-const LogoText = styled.span`
-  font-size: 20px;
-  font-weight: 600;
-  color: #0b3668;
-  letter-spacing: -0.4px;
+  flex-direction: column;
+  gap: 64px;
+  padding: 115px 0 120px;
 `;
 
 const HeroSection = styled.div`
+  width: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 24px;
-  padding: 51px 0 48px;
+  gap: 6px;
 `;
-
 const HeroTitle = styled.h1`
   font-size: 48px;
   font-weight: 400;
   color: #0b3668;
   letter-spacing: -1.92px;
   line-height: 1.04;
-  margin: 0;
+  text-align: center;
 `;
-
 const PagemateBadge = styled.div`
+  width: fit-content;
   display: flex;
   align-items: center;
   gap: 8px;
   background: #bae3f8;
   border-radius: 221px;
-  padding: 4.4px 17.7px;
+  padding: 5px 18px;
 `;
-
-const BadgeIcon = styled.span`
-  font-size: 32px;
-`;
-
-const BadgeText = styled.span`
-  font-size: 36px;
-  font-weight: 600;
-  color: #0b3668;
-  letter-spacing: -0.72px;
+const PagemateBadgeLogo = styled.img`
+  width: 247px;
+  height: 55px;
+  object-fit: contain;
 `;
 
 const MainContent = styled.div`
-  max-width: 1200px;
-  margin: 0 auto;
+  width: 100%;
   display: flex;
   gap: 24px;
-  padding: 0 20px 40px;
 `;
 
 const LeftSection = styled.div`
+  max-width: 532px;
   display: flex;
   flex-direction: column;
   gap: 20px;
   flex: 1;
 `;
-
 const SectionHeader = styled.div`
   display: flex;
   align-items: center;
@@ -289,9 +249,7 @@ const SectionTitle = styled.h2`
   color: #0d386a;
   letter-spacing: -0.8px;
   line-height: 1.208;
-  margin: 0;
 `;
-
 const SectionCount = styled.span`
   font-size: 18px;
   font-weight: 500;
@@ -346,21 +304,21 @@ const CompanyInfo = styled.div`
   gap: 3px;
 `;
 
-const CompanyCategory = styled.span`
+const CompanyCategory = styled.p`
   font-size: 14px;
   font-weight: 500;
   color: #0093f6;
   letter-spacing: -0.42px;
 `;
 
-const CompanyName = styled.span`
+const CompanyName = styled.h3`
   font-size: 23px;
   font-weight: 500;
   color: #000000;
   letter-spacing: -0.69px;
 `;
 
-const CompanyCreated = styled.span`
+const CompanyCreated = styled.p`
   font-size: 14px;
   font-weight: 400;
   color: #6c8bab;
@@ -368,25 +326,23 @@ const CompanyCreated = styled.span`
   line-height: 1.2;
 `;
 
-const ViewDetailsButton = styled.a`
+const ViewDetailsButton = styled.button`
   display: flex;
-  align-items: center;
-  justify-content: center;
   padding: 8px 16px;
-  border: 1px solid #c4e2f1;
+  justify-content: center;
+  align-items: center;
+
   border-radius: 8px;
+  border: 1px solid #c4e2f1;
+
+  color: #6ab9e1;
   font-size: 14px;
   font-weight: 500;
-  color: #6ab9e1;
+  line-height: 120.817%; /* 16.914px */
   letter-spacing: -0.56px;
-  line-height: 1.208;
-  text-decoration: none;
-  cursor: pointer;
-  transition: all 0.2s ease;
 
   &:hover {
-    background: #f0f9ff;
-    border-color: #0093f6;
+    background: rgba(196, 226, 241, 0.1);
   }
 `;
 
@@ -417,13 +373,13 @@ const IntegrationHeader = styled.div`
   background: rgba(170, 226, 255, 0.1);
 `;
 
-const IntegrationSubtitle = styled.div`
+const IntegrationSubtitle = styled.p`
   font-size: 18px;
   font-weight: 400;
   color: #0093f6;
   letter-spacing: -0.72px;
   line-height: 1.04;
-  margin-bottom: 8px;
+  margin: 0 0 8px 0;
 `;
 
 const IntegrationTitle = styled.h3`
@@ -432,7 +388,6 @@ const IntegrationTitle = styled.h3`
   color: #0b3668;
   letter-spacing: -1.36px;
   line-height: 1.04;
-  margin: 0;
 `;
 
 const IntegrationContent = styled.div`
@@ -470,7 +425,7 @@ const StepContent = styled.div`
   gap: 13px;
 `;
 
-const StepTitle = styled.div<{ $active?: boolean }>`
+const StepTitle = styled.p<{ $active?: boolean }>`
   font-size: 18px;
   font-weight: 400;
   color: ${(props) => (props.$active ? '#0b3668' : '#6c8bab')};
@@ -493,7 +448,7 @@ const CodeHeader = styled.div`
   gap: 12px;
 `;
 
-const PackageManager = styled.div`
+const PackageManager = styled.span`
   background: #2d4e77;
   border-radius: 6px;
   padding: 3px 6px 3px 4px;
@@ -517,7 +472,6 @@ const CodeText = styled.pre`
   color: #ffffff;
   letter-spacing: -0.42px;
   line-height: 1.04;
-  margin: 0;
   white-space: pre-wrap;
 `;
 
@@ -544,7 +498,7 @@ const StepConnector = styled.div`
   }
 `;
 
-const LoadingState = styled.div`
+const LoadingState = styled.p`
   padding: 40px;
   text-align: center;
   font-size: 16px;
@@ -578,7 +532,6 @@ const EmptyStateDescription = styled.p`
   font-weight: 400;
   letter-spacing: -0.64px;
   color: #6c8bab;
-  margin: 0;
 `;
 
 const ErrorContainer = styled.div`
@@ -590,7 +543,7 @@ const ErrorContainer = styled.div`
   gap: 16px;
 `;
 
-const ErrorMessage = styled.span`
+const ErrorMessage = styled.p`
   font-size: 18px;
   color: #ff3b30;
 `;
