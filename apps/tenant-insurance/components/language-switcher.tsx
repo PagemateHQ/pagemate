@@ -21,13 +21,13 @@ export function LanguageSwitcher() {
 	}
 
 	return (
-		<Select value={locale} onValueChange={onChange}>
-			<SelectTrigger className="w-[120px]">
+		<Select value={locale} onValueChange={onChange} aria-label="Select language">
+			<SelectTrigger className="w-[120px]" aria-label="Language selection dropdown">
 				<SelectValue />
 			</SelectTrigger>
-			<SelectContent>
-				<SelectItem value="en">{t("Common.language.en")}</SelectItem>
-				<SelectItem value="ko">{t("Common.language.ko")}</SelectItem>
+			<SelectContent aria-label="Available languages">
+				<SelectItem value="en" aria-label="Switch to English">{t("Common.language.en")}</SelectItem>
+				<SelectItem value="ko" aria-label="Switch to Korean">{t("Common.language.ko")}</SelectItem>
 			</SelectContent>
 		</Select>
 	);

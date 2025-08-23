@@ -11,7 +11,7 @@ export function MobileNav() {
 	const [open, setOpen] = useState(false);
 	const t = useTranslations();
 	return (
-		<Sheet open={open} onOpenChange={setOpen}>
+		<Sheet open={open} onOpenChange={setOpen} aria-label="Mobile navigation menu">
 			<SheetTrigger asChild>
 				<Button
 					variant="ghost"
@@ -21,48 +21,51 @@ export function MobileNav() {
 					<MenuIcon className="size-5" />
 				</Button>
 			</SheetTrigger>
-			<SheetContent side="right" className="w-80">
-				<nav className="grid gap-4">
-					<Link onClick={() => setOpen(false)} className="py-1" href="/">
+			<SheetContent side="right" className="w-80" aria-label="Mobile navigation panel">
+				<nav className="grid gap-4" aria-label="Mobile navigation links">
+					<Link onClick={() => setOpen(false)} className="py-1" href="/" aria-label="Navigate to home page">
 						{t("Common.nav.home")}
 					</Link>
-					<Link onClick={() => setOpen(false)} className="py-1" href="/plans">
+					<Link onClick={() => setOpen(false)} className="py-1" href="/plans" aria-label="View insurance plans">
 						{t("Common.nav.plans")}
 					</Link>
 					<Link
 						onClick={() => setOpen(false)}
 						className="py-1"
 						href="/plans/Standard"
+						aria-label="View Standard plan details"
 					>
 						{t("Common.mobile.planDetails")}
 					</Link>
-					<Link onClick={() => setOpen(false)} className="py-1" href="/quote">
+					<Link onClick={() => setOpen(false)} className="py-1" href="/quote" aria-label="Get insurance quote">
 						{t("Common.actions.getQuote")}
 					</Link>
 					{/** Wizard is intentionally hidden from global nav */}
-					<Link onClick={() => setOpen(false)} className="py-1" href="/claims">
+					<Link onClick={() => setOpen(false)} className="py-1" href="/claims" aria-label="Submit insurance claims">
 						{t("Common.mobile.claims")}
 					</Link>
 					<Link
 						onClick={() => setOpen(false)}
 						className="py-1"
 						href="/claims/track"
+						aria-label="Track claim status"
 					>
 						{t("Common.mobile.trackClaim")}
 					</Link>
-					<Link onClick={() => setOpen(false)} className="py-1" href="/faq">
+					<Link onClick={() => setOpen(false)} className="py-1" href="/faq" aria-label="View frequently asked questions">
 						{t("Common.mobile.faq")}
 					</Link>
-					<Link onClick={() => setOpen(false)} className="py-1" href="/agents">
+					<Link onClick={() => setOpen(false)} className="py-1" href="/agents" aria-label="Find insurance agents">
 						{t("Common.mobile.agents")}
 					</Link>
-					<Link onClick={() => setOpen(false)} className="py-1" href="/contact">
+					<Link onClick={() => setOpen(false)} className="py-1" href="/contact" aria-label="Contact customer service">
 						{t("Common.mobile.contact")}
 					</Link>
 					<Link
 						onClick={() => setOpen(false)}
 						className="py-1"
 						href="/(marketing)/disclosures"
+						aria-label="View legal disclosures"
 					>
 						{t("Common.mobile.disclosures")}
 					</Link>
