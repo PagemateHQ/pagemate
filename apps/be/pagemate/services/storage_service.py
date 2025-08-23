@@ -9,14 +9,12 @@ async def file_exists(path: str | pathlib.Path) -> bool:
 
 
 async def save_text_file(
-    path: str | pathlib.Path, content: str, encoding: str = "utf-8"
+    path: str | pathlib.Path, content: bytes
 ) -> None:
     """텍스트 파일을 저장합니다."""
     path_obj = pathlib.Path(path) if isinstance(path, str) else path
-    data = content.encode(encoding)
 
-    await save_file(path_obj, data)
-
+    await save_file(path_obj, content)
 
 async def read_text_file(path: str | pathlib.Path, encoding: str = "utf-8") -> str:
     """텍스트 파일을 읽어옵니다."""
