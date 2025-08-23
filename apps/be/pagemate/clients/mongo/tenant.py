@@ -8,6 +8,16 @@ def get_tenant_collection() -> AsyncIOMotorCollection:
     return db.tenants
 
 
+async def list_tenants(offset: int = 0, limit: int = 20) -> list[dict]:
+    """모든 테넌트 정보를 리스트로 반환합니다."""
+    collection = get_tenant_collection()
+    cursor = collection.find({}).skip(offset).limit(limit)
+    tenants = []
+    async for doc in cursor:
+        tenants.append(doc)
+    return tenants
+
+
 async def get_tenant_by_id(tenant_id: str) -> dict | None:
     """주어진 tenant_id에 해당하는 테넌트 정보를 반환합니다."""
     collection = get_tenant_collection()
