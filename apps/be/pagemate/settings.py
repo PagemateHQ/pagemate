@@ -16,6 +16,11 @@ class Settings(BaseSettings):
     query_embedding_model: str = "embedding-query"
     document_embedding_model: str = "embedding-passage"
 
+    secret_recipe: str = (
+        "Current website is Acme Insurance."
+        "You are an AI assistant that helps users navigate to the appropriate pages."
+    )
+
     @property
     def file_storage_base_path(self) -> pathlib.Path:
         return pathlib.Path(self.file_storage_base_path_str)

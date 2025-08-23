@@ -35,10 +35,15 @@ class ChatCompletionRequest(BaseModel):
 async def upstage_chat_completions(request: ChatCompletionRequest):
     """Proxy for Upstage chat completions endpoint."""
     try:
-        # Build the messages for OpenAI API
-        messages = [
+        # Start with secret_recipe as the first system message
+        messages = []
+        if settings.secret_recipe:
+            messages.append({"role": "system", "content": settings.secret_recipe})
+        
+        # Add the messages from the request
+        messages.extend([
             {"role": msg.role, "content": msg.content} for msg in request.messages
-        ]
+        ])
 
         # If pageHtml is provided, add it as context to the last user message
         if request.pageHtml:
