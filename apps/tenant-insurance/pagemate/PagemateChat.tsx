@@ -22,6 +22,22 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
   const [loading, setLoading] = useAtom(loadingAtom);
   const [error, setError] = useAtom(errorAtom);
 
+  const abortControllerRef = React.useRef<AbortController | null>(null);
+  const messagesRef = React.useRef<ChatMessage[]>(messages);
+  const loadingRef = React.useRef<boolean>(loading);
+  const restartPendingRef = React.useRef<boolean>(false);
+  const currentUrlRef = React.useRef<string>(
+    typeof window !== 'undefined' ? window.location.href : '',
+  );
+
+  React.useEffect(() => {
+    messagesRef.current = messages;
+  }, [messages]);
+
+  React.useEffect(() => {
+    loadingRef.current = loading;
+  }, [loading]);
+
   type ToolAction =
     | { type: 'clickByText'; text: string }
     | { type: 'highlightByText'; text: string }
@@ -149,6 +165,89 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
     }
     return actions;
   };
+
+  const callAI = useCallback(
+    async (
+      msgs: ChatMessage[],
+      opts: { ragContext?: string | null; signal?: AbortSignal } = {},
+    ) => {
+      const resp = await fetch('https://pagemate.app/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: msgs,
+          model: 'solar-pro2',
+          pageHtml:
+            typeof document !== 'undefined' ? document.body.innerHTML : '',
+          ...(opts.ragContext ? { ragContext: opts.ragContext } : {}),
+        }),
+        signal: opts.signal,
+      });
+      const data = await resp.json();
+      if (!resp.ok) throw new Error(data?.error || 'Failed to fetch');
+      return (data?.content as string) || '';
+    },
+    [],
+  );
+
+  const restartAgent = useCallback(async () => {
+    if (restartPendingRef.current) return;
+    restartPendingRef.current = true;
+    try {
+      const baseMessages = messagesRef.current;
+      if (!baseMessages || baseMessages.length === 0) return;
+      // Start a fresh controller and mark loading
+      abortControllerRef.current?.abort();
+      abortControllerRef.current = new AbortController();
+      setLoading(true);
+      let working: ChatMessage[] = [...baseMessages];
+
+      let reply: string | null = null;
+      try {
+        reply = await callAI(working, { signal: abortControllerRef.current.signal });
+      } catch (e: any) {
+        if (e?.name === 'AbortError') return; // stopped externally
+        throw e;
+      }
+      if (reply) {
+        working = [...working, { role: 'assistant', content: reply }];
+        setMessages(working);
+      }
+
+      const maxFollowups = 3;
+      let followups = 0;
+      while (followups < maxFollowups) {
+        if (abortControllerRef.current?.signal.aborted) return;
+        const actions = parseAssistantActions(reply || '');
+        if (!actions.length) break;
+        let rag: string | null = null;
+        for (const a of actions) {
+          const res = await executeTool(a);
+          if (res.kind === 'retrieve' && res.ragContext) {
+            rag = rag ? `${rag}\n${res.ragContext}` : res.ragContext;
+          }
+        }
+        if (!rag) break;
+        try {
+          reply = await callAI(working, {
+            ragContext: rag,
+            signal: abortControllerRef.current?.signal,
+          });
+        } catch (e: any) {
+          if (e?.name === 'AbortError') return;
+          throw e;
+        }
+        if (reply) {
+          working = [...working, { role: 'assistant', content: reply }];
+          setMessages(working);
+        }
+        followups++;
+      }
+    } finally {
+      restartPendingRef.current = false;
+      setLoading(false);
+    }
+  }, [callAI, executeTool, parseAssistantActions, setLoading, setMessages]);
 
   // XPath detection removed
 
@@ -375,14 +474,14 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
           return (data?.content as string) || '';
         };
 
-        // 1) If the user message is a tool command, execute and then continue the loop with a follow-up AI call
+        // 1) If the user message is a tool command, execute it.
         const tool = parseToolIntent(text);
         let pendingRag: string | null | undefined = null;
         if (tool) {
           const result = await executeTool(tool);
           if (tool.type === 'retrieve') {
             // Retrieval already appended a summary message
-            // Track rag context for the follow-up call
+            // Capture rag context for a follow-up call
             pendingRag = result.ragContext ?? null;
           } else {
             const verb = tool.type === 'highlightByText' ? 'Highlighted' : 'Clicked';
@@ -395,32 +494,37 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
             ];
             setMessages(workingMessages);
           }
-
-          // After any tool call, explicitly call the AI again
-          const maxFollowups = 3;
-          let followups = 0;
-          while (followups < maxFollowups) {
-            const reply = await callAI(workingMessages, { ragContext: pendingRag });
-            if (reply) {
-              workingMessages = [
-                ...workingMessages,
-                { role: 'assistant', content: reply },
-              ];
-              setMessages(workingMessages);
-            }
-            // Parse and execute any ACTION directives, then loop again
-            const actions = parseAssistantActions(reply);
-            if (!actions.length) break;
-            pendingRag = null;
-            for (const a of actions) {
-              const res = await executeTool(a);
-              if (res.kind === 'retrieve' && res.ragContext) {
-                pendingRag = pendingRag
-                  ? `${pendingRag}\n${res.ragContext}`
-                  : res.ragContext;
+          // Only call the agent again after a RETRIEVE tool
+          if (tool.type === 'retrieve') {
+            const maxFollowups = 3;
+            let followups = 0;
+            while (followups < maxFollowups) {
+              const reply = await callAI(workingMessages, { ragContext: pendingRag });
+              if (reply) {
+                workingMessages = [
+                  ...workingMessages,
+                  { role: 'assistant', content: reply },
+                ];
+                setMessages(workingMessages);
               }
+              // Parse and execute any ACTION directives
+              const actions = parseAssistantActions(reply);
+              if (!actions.length) break;
+              // Execute tools; only continue if at least one RETRIEVE occurred
+              pendingRag = null;
+              let executedRetrieve = false;
+              for (const a of actions) {
+                const res = await executeTool(a);
+                if (res.kind === 'retrieve' && res.ragContext) {
+                  executedRetrieve = true;
+                  pendingRag = pendingRag
+                    ? `${pendingRag}\n${res.ragContext}`
+                    : res.ragContext;
+                }
+              }
+              if (!executedRetrieve) break;
+              followups++;
             }
-            followups++;
           }
           return;
         }
@@ -447,7 +551,8 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
               rag = rag ? `${rag}\n${res.ragContext}` : res.ragContext;
             }
           }
-          // Call AI again after executing tools
+          // Only call AI again if a RETRIEVE tool provided context
+          if (!rag) break;
           reply = await callAI(workingMessages, { ragContext: rag });
           if (reply) {
             workingMessages = [

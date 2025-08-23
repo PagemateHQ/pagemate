@@ -53,6 +53,7 @@ async function handler(
         'Supported VERB values: SPOTLIGHT (highlight by visible text), CLICK (click by visible text), RETRIEVE (semantic search).',
         'Use RETRIEVE when external knowledge is needed. Provide a concise query; the client will fetch top matches and continue the answer using them.',
         'Examples: ACTION SPOTLIGHT Start Building | ACTION CLICK Start Building | ACTION RETRIEVE refund policy for subscriptions',
+        'Unless the user asks, only use SPOTLIGHT. Also, the website information changes frequently, so do not rely on knowledge retrieval; only figure out the where to find the information.',
         'The command line should be in a single line, and should not contain any other text.',
       'Keep replies concise and confirm actions you take (e.g., "Highlighting Start Building").',
       'When uncertain, ask a short clarifying question. Do not hallucinate UI that is not present.',
