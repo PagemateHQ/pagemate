@@ -42,6 +42,8 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
   type ToolAction =
     | { type: 'clickByText'; text: string }
     | { type: 'highlightByText'; text: string }
+    | { type: 'clickBySelector'; selector: string }
+    | { type: 'highlightBySelector'; selector: string }
     | { type: 'retrieve'; query: string; limit?: number; documentId?: string | null };
 
   type ToolExecResult = {
@@ -107,6 +109,29 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
           return { success: false, kind: tool.type };
         }
       }
+      case 'clickBySelector': {
+        const el = findElementBySelector(tool.selector);
+        if (!el) return { success: false, kind: tool.type };
+        try {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          flashHighlight(el);
+          (el as HTMLElement).click();
+          return { success: true, kind: tool.type };
+        } catch {
+          return { success: false, kind: tool.type };
+        }
+      }
+      case 'highlightBySelector': {
+        const el = findElementBySelector(tool.selector);
+        if (!el) return { success: false, kind: tool.type };
+        try {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          showSpotlight(el);
+          return { success: true, kind: tool.type };
+        } catch {
+          return { success: false, kind: tool.type };
+        }
+      }
       // XPath-based actions have been removed
       case 'retrieve': {
         try {
@@ -135,6 +160,35 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
 
   const parseAssistantActions = (text: string): ToolAction[] => {
     const actions: ToolAction[] = [];
+    // Try JSON envelope: { reply: string, action: { verb, target } }
+    try {
+      const trimmed = (text || '').trim();
+      if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
+        const obj = JSON.parse(trimmed);
+        if (obj && typeof obj === 'object' && obj.action && obj.action.verb) {
+          const verb = String(obj.action.verb || '').toUpperCase();
+          const target: string = String(obj.action.target || '');
+          const isSelector = isLikelyCssSelector(target);
+          if (verb === 'SPOTLIGHT') {
+            actions.push(
+              isSelector
+                ? { type: 'highlightBySelector', selector: target }
+                : { type: 'highlightByText', text: target },
+            );
+          } else if (verb === 'CLICK') {
+            // Keep non-destructive default: highlight instead of clicking
+            actions.push(
+              isSelector
+                ? { type: 'highlightBySelector', selector: target }
+                : { type: 'highlightByText', text: target },
+            );
+          } else if (verb === 'RETRIEVE') {
+            actions.push({ type: 'retrieve', query: target });
+          }
+        }
+      }
+    } catch {}
+
     // Match patterns like:
     // ACTION SPOTLIGHT Start Building
     // ACTION CLICK "Start Building"
@@ -166,6 +220,12 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
       }
     }
     return actions;
+  };
+
+  const isLikelyCssSelector = (s: string): boolean => {
+    const t = (s || '').trim();
+    if (!t) return false;
+    return /^[#\.\[]/.test(t) || /[\[\]#.>:~+]/.test(t);
   };
 
   const callAI = useCallback(
@@ -381,6 +441,16 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
     if (exact) return exact;
     const partial = visible.find((el) => norm(getLabel(el)).includes(t));
     return partial || null;
+  };
+
+  const findElementBySelector = (selector: string): HTMLElement | null => {
+    try {
+      const el = document.querySelector(selector) as HTMLElement | null;
+      if (el && isVisible(el)) return el;
+      return el || null;
+    } catch {
+      return null;
+    }
   };
 
   const isVisible = (el: HTMLElement): boolean => {
