@@ -7,6 +7,8 @@ from typing import Any, Dict, Optional
 from pymongo import MongoClient, ReturnDocument
 from pymongo.errors import PyMongoError
 from openai import OpenAI
+from dotenv import load_dotenv
+from pathlib import Path
 
 
 def utc_now() -> datetime:
@@ -151,13 +153,16 @@ def _short_id(val: Any) -> str:
 
 
 def main() -> None:
+    # Load environment variables from the .env file next to this app (does not override existing)
+    load_dotenv(dotenv_path=Path(__file__).resolve().parent / ".env")
+
     # Config
     openai_api_key = os.getenv("OPENAI_API_KEY")
     if not openai_api_key:
         print("ERROR: OPENAI_API_KEY is required in environment.", file=sys.stderr)
         sys.exit(1)
 
-    embedding_model = os.getenv("EMBEDDING_MODEL", "text-embedding-3-small")
+    embedding_model = os.getenv("EMBEDDING_MODEL", "solar-embedding-1-large-query")
     drain_backlog = os.getenv("DRAIN_BACKLOG_ON_STARTUP", "true").lower() in (
         "1",
         "true",

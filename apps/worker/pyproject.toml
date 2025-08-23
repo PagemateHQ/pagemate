@@ -8,4 +8,6 @@ dependencies = [
     "pymongo>=4.6.1",
     "openai>=1.40.0",
     "dnspython>=2.4.0",
+    "python-dotenv>=1.0.1",
+    "dotenv>=0.9.9",
 ]
