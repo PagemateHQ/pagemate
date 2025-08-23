@@ -44,8 +44,10 @@ const HomePage = () => {
             <Description>
               Pagemate guides users and executes tasks for them—
               <br />
-              all through a simple drop-in SDK that turns any flow into
-              one-click experiences.
+              all through a simple drop-in SDK{' '}
+              <span className="inline-block">
+                that turns any flow into one-click experiences.
+              </span>
             </Description>
             <ButtonGroup>
               <Link href="/customers" style={{ textDecoration: 'none' }}>
@@ -176,6 +178,10 @@ const Title = styled.h1`
   letter-spacing: -1.92px;
   color: #0b3668;
   text-align: center;
+
+  @media screen and (max-width: 500px) {
+    font-size: 40px;
+  }
 `;
 
 const Description = styled.p`
@@ -188,6 +194,11 @@ const Description = styled.p`
   letter-spacing: -0.72px;
   color: #6c8bab;
   text-align: center;
+
+  @media screen and (max-width: 500px) {
+    margin-top: 16px;
+    font-size: 16px;
+  }
 `;
 
 const ButtonGroup = styled.div`
@@ -243,6 +254,14 @@ const DemoSection = styled.div`
   display: flex;
   flex-direction: column;
   gap: 16px;
+
+  @media screen and (max-width: 700px) {
+    margin-top: 64px;
+  }
+
+  @media screen and (max-width: 400px) {
+    margin-top: 100px;
+  }
 `;
 
 const DemoLabel = styled.span`
