@@ -16,21 +16,21 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   metadataBase: new URL("https://example.com"),
   title: {
-    default: "Acme Insurance",
-    template: "%s | Acme Insurance",
+    default: "아무개 보험",
+    template: "%s | 아무개 보험",
   },
   description:
-    "Simple, affordable coverage for renters. Get a quote in minutes.",
+    "임차인을 위한 간단하고 합리적인 보험. 몇 분 만에 견적 받기.",
   keywords: [
-    "insurance",
-    "renters insurance",
-    "tenant insurance",
-    "home insurance",
+    "보험",
+    "임차인 보험",
+    "세입자 보험",
+    "주택 보험",
   ],
   openGraph: {
-    title: "Acme Insurance",
+    title: "아무개 보험",
     description:
-      "Simple, affordable coverage for renters. Get a quote in minutes.",
+      "임차인을 위한 간단하고 합리적인 보험. 몇 분 만에 견적 받기.",
     type: "website",
     url: "https://example.com",
   },

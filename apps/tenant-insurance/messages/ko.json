@@ -1,6 +1,6 @@
 {
   "Common": {
-    "brand": "Acme 보험",
+    "brand": "아무개 보험",
     "nav": {
       "home": "홈",
       "plans": "플랜",
@@ -20,7 +20,7 @@
       "privacy": "개인정보 처리방침",
       "terms": "이용약관",
       "contact": "문의",
-      "copyright": "© {year} Acme 보험. 모든 권리 보유."
+      "copyright": "© {year} 아무개 보험. 모든 권리 보유."
     },
     "actions": {
       "getQuote": "견적 받기",
@@ -42,7 +42,7 @@
       "zip": "우편번호",
       "zipShort": "우편번호",
       "email": "이메일",
-      "state": "주",
+      "state": "지역",
       "buildingType": "주거 형태",
       "personalProperty": "개인 소지품 (₩)",
       "notes": "메모 (선택)",
@@ -211,7 +211,7 @@
     "termsTitle": "이용약관",
     "termsBody": "이 웹사이트는 보험사를 위한 데모 사이트입니다. 실제 약관으로 교체하세요.",
     "disclosuresTitle": "공시 및 라이선스",
-    "disclosuresBody": "Acme 보험은 데모 목적의 가상 브랜드입니다. NAIC 번호, 모집인 라이선스, 주별 공시 등 준법 정보를 입력하세요.",
+    "disclosuresBody": "아무개 보험은 데모 목적의 가상 브랜드입니다. NAIC 번호, 모집인 라이선스, 주별 공시 등 준법 정보를 입력하세요.",
     "disclosuresItems": ["CA License 0A00000 (데모)", "NY License BR-000000 (데모)"]
   },
   "Quote": {

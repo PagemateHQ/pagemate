@@ -1,6 +1,7 @@
 import type {Metadata} from 'next'
+import {use} from 'react'
 import {NextIntlClientProvider, useMessages} from 'next-intl'
-import {unstable_setRequestLocale} from 'next-intl/server'
+import {setRequestLocale} from 'next-intl/server'
 import {SiteHeader} from '@/components/site-header'
 import {SiteFooter} from '@/components/site-footer'
 import {ThemeProvider} from '@/components/theme-provider'
@@ -16,12 +17,12 @@ export function generateStaticParams() {
   return [{locale: 'en'}, {locale: 'ko'}]
 }
 
-export default async function LocaleLayout({
+export default function LocaleLayout({
   children,
   params,
-}: Readonly<{children: React.ReactNode; params: Promise<{locale: string}}> >) {
-  const { locale } = await params
-  unstable_setRequestLocale(locale)
+}: Readonly<{ children: React.ReactNode; params: Promise<{ locale: string }> }>) {
+  const { locale } = use(params)
+  setRequestLocale(locale)
   const messages = useMessages()
   return (
     <NextIntlClientProvider locale={locale} messages={messages} timeZone="UTC">

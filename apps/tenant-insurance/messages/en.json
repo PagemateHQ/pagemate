@@ -1,6 +1,6 @@
 {
   "Common": {
-    "brand": "Acme Insurance",
+    "brand": "아무개 보험",
     "nav": {
       "home": "Home",
       "plans": "Plans",
@@ -20,7 +20,7 @@
       "privacy": "Privacy",
       "terms": "Terms",
       "contact": "Contact",
-      "copyright": "© {year} Acme Insurance. All rights reserved."
+      "copyright": "© {year} 아무개 보험. All rights reserved."
     },
     "actions": {
       "getQuote": "Get a Quote",
@@ -211,7 +211,7 @@
     "termsTitle": "Terms of Service",
     "termsBody": "This is a demo site for an insurance company. Replace this page with your organization’s actual terms of service.",
     "disclosuresTitle": "Disclosures & Licensing",
-    "disclosuresBody": "Acme Insurance is a fictitious brand for demo purposes. Replace with your compliance and licensing details, including NAIC numbers, producer licenses, and state-specific disclosures.",
+    "disclosuresBody": "아무개 보험 is a fictitious brand for demo purposes. Replace with your compliance and licensing details, including NAIC numbers, producer licenses, and state-specific disclosures.",
     "disclosuresItems": ["CA License 0A00000 (demo)", "NY License BR-000000 (demo)"]
   },
   "Quote": {
