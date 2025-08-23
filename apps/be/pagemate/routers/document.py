@@ -28,12 +28,15 @@ async def create_document(tenant_id: str, file: UploadFile = File(...)):
     object_path, file_size = await storage_service.save_text_file(content)
 
     # Create document record
-    document = await document_service.create_document(
-        name=file.filename or "untitled",
+
+    document = Document(
+        tenant_id=tenant_id,
+        name=file.filename,
         object_path=str(object_path),
         size=file_size,
-        tenant_id=tenant_id,
     )
+
+    document = await document_service.create_document(document=document, tenant_id=tenant_id)
 
     return document
 

@@ -13,7 +13,7 @@ class DocumentEmbeddingStatus(str, Enum):
 
 
 class Document(BaseModel):
-    id: str = Field(..., alias="_id", description="Document ID")
+    id: str | None = Field(None, alias="_id", description="Document ID")
     tenant_id: str = Field(..., description="Tenant ID")
     name: str = Field(..., description="Document name")
     object_path: str = Field(..., description="Object storage path")
@@ -37,7 +37,7 @@ class Document(BaseModel):
     failed_at: Optional[datetime] = Field(None, alias="failedAt")
 
 class DocumentChunk(BaseModel):
-    id: str = Field(..., alias="_id", description="Chunk ID")
+    id: str | None = Field(None, alias="_id", description="Chunk ID")
     document_id: str = Field(..., description="Parent document ID")
     tenant_id: str = Field(..., description="Tenant ID")
     index: int = Field(..., description="Chunk index in document (0-based)")

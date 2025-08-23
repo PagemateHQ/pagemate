@@ -36,21 +36,13 @@ async def get_document_by_id(document_id: str, *, tenant_id: str) -> Document | 
 
 
 async def create_document(
-    name: str,
-    object_path: str,
-    size: int,
+    document: Document,
     *,
     tenant_id: str,
 ) -> Document:
     """Creates a new document and returns the Document model."""
     now = datetime.now(timezone.utc)
-    document_data = {
-        "name": name,
-        "object_path": object_path,
-        "size": size,
-        "created_at": now,
-        "updated_at": now,
-    }
+    document_data = document.model_dump()
 
     created_data = await clients.mongo.document.create_document(
         document_data=document_data, tenant_id=tenant_id
