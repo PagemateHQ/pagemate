@@ -8,8 +8,11 @@ const states = ["CA","NY","TX","IL","FL","WA","MA","GA","PA","AZ"]
 export function LocationSelector() {
   const [state, setState] = useState<string>("CA")
   useEffect(() => {
-    const v = localStorage.getItem("state-selector:v1")
-    if (v) setState(v)
+    // Always default to CA on (re)load for the demo
+    setState("CA")
+    try {
+      localStorage.setItem("state-selector:v1", "CA")
+    } catch {}
   }, [])
   function onChange(v: string) {
     setState(v)
@@ -26,4 +29,3 @@ export function LocationSelector() {
     </Select>
   )
 }
-
