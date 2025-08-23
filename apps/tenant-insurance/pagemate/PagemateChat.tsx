@@ -496,6 +496,7 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
         { role: 'user', content: text.trim() },
       ];
       setMessages(workingMessages);
+      try { setSuppressActions(false); } catch {}
 
       // Switch to chat view if we're still in intro
       if (currentView === 'intro') {

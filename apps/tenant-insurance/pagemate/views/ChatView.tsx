@@ -12,12 +12,14 @@ interface ChatViewProps {
   messages: ChatMessage[];
   loading?: boolean;
   error?: string | null;
+  suppressActions?: boolean;
 }
 
 export const ChatView: React.FC<ChatViewProps> = ({
   messages,
   loading = false,
   error = null,
+  suppressActions = false,
 }) => {
   const chatScrollRef = useRef<HTMLDivElement | null>(null);
 
@@ -44,7 +46,7 @@ export const ChatView: React.FC<ChatViewProps> = ({
                 {m.role === 'user' ? 'You' : 'Pagemate'}
               </BubbleRole>
               <BubbleText>
-                {renderMessageContent(m.content, { isLast: i === messages.length - 1 })}
+                {renderMessageContent(m.content, { isLast: i === messages.length - 1, suppress: suppressActions })}
               </BubbleText>
             </Bubble>
           </BubbleWrapper>
@@ -303,13 +305,16 @@ function renderTextWithCommands(text: string, parseCommands: boolean) {
   return out;
 }
 
-function renderMessageContent(content: string, opts?: { isLast?: boolean }) {
+function renderMessageContent(
+  content: string,
+  opts?: { isLast?: boolean; suppress?: boolean },
+) {
   const nodes: React.ReactNode[] = [];
   const ragRe = /RAG_BLOCK_START\s*(.*)\r?\n([\s\S]*?)\r?\nRAG_BLOCK_END/gm;
   let lastIndex = 0;
   let m: RegExpExecArray | null;
   let ragIdx = 0;
-  const parseCommands = !!opts?.isLast;
+  const parseCommands = !!opts?.isLast && !opts?.suppress;
 
   while ((m = ragRe.exec(content)) !== null) {
     const start = m.index;

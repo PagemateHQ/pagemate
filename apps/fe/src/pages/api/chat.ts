@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import OpenAI from 'openai';
 import { z } from 'zod';
+import { zodResponseFormat } from 'openai/helpers/zod';
 
 import { stripJunk } from '../../utils/stripJunk';
 import { withCORS } from '../../lib/withCORS';
@@ -20,8 +21,9 @@ async function handler(
   }
 
   const apiKey = process.env.UPSTAGE_API_KEY;
-  if (!apiKey) {
-    return res.status(500).json({ error: 'Missing UPSTAGE_API_KEY' });
+  const openaiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey && !openaiKey) {
+    return res.status(500).json({ error: 'Missing UPSTAGE_API_KEY or OPENAI_API_KEY' });
   }
 
   try {
@@ -41,10 +43,9 @@ async function handler(
       return res.status(400).json({ error: 'messages[] is required' });
     }
 
-    const openai = new OpenAI({
-      apiKey,
-      baseURL: 'https://api.upstage.ai/v1',
-    });
+    const upstageClient = apiKey
+      ? new OpenAI({ apiKey, baseURL: 'https://api.upstage.ai/v1' })
+      : null;
 
     const DEFAULT_SYSTEM_PROMPT = [
       'You are Pagemate, an on-page AI assistant embedded in a website.',
@@ -96,60 +97,21 @@ async function handler(
       return [...head, ...m.slice(1)];
     })();
 
-    // Structured Outputs via Zod (local enforcement)
-    const ActionVerb = z.enum(['SPOTLIGHT', 'CLICK', 'RETRIEVE']);
-    const ActionSchema = z.object({ verb: ActionVerb, target: z.string().min(1) });
-    const AssistantSchema = z.object({ reply: z.string().min(1), action: ActionSchema });
-
-    const completion = await openai.chat.completions.create({
-      model: model || 'solar-pro2',
-      messages: finalMessages,
-      stream: false,
-    });
-
-    const raw = completion.choices?.[0]?.message?.content ?? '';
-
-
-    const toTextWithSingleAction = (obj: z.infer<typeof AssistantSchema>): string => {
-      const reply = obj.reply.trim();
-      const target = obj.action.target.trim().replace(/^(["'`])|(["'`])$/g, '');
-      return `${reply}\nACTION ${obj.action.verb} ${target}`.trim();
-    };
-
-    let content: string;
-    let structured: { reply: string; action: { verb: z.infer<typeof ActionVerb>; target: string } } | null = null;
-    try {
-      const parsedJson = JSON.parse(raw);
-      const validated = AssistantSchema.safeParse(parsedJson);
-      if (validated.success) {
-        structured = { reply: validated.data.reply, action: validated.data.action };
-        content = toTextWithSingleAction(validated.data);
-      } else {
-        // Fallback: attempt to sanitize a free-text response into a single ACTION
-        const lines = raw.split(/\r?\n/);
-        let firstAction: { verb: string; target: string } | null = null;
-        const nonAction: string[] = [];
-        for (const line of lines) {
-          const m = /^ACTION\s+([^\s:]+)\s*[:\-]?\s*(.+)$/i.exec(line.trim());
-          if (m && !firstAction) {
-            const v = (m[1] || '').toUpperCase();
-            let t = (m[2] || '').trim();
-            if ((t.startsWith('"') && t.endsWith('"')) || (t.startsWith("'") && t.endsWith("'")) || (t.startsWith('`') && t.endsWith('`'))) t = t.slice(1, -1);
-            const ok = ActionSchema.safeParse({ verb: v, target: t });
-            if (ok.success) firstAction = ok.data;
-          } else if (!/^ACTION\b/i.test(line.trim())) {
-            nonAction.push(line);
-          }
+    const locallyValidateOrSanitize = (
+      raw: string,
+    ): { content: string; structured: { reply: string; action: { verb: z.infer<typeof ActionVerb>; target: string } } | null } => {
+      try {
+        const parsedJson = JSON.parse(raw);
+        const validated = AssistantSchema.safeParse(parsedJson);
+        if (validated.success) {
+          const structured = {
+            reply: validated.data.reply,
+            action: validated.data.action,
+          };
+          const content = toTextWithSingleAction(validated.data);
+          return { content, structured };
         }
-        if (firstAction) {
-          content = `${nonAction.join('\n').trim()}\nACTION ${firstAction.verb} ${firstAction.target}`.trim();
-        } else {
-          // As a last resort, return the raw text (no ACTION)
-          content = raw.trim();
-        }
-      }
-    } catch {
-      // Not JSON; sanitize to ensure at most one action
+      } catch {}
       const lines = raw.split(/\r?\n/);
       let firstAction: { verb: string; target: string } | null = null;
       const nonAction: string[] = [];
@@ -159,18 +121,67 @@ async function handler(
           const v = (m[1] || '').toUpperCase();
           let t = (m[2] || '').trim();
           if ((t.startsWith('"') && t.endsWith('"')) || (t.startsWith("'") && t.endsWith("'")) || (t.startsWith('`') && t.endsWith('`'))) t = t.slice(1, -1);
-          const ok = ActionSchema.safeParse({ verb: v, target: t });
-          if (ok.success) firstAction = ok.data;
+          const ok = ActionSchema.safeParse({ verb: v as any, target: t });
+          if (ok.success) firstAction = ok.data as any;
         } else if (!/^ACTION\b/i.test(line.trim())) {
           nonAction.push(line);
         }
       }
       if (firstAction) {
-        content = `${nonAction.join('\n').trim()}\nACTION ${firstAction.verb} ${firstAction.target}`.trim();
-      } else {
-        content = raw.trim();
+        const content = `${nonAction.join('\n').trim()}\nACTION ${firstAction.verb} ${firstAction.target}`.trim();
+        return { content, structured: null };
       }
+      return { content: raw.trim(), structured: null };
+    };
+
+    let content = '';
+    let structured: { reply: string; action: { verb: z.infer<typeof ActionVerb>; target: string } } | null = null;
+
+    const mname = (model || 'solar-pro2').trim();
+    const isOpenAIModel = /^gpt-|^o3|^gpt4|^gpt-4o/i.test(mname);
+
+    if (openaiKey && isOpenAIModel) {
+      const oai = new OpenAI({ apiKey: openaiKey });
+      try {
+        const completion: any = await oai.chat.completions.parse({
+          model: mname,
+          messages: finalMessages,
+          response_format: zodResponseFormat(AssistantSchema, 'assistant_reply'),
+        } as any);
+        const msg = completion?.choices?.[0]?.message || {};
+        if (msg.refusal) {
+          content = String(msg.refusal || 'Refused');
+        } else if (msg.parsed) {
+          const parsed = msg.parsed as z.infer<typeof AssistantSchema>;
+          structured = { reply: parsed.reply, action: parsed.action };
+          content = toTextWithSingleAction(parsed);
+        } else {
+          const text = msg?.content?.[0]?.text || msg?.content || '';
+          ({ content, structured } = locallyValidateOrSanitize(String(text || '')));
+        }
+      } catch (e: any) {
+        if (!upstageClient) throw e;
+        const completion = await upstageClient.chat.completions.create({
+          model: 'solar-pro2',
+          messages: finalMessages,
+          stream: false,
+        });
+        const raw = completion.choices?.[0]?.message?.content ?? '';
+        ({ content, structured } = locallyValidateOrSanitize(raw));
+      }
+    } else {
+      if (!upstageClient) {
+        return res.status(500).json({ error: 'No suitable provider configured' });
+      }
+      const completion = await upstageClient.chat.completions.create({
+        model: mname || 'solar-pro2',
+        messages: finalMessages,
+        stream: false,
+      });
+      const raw = completion.choices?.[0]?.message?.content ?? '';
+      ({ content, structured } = locallyValidateOrSanitize(raw));
     }
+
     return res.status(200).json({ content, structured: structured ?? undefined });
   } catch (err: any) {
     console.error('API /api/chat error:', err);
