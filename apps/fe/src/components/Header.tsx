@@ -1,3 +1,4 @@
+import { css } from '@emotion/react';
 import styled from '@emotion/styled';
 import Link from 'next/link';
 import React from 'react';
@@ -25,33 +26,25 @@ export const Header: React.FC<HeaderProps> = ({ variant = 'default' }) => {
 };
 
 const StyledHeader = styled.header<{ $isHome: boolean }>`
-  ${props => props.$isHome ? `
-    max-width: 1200px;
-    width: 100%;
-    position: absolute;
-    left: 50%;
-    top: 0;
-    transform: translateX(-50%);
-  ` : `
-    width: 100%;
-    background: white;
-    position: relative;
-  `}
+  width: 100%;
   height: 64px;
   border-bottom: 1px solid #c4e2f1;
   z-index: 100;
+  position: fixed;
+  left: 0;
+  top: 0;
+  background: rgba(232, 247, 255, 0.95);
+  backdrop-filter: blur(10px);
 `;
 
 const HeaderContent = styled.div<{ $isHome: boolean }>`
   height: 64px;
-  padding: 0 ${props => props.$isHome ? '8px' : '24px'};
+  padding: 0 24px;
   display: flex;
   align-items: center;
   justify-content: flex-start;
-  ${props => !props.$isHome && `
-    max-width: 1464px;
-    margin: 0 auto;
-  `}
+  max-width: 1200px;
+  margin: 0 auto;
 `;
 
 const LogoGroup = styled.div`

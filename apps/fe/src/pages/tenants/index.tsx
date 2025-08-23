@@ -37,27 +37,6 @@ const TenantsPage: React.FC = () => {
     });
   };
 
-  if (loading) {
-    return (
-      <Container>
-        <Header />
-        <LoadingContainer>Loading tenants...</LoadingContainer>
-      </Container>
-    );
-  }
-
-  if (error) {
-    return (
-      <Container>
-        <Header />
-        <ErrorContainer>
-          <ErrorMessage>{error}</ErrorMessage>
-          <RetryButton onClick={loadTenants}>Retry</RetryButton>
-        </ErrorContainer>
-      </Container>
-    );
-  }
-
   return (
     <Container>
       <Header />
@@ -70,7 +49,16 @@ const TenantsPage: React.FC = () => {
           </PageDescription>
         </PageHeader>
 
-        {tenants.length === 0 ? (
+        {error ? (
+          <ErrorContainer>
+            <ErrorMessage>{error}</ErrorMessage>
+            <RetryButton onClick={loadTenants}>Retry</RetryButton>
+          </ErrorContainer>
+        ) : loading ? (
+          <EmptyState>
+            <EmptyStateTitle>Loading tenants...</EmptyStateTitle>
+          </EmptyState>
+        ) : tenants.length === 0 ? (
           <EmptyState>
             <EmptyStateIcon>
               <svg width="64" height="64" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -122,21 +110,12 @@ const Container = styled.div`
   background: #e8f7ff;
 `;
 
-const LoadingContainer = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: calc(100vh - 64px);
-  font-size: 18px;
-  color: #6c8bab;
-`;
-
 const ErrorContainer = styled.div`
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-height: calc(100vh - 64px);
+  padding: 80px 20px;
   gap: 16px;
 `;
 
@@ -164,7 +143,7 @@ const RetryButton = styled.button`
 const Content = styled.div`
   max-width: 1200px;
   margin: 0 auto;
-  padding: 40px 24px;
+  padding: 104px 24px 40px;
 `;
 
 const PageHeader = styled.div`

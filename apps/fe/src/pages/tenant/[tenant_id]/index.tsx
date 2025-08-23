@@ -104,10 +104,6 @@ const TenantDetailPage: React.FC = () => {
     return 'unknown';
   };
 
-  if (loading) {
-    return <LoadingContainer>Loading...</LoadingContainer>;
-  }
-
   return (
     <Container>
       <Header />
@@ -115,7 +111,11 @@ const TenantDetailPage: React.FC = () => {
       <Content>
         <Sidebar>
           <TenantCard>
-            <TenantName>{tenant?.name || 'TENANT NAME'}</TenantName>
+            {loading ? (
+              <LoadingText>Loading...</LoadingText>
+            ) : (
+              <TenantName>{tenant?.name || 'TENANT NAME'}</TenantName>
+            )}
           </TenantCard>
         </Sidebar>
 
@@ -149,20 +149,19 @@ const TenantDetailPage: React.FC = () => {
               </UploadDescription>
             </UploadContent>
 
-            <DropZone $isDragging={dragActive}>
+            <DropZone
+              $isDragging={dragActive}
+              onClick={() => fileInputRef.current?.click()}
+            >
               <input
                 ref={fileInputRef}
                 type="file"
                 multiple
                 onChange={(e) => handleFileUpload(e.target.files)}
                 style={{ display: 'none' }}
+                onClick={(e) => e.stopPropagation()}
               />
-              <DropZoneText>
-                <UploadLink onClick={() => fileInputRef.current?.click()}>
-                  Upload
-                </UploadLink>
-                {' or drag and drop files here'}
-              </DropZoneText>
+              <DropZoneText>Upload or drag and drop files here</DropZoneText>
             </DropZone>
           </UploadSection>
 
@@ -176,24 +175,26 @@ const TenantDetailPage: React.FC = () => {
             </DocumentsHeader>
 
             <DocumentsList>
-              {documents.map((doc) => (
-                <DocumentCard key={doc._id}>
-                  <FileIcon type={getFileExtension(doc.name)} />
-                  <DocumentInfo>
-                    <DocumentName>{doc.name}</DocumentName>
-                    <DocumentMeta>
-                      {formatFileSize(doc.size)} •{' '}
-                      {new Date(doc.created_at).toLocaleDateString()}
-                    </DocumentMeta>
-                  </DocumentInfo>
-                  <StatusBadge status={doc.embedding_status}>
-                    {doc.embedding_status}
-                  </StatusBadge>
-                </DocumentCard>
-              ))}
-
-              {documents.length === 0 && (
-                <EmptyState>No documents uploaded yet</EmptyState>
+              {loading ? (
+                <EmptyState>List is loading...</EmptyState>
+              ) : documents.length === 0 ? (
+                <EmptyState>List is empty</EmptyState>
+              ) : (
+                documents.map((doc) => (
+                  <DocumentCard key={doc._id}>
+                    <FileIcon type={getFileExtension(doc.name)} />
+                    <DocumentInfo>
+                      <DocumentName>{doc.name}</DocumentName>
+                      <DocumentMeta>
+                        {formatFileSize(doc.size)} •{' '}
+                        {new Date(doc.created_at).toLocaleDateString()}
+                      </DocumentMeta>
+                    </DocumentInfo>
+                    <StatusBadge status={doc.embedding_status}>
+                      {doc.embedding_status}
+                    </StatusBadge>
+                  </DocumentCard>
+                ))
               )}
             </DocumentsList>
           </DocumentsSection>
@@ -209,21 +210,27 @@ const Container = styled.div`
   background: #e8f7ff;
 `;
 
-const LoadingContainer = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 100vh;
-  font-size: 18px;
+const LoadingText = styled.div`
+  font-family:
+    'Instrument Sans',
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    sans-serif;
+  font-size: 16px;
+  font-weight: 400;
+  letter-spacing: -0.64px;
   color: #6c8bab;
 `;
 
 const Content = styled.div`
+  max-width: 1200px;
+  width: 100%;
+  margin: 0 auto;
+
   display: flex;
   gap: 25px;
   padding: 24px;
-  max-width: 1464px;
-  margin: 0 auto;
 `;
 
 const Sidebar = styled.aside`
@@ -362,15 +369,6 @@ const DropZoneText = styled.p`
   letter-spacing: -0.64px;
   color: #0093f6;
   margin: 0;
-`;
-
-const UploadLink = styled.span`
-  text-decoration: underline;
-  cursor: pointer;
-
-  &:hover {
-    color: #0073ff;
-  }
 `;
 
 const ErrorMessage = styled.div`
