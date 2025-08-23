@@ -119,6 +119,32 @@ def read_dotted(obj: Dict[str, Any], dotted: str) -> Optional[Any]:
     return cur
 
 
+def download_file_from_api(tenant_id: str, document_id: str, obj_path: str) -> bool:
+    """Download file from API to local path. Returns True if successful."""
+    import urllib.request
+    import urllib.error
+    
+    api_url = f"https://api.pagemate.app/tenants/{tenant_id}/documents/{document_id}/attachment"
+    
+    try:
+        logger.debug("Downloading file from API: %s", api_url)
+        
+        # Create directory if it doesn't exist
+        Path(obj_path).parent.mkdir(parents=True, exist_ok=True)
+        
+        # Download the file
+        urllib.request.urlretrieve(api_url, obj_path)
+        logger.debug("Successfully downloaded file to: %s", obj_path)
+        return True
+        
+    except urllib.error.URLError as e:
+        logger.warning("Failed to download file from API: %s", e)
+        return False
+    except Exception as e:
+        logger.warning("Error downloading file: %s", e)
+        return False
+
+
 def extract_text_for_embedding(doc_or_task: Dict[str, Any], documents_col) -> str:
     preferred_field = os.getenv("EMBEDDING_TEXT_FIELD")
     if preferred_field:
@@ -141,9 +167,18 @@ def extract_text_for_embedding(doc_or_task: Dict[str, Any], documents_col) -> st
     obj_path = doc_or_task.get("object_path")
     if isinstance(obj_path, str) and obj_path:
         logger.debug("Attempting text extraction from provided object_path")
+        from pathlib import Path
+        p = Path(obj_path)
+
         try:
-            from pathlib import Path
-            p = Path(obj_path)
+            # Download file from server
+            tenant_id = doc_or_task.get("tenant_id")
+            document_id = doc_or_task.get("_id") or doc_or_task.get("document_id")
+
+            download_success = download_file_from_api(tenant_id, document_id, str(p))
+            if not download_success:
+                raise Exception(f"Failed to download file to {p}")
+
             ext = p.suffix.lower()
             if not ext:
                 # Infer from document name when path has no extension
@@ -159,6 +194,15 @@ def extract_text_for_embedding(doc_or_task: Dict[str, Any], documents_col) -> st
         except Exception as e:
             logger.debug("Direct extraction via object_path failed: %s", e)
             text = None
+        finally:
+            # Clean up downloaded file
+            if p.exists():
+                try:
+                    p.unlink()
+                    logger.debug("Cleaned up downloaded file: %s", p)
+                except Exception as e:
+                    logger.warning("Failed to clean up downloaded file %s: %s", p, e)
+
         if isinstance(text, str) and text.strip():
             logger.debug("Text extracted (len=%d) via object_path", len(text))
             return text

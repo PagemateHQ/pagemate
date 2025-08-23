@@ -2,7 +2,7 @@ import styled from '@emotion/styled';
 import { motion } from 'framer-motion';
 import React from 'react';
 
-import { SparkleIcon } from '@/components/SparkleIcon';
+import { SparkleIcon } from '@/components/icons/SparkleIcon';
 
 interface IntroViewProps {
   onClose?: () => void;
