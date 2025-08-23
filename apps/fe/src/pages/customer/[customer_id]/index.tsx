@@ -6,9 +6,9 @@ import { Header } from '@/components/Header';
 import { FileIcon } from '@/components/icons/FileIcon';
 import { Document, Tenant, tenantService } from '@/services/api';
 
-const TenantDetailPage: React.FC = () => {
+const CustomerDetailPage: React.FC = () => {
   const router = useRouter();
-  const { tenant_id } = router.query;
+  const { customer_id } = router.query;
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [tenant, setTenant] = useState<Tenant | null>(null);
@@ -20,10 +20,10 @@ const TenantDetailPage: React.FC = () => {
 
   // Fetch tenant and documents
   useEffect(() => {
-    if (tenant_id && typeof tenant_id === 'string') {
-      loadData(tenant_id);
+    if (customer_id && typeof customer_id === 'string') {
+      loadData(customer_id);
     }
-  }, [tenant_id]);
+  }, [customer_id]);
 
   const loadData = async (tenantId: string) => {
     try {
@@ -44,14 +44,14 @@ const TenantDetailPage: React.FC = () => {
 
   // Handle file upload
   const handleFileUpload = async (files: FileList | null) => {
-    if (!files || !tenant_id || typeof tenant_id !== 'string') return;
+    if (!files || !customer_id || typeof customer_id !== 'string') return;
 
     setUploading(true);
     setError(null);
 
     try {
       const uploadPromises = Array.from(files).map((file) =>
-        tenantService.createDocument(tenant_id, file),
+        tenantService.createDocument(customer_id, file),
       );
 
       const newDocuments = await Promise.all(uploadPromises);
@@ -85,7 +85,7 @@ const TenantDetailPage: React.FC = () => {
         handleFileUpload(e.dataTransfer.files);
       }
     },
-    [tenant_id],
+    [customer_id],
   );
 
   const formatFileSize = (bytes: number) => {
@@ -104,10 +104,6 @@ const TenantDetailPage: React.FC = () => {
     return 'unknown';
   };
 
-  if (loading) {
-    return <LoadingContainer>Loading...</LoadingContainer>;
-  }
-
   return (
     <Container>
       <Header />
@@ -115,7 +111,11 @@ const TenantDetailPage: React.FC = () => {
       <Content>
         <Sidebar>
           <TenantCard>
-            <TenantName>{tenant?.name || 'TENANT NAME'}</TenantName>
+            {loading ? (
+              <LoadingText>Loading...</LoadingText>
+            ) : (
+              <TenantName>{tenant?.name || 'CUSTOMER NAME'}</TenantName>
+            )}
           </TenantCard>
         </Sidebar>
 
@@ -149,20 +149,19 @@ const TenantDetailPage: React.FC = () => {
               </UploadDescription>
             </UploadContent>
 
-            <DropZone $isDragging={dragActive}>
+            <DropZone
+              $isDragging={dragActive}
+              onClick={() => fileInputRef.current?.click()}
+            >
               <input
                 ref={fileInputRef}
                 type="file"
                 multiple
                 onChange={(e) => handleFileUpload(e.target.files)}
                 style={{ display: 'none' }}
+                onClick={(e) => e.stopPropagation()}
               />
-              <DropZoneText>
-                <UploadLink onClick={() => fileInputRef.current?.click()}>
-                  Upload
-                </UploadLink>
-                {' or drag and drop files here'}
-              </DropZoneText>
+              <DropZoneText>Upload or drag and drop files here</DropZoneText>
             </DropZone>
           </UploadSection>
 
@@ -176,24 +175,26 @@ const TenantDetailPage: React.FC = () => {
             </DocumentsHeader>
 
             <DocumentsList>
-              {documents.map((doc) => (
-                <DocumentCard key={doc._id}>
-                  <FileIcon type={getFileExtension(doc.name)} />
-                  <DocumentInfo>
-                    <DocumentName>{doc.name}</DocumentName>
-                    <DocumentMeta>
-                      {formatFileSize(doc.size)} •{' '}
-                      {new Date(doc.created_at).toLocaleDateString()}
-                    </DocumentMeta>
-                  </DocumentInfo>
-                  <StatusBadge status={doc.embedding_status}>
-                    {doc.embedding_status}
-                  </StatusBadge>
-                </DocumentCard>
-              ))}
-
-              {documents.length === 0 && (
-                <EmptyState>No documents uploaded yet</EmptyState>
+              {loading ? (
+                <EmptyState>List is loading...</EmptyState>
+              ) : documents.length === 0 ? (
+                <EmptyState>List is empty</EmptyState>
+              ) : (
+                documents.map((doc) => (
+                  <DocumentCard key={doc._id}>
+                    <FileIcon type={getFileExtension(doc.name)} />
+                    <DocumentInfo>
+                      <DocumentName>{doc.name}</DocumentName>
+                      <DocumentMeta>
+                        {formatFileSize(doc.size)} •{' '}
+                        {new Date(doc.created_at).toLocaleDateString()}
+                      </DocumentMeta>
+                    </DocumentInfo>
+                    <StatusBadge status={doc.embedding_status}>
+                      {doc.embedding_status}
+                    </StatusBadge>
+                  </DocumentCard>
+                ))
               )}
             </DocumentsList>
           </DocumentsSection>
@@ -206,24 +207,29 @@ const TenantDetailPage: React.FC = () => {
 // Styled Components
 const Container = styled.div`
   min-height: 100vh;
-  background: #e8f7ff;
 `;
 
-const LoadingContainer = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 100vh;
-  font-size: 18px;
+const LoadingText = styled.div`
+  font-family:
+    'Instrument Sans',
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    sans-serif;
+  font-size: 16px;
+  font-weight: 400;
+  letter-spacing: -0.64px;
   color: #6c8bab;
 `;
 
 const Content = styled.div`
+  max-width: 1200px;
+  width: 100%;
+  margin: 0 auto;
+
   display: flex;
   gap: 25px;
-  padding: 24px;
-  max-width: 1464px;
-  margin: 0 auto;
+  padding: 88px 24px 24px;
 `;
 
 const Sidebar = styled.aside`
@@ -362,15 +368,6 @@ const DropZoneText = styled.p`
   letter-spacing: -0.64px;
   color: #0093f6;
   margin: 0;
-`;
-
-const UploadLink = styled.span`
-  text-decoration: underline;
-  cursor: pointer;
-
-  &:hover {
-    color: #0073ff;
-  }
 `;
 
 const ErrorMessage = styled.div`
@@ -513,4 +510,4 @@ const EmptyState = styled.div`
   font-size: 16px;
 `;
 
-export default TenantDetailPage;
+export default CustomerDetailPage;

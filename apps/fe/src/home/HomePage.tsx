@@ -1,5 +1,6 @@
 import styled from '@emotion/styled';
 import Image from 'next/image';
+import Link from 'next/link';
 import React from 'react';
 
 import { Header } from '@/components/Header';
@@ -25,7 +26,7 @@ const DEMO_ITEMS: {
 const HomePage = () => {
   return (
     <Container>
-      <Header variant="home" />
+      <Header />
 
       <ContentWrapper>
         <HeroSection>
@@ -47,7 +48,9 @@ const HomePage = () => {
               one-click experiences.
             </Description>
             <ButtonGroup>
-              <StartBuildingButton>Start Building</StartBuildingButton>
+              <Link href="/customers" style={{ textDecoration: 'none' }}>
+                <StartBuildingButton>Start Building</StartBuildingButton>
+              </Link>
               <ReadDocsButton>Read Docs</ReadDocsButton>
             </ButtonGroup>
           </HeroContent>
@@ -89,8 +92,6 @@ const Container = styled.div`
   padding: 0 20px;
   width: 100%;
   min-height: 100vh;
-
-  background: #e8f7ff;
   position: relative;
 `;
 
