@@ -1,5 +1,5 @@
 import styled from '@emotion/styled';
-import { AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import { CornerPosition, useDraggable } from '@/hooks/useDraggable';
@@ -154,17 +154,27 @@ export const FloatingOrb: React.FC<FloatingOrbProps> = ({
       />
       <AnimatePresence>
         {showView && (
-          <ViewContainerWrapper
-            style={{
+          <MotionViewContainerWrapper
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{
+              opacity: 1,
+              scale: 1,
               top: viewPosition.top,
               left: viewPosition.left,
+            }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            transition={{
+              type: 'spring',
+              stiffness: 300,
+              damping: 30,
+              opacity: { duration: 0.2 },
             }}
           >
             <PagemateChat
               isOpen={showView}
               onClose={() => setShowView(false)}
             />
-          </ViewContainerWrapper>
+          </MotionViewContainerWrapper>
         )}
       </AnimatePresence>
     </>
@@ -175,6 +185,8 @@ const ViewContainerWrapper = styled.div`
   position: fixed;
   z-index: 10000;
 `;
+
+const MotionViewContainerWrapper = motion(ViewContainerWrapper);
 
 const StyledFloatingOrb = styled.div<{ $isDragging?: boolean }>`
   width: 64px;
