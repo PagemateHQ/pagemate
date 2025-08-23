@@ -225,12 +225,6 @@ const Container = styled.div`
 `;
 
 const LoadingText = styled.div`
-  font-family:
-    'Instrument Sans',
-    -apple-system,
-    BlinkMacSystemFont,
-    'Segoe UI',
-    sans-serif;
   font-size: 16px;
   font-weight: 400;
   letter-spacing: -0.64px;
@@ -303,12 +297,6 @@ const TenantDetails = styled.div`
 `;
 
 const TenantCategory = styled.span`
-  font-family:
-    'Instrument Sans',
-    -apple-system,
-    BlinkMacSystemFont,
-    'Segoe UI',
-    sans-serif;
   font-size: 14px;
   font-weight: 500;
   letter-spacing: -0.42px;
@@ -317,12 +305,6 @@ const TenantCategory = styled.span`
 `;
 
 const TenantName = styled.h2`
-  font-family:
-    'Instrument Sans',
-    -apple-system,
-    BlinkMacSystemFont,
-    'Segoe UI',
-    sans-serif;
   font-size: 23px;
   font-weight: 500;
   letter-spacing: -0.69px;
@@ -332,12 +314,6 @@ const TenantName = styled.h2`
 `;
 
 const TenantCreated = styled.span`
-  font-family:
-    'Instrument Sans',
-    -apple-system,
-    BlinkMacSystemFont,
-    'Segoe UI',
-    sans-serif;
   font-size: 14px;
   font-weight: 400;
   letter-spacing: -0.56px;
@@ -390,12 +366,6 @@ const IconRow = styled.div`
 `;
 
 const UploadTitle = styled.h3`
-  font-family:
-    'Instrument Sans',
-    -apple-system,
-    BlinkMacSystemFont,
-    'Segoe UI',
-    sans-serif;
   font-size: 24px;
   font-weight: 400;
   line-height: 1.04;
@@ -406,12 +376,6 @@ const UploadTitle = styled.h3`
 `;
 
 const UploadDescription = styled.p`
-  font-family:
-    'Instrument Sans',
-    -apple-system,
-    BlinkMacSystemFont,
-    'Segoe UI',
-    sans-serif;
   font-size: 14px;
   font-weight: 400;
   line-height: 1.2;
@@ -445,12 +409,6 @@ const DropZone = styled.div<{ $isDragging: boolean }>`
 `;
 
 const DropZoneText = styled.p`
-  font-family:
-    'Instrument Sans',
-    -apple-system,
-    BlinkMacSystemFont,
-    'Segoe UI',
-    sans-serif;
   font-size: 16px;
   font-weight: 400;
   letter-spacing: -0.64px;
@@ -487,12 +445,6 @@ const DocumentsHeader = styled.div`
 `;
 
 const DocumentsTitle = styled.h3`
-  font-family:
-    'Instrument Sans',
-    -apple-system,
-    BlinkMacSystemFont,
-    'Segoe UI',
-    sans-serif;
   font-size: 20px;
   font-weight: 500;
   letter-spacing: -0.8px;
@@ -501,12 +453,6 @@ const DocumentsTitle = styled.h3`
 `;
 
 const DocumentsCount = styled.span`
-  font-family:
-    'Instrument Sans',
-    -apple-system,
-    BlinkMacSystemFont,
-    'Segoe UI',
-    sans-serif;
   font-size: 18px;
   font-weight: 500;
   letter-spacing: -0.72px;
@@ -537,12 +483,6 @@ const DocumentInfo = styled.div`
 `;
 
 const DocumentName = styled.h4`
-  font-family:
-    'Instrument Sans',
-    -apple-system,
-    BlinkMacSystemFont,
-    'Segoe UI',
-    sans-serif;
   font-size: 16px;
   font-weight: 500;
   color: #0b3668;
@@ -550,12 +490,6 @@ const DocumentName = styled.h4`
 `;
 
 const DocumentMeta = styled.span`
-  font-family:
-    'Instrument Sans',
-    -apple-system,
-    BlinkMacSystemFont,
-    'Segoe UI',
-    sans-serif;
   font-size: 14px;
   color: #6c8bab;
 `;
