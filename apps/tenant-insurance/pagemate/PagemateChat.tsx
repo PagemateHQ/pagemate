@@ -277,12 +277,33 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
       return ret;
     };
 
+    const stripActionLines = (text: string): string => {
+      try {
+        const lines = text.split(/\r?\n/);
+        const kept = lines.filter((l) => !/^\s*ACTION\s+[A-Z_]+\b/.test(l));
+        return kept.join('\n').replace(/\n{3,}/g, '\n\n').trim();
+      } catch {
+        return text;
+      }
+    };
+
     const handleNav = () => {
       const href = win.location.href;
       if (href === currentUrlRef.current) return;
       currentUrlRef.current = href;
       try { removeSpotlight(); } catch {}
       try { setSuppressActions(true); } catch {}
+      // Erase already-executed commands from existing messages
+      try {
+        if (messagesRef.current && messagesRef.current.length) {
+          const sanitized: ChatMessage[] = messagesRef.current.map((m) => ({
+            ...m,
+            content: stripActionLines(m.content || ''),
+          }));
+          messagesRef.current = sanitized;
+          setMessages(sanitized);
+        }
+      } catch {}
       if (loadingRef.current) {
         abortControllerRef.current?.abort();
         setTimeout(() => restartAgent(), 0);
