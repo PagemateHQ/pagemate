@@ -277,6 +277,7 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
       const href = win.location.href;
       if (href === currentUrlRef.current) return;
       currentUrlRef.current = href;
+      try { removeSpotlight(); } catch {}
       if (loadingRef.current) {
         abortControllerRef.current?.abort();
         setTimeout(() => restartAgent(), 0);

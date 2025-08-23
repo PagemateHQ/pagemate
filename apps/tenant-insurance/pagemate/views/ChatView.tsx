@@ -43,7 +43,9 @@ export const ChatView: React.FC<ChatViewProps> = ({
               <BubbleRole data-role={m.role}>
                 {m.role === 'user' ? 'You' : 'Pagemate'}
               </BubbleRole>
-              <BubbleText>{renderMessageContent(m.content)}</BubbleText>
+              <BubbleText>
+                {renderMessageContent(m.content, { isLast: i === messages.length - 1 })}
+              </BubbleText>
             </Bubble>
           </BubbleWrapper>
         ))
@@ -217,7 +219,23 @@ const MarkdownBlock = styled.div`
   h3 { font-size: 15px; }
 `;
 
-function renderTextWithCommands(text: string) {
+function renderTextWithCommands(text: string, parseCommands: boolean) {
+  if (!parseCommands) {
+    return [
+      <MarkdownBlock key={`md-all`}>
+        <ReactMarkdown
+          remarkPlugins={[remarkGfm]}
+          components={{
+            a: ({ node, ...props }) => (
+              <a target="_blank" rel="noopener noreferrer" {...props} />
+            ),
+          }}
+        >
+          {text}
+        </ReactMarkdown>
+      </MarkdownBlock>,
+    ];
+  }
   const out: React.ReactNode[] = [];
   const re = /ACTION\s+([A-Z_]+)\s*[:\-]?\s*([\s\S]+?)(?=(?:\r?\n|\s*ACTION\s+[A-Z_]+|$))/gim;
   let lastIndex = 0;
@@ -285,19 +303,20 @@ function renderTextWithCommands(text: string) {
   return out;
 }
 
-function renderMessageContent(content: string) {
+function renderMessageContent(content: string, opts?: { isLast?: boolean }) {
   const nodes: React.ReactNode[] = [];
   const ragRe = /RAG_BLOCK_START\s*(.*)\r?\n([\s\S]*?)\r?\nRAG_BLOCK_END/gm;
   let lastIndex = 0;
   let m: RegExpExecArray | null;
   let ragIdx = 0;
+  const parseCommands = !!opts?.isLast;
 
   while ((m = ragRe.exec(content)) !== null) {
     const start = m.index;
     const end = ragRe.lastIndex;
 
     const before = content.slice(lastIndex, start);
-    if (before) nodes.push(...renderTextWithCommands(before));
+    if (before) nodes.push(...renderTextWithCommands(before, parseCommands));
 
     const header = (m[1] || 'Retrieved results').trim();
     const body = (m[2] || '').trim();
@@ -323,7 +342,7 @@ function renderMessageContent(content: string) {
   }
 
   const tail = content.slice(lastIndex);
-  if (tail) nodes.push(...renderTextWithCommands(tail));
+  if (tail) nodes.push(...renderTextWithCommands(tail, parseCommands));
 
   return nodes.length ? nodes : content;
 }

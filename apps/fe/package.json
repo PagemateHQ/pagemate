@@ -25,6 +25,7 @@
     "react-dom": "18.2.0",
     "react-is": "^18.2.0",
     "sanitize-html": "^2.13.0",
+    "zod": "^4.0.17",
     "tailwind-merge": "^2.2.1",
     "tailwindcss-animate": "^1.0.7"
   },
