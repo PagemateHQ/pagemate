@@ -21,7 +21,7 @@ async def create_document(tenant_id: str, file: UploadFile = File(...)):
     content: bytes = await file.read()
 
     # Validate file extension
-    if not file.filename.endswith('.txt'):
+    if not file.filename.endswith(('.txt', '.pdf', '.md')):
         raise HTTPException(status_code=400, detail="Only .txt files are supported")
 
     # Save file to storage and get path and size
