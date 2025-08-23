@@ -1,3 +1,5 @@
+from typing import Literal
+
 from fastapi import APIRouter, HTTPException, UploadFile, File
 from fastapi.responses import Response
 
@@ -9,11 +11,25 @@ router = APIRouter(prefix="/tenants/{tenant_id}/documents", tags=["documents"])
 
 
 @router.get("/", response_model=list[Document])
-async def list_documents(tenant_id: str, offset: int = 0, limit: int = 20):
+async def list_documents(
+    tenant_id: str,
+    offset: int = 0,
+    limit: int = 20,
+    sort: Literal["latest-first", "oldest-first"] = "latest-first",
+):
     """List documents for a tenant with pagination."""
-    return await document_service.list_documents_by_tenant_id(
+    documents = await document_service.list_documents_by_tenant_id(
         tenant_id=tenant_id, offset=offset, limit=limit
     )
+
+    if sort == "latest-first":
+        documents.sort(key=lambda doc: doc.created_at, reverse=True)
+    elif sort == "oldest-first":
+        documents.sort(key=lambda doc: doc.created_at)
+    else:
+        raise HTTPException(status_code=400, detail="Invalid sort option")
+
+    return documents
 
 
 @router.post("/", response_model=Document, status_code=201)
