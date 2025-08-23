@@ -2,7 +2,7 @@ import { useAtom } from 'jotai';
 import React, { useCallback } from 'react';
 
 import { ViewContainer } from './ViewContainer';
-import { currentViewAtom, errorAtom, loadingAtom, messagesAtom } from './atoms';
+import { currentViewAtom, errorAtom, loadingAtom, messagesAtom, suppressActionParsingAtom } from './atoms';
 import { ChatMessage, ChatView } from './views/ChatView';
 import { IntroView } from './views/IntroView';
 
@@ -21,6 +21,7 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
   const [messages, setMessages] = useAtom(messagesAtom);
   const [loading, setLoading] = useAtom(loadingAtom);
   const [error, setError] = useAtom(errorAtom);
+  const [suppressActions, setSuppressActions] = useAtom(suppressActionParsingAtom);
 
   const abortControllerRef = React.useRef<AbortController | null>(null);
   const messagesRef = React.useRef<ChatMessage[]>(messages);
@@ -214,6 +215,7 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
         working = [...working, { role: 'assistant', content: reply }];
         messagesRef.current = working;
         setMessages(working);
+        try { setSuppressActions(false); } catch {}
       }
 
       const maxFollowups = 3;
@@ -243,6 +245,7 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
           working = [...working, { role: 'assistant', content: reply }];
           messagesRef.current = working;
           setMessages(working);
+          try { setSuppressActions(false); } catch {}
         }
         followups++;
       }
