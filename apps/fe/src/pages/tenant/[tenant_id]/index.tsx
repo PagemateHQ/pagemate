@@ -207,7 +207,6 @@ const TenantDetailPage: React.FC = () => {
 // Styled Components
 const Container = styled.div`
   min-height: 100vh;
-  background: #e8f7ff;
 `;
 
 const LoadingText = styled.div`

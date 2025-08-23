@@ -2,6 +2,13 @@
 @tailwind components;
 @tailwind utilities;
 
+html,
+body {
+  background: #e8f7ff;
+  margin: 0;
+  padding: 0;
+}
+
 * {
   box-sizing: border-box;
   word-break: keep-all;

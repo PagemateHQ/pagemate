@@ -92,8 +92,6 @@ const Container = styled.div`
   padding: 0 20px;
   width: 100%;
   min-height: 100vh;
-
-  background: #e8f7ff;
   position: relative;
 `;
 
