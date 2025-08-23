@@ -1,4 +1,5 @@
 import { getTranslations } from "next-intl/server";
+import Image from "next/image";
 import { Link } from "@/i18n/routing";
 
 export async function SiteFooter() {
@@ -6,20 +7,31 @@ export async function SiteFooter() {
 	return (
 		<footer className="border-t py-8">
 			<div className="container mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 text-sm text-muted-foreground">
-				<div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-					<p>
-						{t("Common.footer.copyright", { year: new Date().getFullYear() })}
-					</p>
-					<div className="flex items-center gap-4">
-						<Link href="/privacy" className="hover:underline">
-							{t("Common.footer.privacy")}
-						</Link>
-						<Link href="/terms" className="hover:underline">
-							{t("Common.footer.terms")}
-						</Link>
-						<Link href="/contact" className="hover:underline">
-							{t("Common.footer.contact")}
-						</Link>
+				<div className="flex flex-col gap-6">
+					<div className="flex justify-center">
+						<Image
+							src="/logo.svg"
+							alt="Acme Insurance"
+							width={200}
+							height={60}
+							className="h-14 w-auto"
+						/>
+					</div>
+					<div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+						<p>
+							{t("Common.footer.copyright", { year: new Date().getFullYear() })}
+						</p>
+						<div className="flex items-center gap-4">
+							<Link href="/privacy" className="hover:underline">
+								{t("Common.footer.privacy")}
+							</Link>
+							<Link href="/terms" className="hover:underline">
+								{t("Common.footer.terms")}
+							</Link>
+							<Link href="/contact" className="hover:underline">
+								{t("Common.footer.contact")}
+							</Link>
+						</div>
 					</div>
 				</div>
 			</div>
