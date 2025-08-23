@@ -21,22 +21,19 @@ async def create_document(tenant_id: str, file: UploadFile = File(...)):
     content: bytes = await file.read()
 
     # Validate file extension
-    if not file.filename.endswith(('.txt', '.pdf', '.md')):
-        raise HTTPException(status_code=400, detail="Only .txt files are supported")
+    if not file.filename.endswith((".txt", ".pdf", ".md")):
+        raise HTTPException(status_code=400, detail="Only .txt, .md, or .pdf files are supported")
 
     # Save file to storage and get path and size
     object_path, file_size = await storage_service.save_text_file(content)
 
-    # Create document record
-
-    document = Document(
-        tenant_id=tenant_id,
-        name=file.filename,
+    # Create document record (embedding_status is set to pending in service)
+    document = await document_service.create_document(
+        name=file.filename or "untitled",
         object_path=str(object_path),
         size=file_size,
+        tenant_id=tenant_id,
     )
-
-    document = await document_service.create_document(document=document, tenant_id=tenant_id)
 
     return document
 

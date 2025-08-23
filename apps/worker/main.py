@@ -140,59 +140,73 @@ def extract_text_for_embedding(doc_or_task: Dict[str, Any], documents_col) -> st
     # If we already have the object_path in the payload, prefer it
     obj_path = doc_or_task.get("object_path")
     if isinstance(obj_path, str) and obj_path:
-        logger.debug("Attempting PDF text extraction from provided object_path")
+        logger.debug("Attempting text extraction from provided object_path")
         try:
             from pathlib import Path
-            text = extract_text_from_pdf(Path(obj_path))
+            p = Path(obj_path)
+            ext = p.suffix.lower()
+            if not ext:
+                # Infer from document name when path has no extension
+                name = str(doc_or_task.get("name", ""))
+                if "." in name:
+                    ext = "." + name.rsplit(".", 1)[-1].lower()
+            if ext == ".pdf":
+                text = extract_text_from_pdf(p)
+            elif ext in (".txt", ".md"):
+                text = extract_text_from_txt(p)
+            else:
+                text = None
         except Exception as e:
-            logger.debug("Direct PDF extraction via object_path failed: %s", e)
+            logger.debug("Direct extraction via object_path failed: %s", e)
             text = None
         if isinstance(text, str) and text.strip():
-            logger.debug("PDF text extracted (len=%d) via object_path", len(text))
+            logger.debug("Text extracted (len=%d) via object_path", len(text))
             return text
 
     # Otherwise, determine the source document id and fetch
     doc_id = doc_or_task.get("_id") or doc_or_task.get("document_id")
     if doc_id is not None:
-        logger.debug("Attempting PDF text extraction for document_id=%s", _short_id(doc_id))
-        text = try_extract_text_from_pdf(documents_col, doc_id)
+        logger.debug("Attempting text extraction for document_id=%s", _short_id(doc_id))
+        text = try_extract_text_from_document(documents_col, doc_id)
         if isinstance(text, str) and text.strip():
-            logger.debug("PDF text extracted (len=%d) for document_id=%s", len(text), _short_id(doc_id))
+            logger.debug("Text extracted (len=%d) for document_id=%s", len(text), _short_id(doc_id))
             return text
 
     raise ValueError("No text available for embedding")
 
 
-def try_extract_text_from_pdf(documents_col, doc_id: Any) -> Optional[str]:
+def try_extract_text_from_document(documents_col, doc_id: Any) -> Optional[str]:
     enable = os.getenv("PDF_EXTRACT_ENABLE", "true").lower() in ("1", "true", "yes", "y")
-    if not enable:
-        logger.debug("PDF extraction disabled via env")
-        return None
-
     src = documents_col.find_one({"_id": doc_id}, projection={"object_path": 1, "name": 1})
     if not src:
-        logger.warning("PDF extraction: source document not found: _id=%s", _short_id(doc_id))
+        logger.warning("Extraction: source document not found: _id=%s", _short_id(doc_id))
         return None
     obj_path = src.get("object_path")
     name = str(src.get("name", ""))
     if not isinstance(obj_path, str) or not obj_path:
-        logger.debug("PDF extraction: missing object_path for _id=%s", _short_id(doc_id))
+        logger.debug("Extraction: missing object_path for _id=%s", _short_id(doc_id))
         return None
 
     path = Path(obj_path)
     if not path.exists() or not path.is_file():
-        logger.warning("PDF extraction: path not found %s for _id=%s", path, _short_id(doc_id))
+        logger.warning("Extraction: path not found %s for _id=%s", path, _short_id(doc_id))
         return None
 
     ext = path.suffix.lower() or ("." + name.rsplit(".", 1)[-1].lower() if "." in name else "")
-    if ext != ".pdf":
-        logger.debug("PDF extraction: unsupported extension '%s' for _id=%s", ext, _short_id(doc_id))
-        return None
     try:
-        logger.info("Extracting text from PDF: path=%s", path)
-        return extract_text_from_pdf(path)
+        if ext == ".pdf":
+            if not enable:
+                logger.debug("PDF extraction disabled via env")
+                return None
+            logger.info("Extracting text from PDF: path=%s", path)
+            return extract_text_from_pdf(path)
+        if ext in (".txt", ".md"):
+            logger.info("Extracting text from TXT: path=%s", path)
+            return extract_text_from_txt(path)
+        logger.debug("Extraction: unsupported extension '%s' for _id=%s", ext, _short_id(doc_id))
+        return None
     except Exception as e:
-        logger.error("PDF extraction failed for %s: %s", path, e)
+        logger.error("Extraction failed for %s: %s", path, e)
         return None
 
 
@@ -235,6 +249,24 @@ def extract_text_from_pdf(path: Path) -> str:
     content = "\n".join(line.strip() for line in content.splitlines())
     logger.info("PDF extraction completed: chars=%d", len(content))
     return content
+
+
+def extract_text_from_txt(path: Path) -> str:
+    max_chars = int(os.getenv("TEXT_EXTRACT_MAX_CHARS", "100000"))
+    try:
+        with path.open("r", encoding="utf-8", errors="ignore") as f:
+            data = f.read()
+    except Exception:
+        # Fallback to binary read and decode
+        with path.open("rb") as f:
+            raw = f.read()
+        data = raw.decode("utf-8", errors="ignore")
+    if len(data) > max_chars:
+        data = data[:max_chars]
+    # Normalize whitespace similar to PDF extraction
+    data = "\n".join(line.strip() for line in data.splitlines())
+    logger.info("TXT extraction completed: chars=%d", len(data))
+    return data
 
 
 def compute_next_retry(now: datetime, attempts: int) -> datetime:
@@ -382,7 +414,8 @@ def create_chunks_for_document(
 
     # Embed in batches to avoid large requests
     batch_size = int(os.getenv("CHUNK_EMBED_BATCH_SIZE", "16"))
-    logger.info("Creating chunks: document_id=%s, total_pieces=%d, batch_size=%d", _short_id(doc_id), len(pieces), batch_size)
+    doc_id_str = str(doc_id)
+    logger.info("Creating chunks: document_id=%s, total_pieces=%d, batch_size=%d", _short_id(doc_id_str), len(pieces), batch_size)
     now = utc_now()
     docs: List[Dict[str, Any]] = []
     idx_global = 0
@@ -394,8 +427,8 @@ def create_chunks_for_document(
         for (txt, start, end), vec in zip(batch, vecs):
             docs.append(
                 {
-                    "_id": f"{doc_id}:{idx_global}",
-                    "document_id": doc_id,
+                    "_id": f"{doc_id_str}:{idx_global}",
+                    "document_id": doc_id_str,
                     "tenant_id": tenant_id,
                     "index": idx_global,
                     "text": txt,
