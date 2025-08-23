@@ -1,6 +1,8 @@
-import React, { useCallback, useRef, useState } from 'react';
+import { useAtom } from 'jotai';
+import React, { useCallback } from 'react';
 
 import { ViewContainer } from './ViewContainer';
+import { currentViewAtom, errorAtom, loadingAtom, messagesAtom } from './atoms';
 import { ChatMessage, ChatView } from './views/ChatView';
 import { IntroView } from './views/IntroView';
 
@@ -13,10 +15,10 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
   isOpen,
   onClose,
 }) => {
-  const [currentView, setCurrentView] = useState<'intro' | 'chat'>('intro');
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [currentView, setCurrentView] = useAtom(currentViewAtom);
+  const [messages, setMessages] = useAtom(messagesAtom);
+  const [loading, setLoading] = useAtom(loadingAtom);
+  const [error, setError] = useAtom(errorAtom);
 
   type ToolAction =
     | { type: 'clickByText'; text: string }
