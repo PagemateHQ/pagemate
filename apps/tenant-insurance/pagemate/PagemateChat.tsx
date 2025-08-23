@@ -142,7 +142,7 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
           if (lastUser) {
             const ragText = buildRagContextFromChunks(query, chunks);
             try {
-              const resp = await fetch('/api/chat', {
+              const resp = await fetch('https://pagemate.app/api/chat', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -421,7 +421,7 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
           }
         }
 
-        const resp = await fetch('/api/chat', {
+        const resp = await fetch('https://pagemate.app/api/chat', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
