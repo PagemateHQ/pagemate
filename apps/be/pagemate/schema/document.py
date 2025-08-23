@@ -1,7 +1,7 @@
 from enum import Enum
 from pydantic import BaseModel, Field
 
-class DocumentStatus(str, Enum):
+class DocumentEmbeddingStatus(str, Enum):
     PENDING = "pending"
     PROCESSING = "processing"
     COMPLETED = "completed"
@@ -13,5 +13,9 @@ class Document(BaseModel):
     name: str = Field(..., description="Document name")
     object_path: str = Field(..., description="Object storage path")
     size: int = Field(..., description="Document size in bytes")
+
+class DocumentEmbedding(BaseModel):
+    id: str = Field(..., alias="_id", description="Document ID")
+    document_id: str = Field(..., description="Document ID")
     embedding: list[float] = Field(..., description="Document embedding")
-    status: DocumentStatus = Field(..., description="Document status")
+    status: DocumentEmbeddingStatus = Field(..., description="Document embedding status")
