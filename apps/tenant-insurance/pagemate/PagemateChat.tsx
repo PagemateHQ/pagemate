@@ -155,20 +155,50 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
   const findClickableByText = (targetText: string): HTMLElement | null => {
     const norm = (s: string) => s.replace(/\s+/g, ' ').trim().toLowerCase();
     const t = norm(targetText);
+
+    const getLabel = (el: HTMLElement): string => {
+      // Prefer visible text
+      let txt = (el.textContent || '').trim();
+      if (txt) return txt;
+      // Accessible name via aria-label
+      const aria = el.getAttribute('aria-label');
+      if (aria) return aria;
+      // aria-labelledby references
+      const labelledby = el.getAttribute('aria-labelledby');
+      if (labelledby) {
+        const ids = labelledby.split(/\s+/).filter(Boolean);
+        const parts: string[] = [];
+        ids.forEach((id) => {
+          const ref = document.getElementById(id);
+          if (ref) parts.push((ref.textContent || '').trim());
+        });
+        const joined = parts.join(' ');
+        if (joined.trim()) return joined;
+      }
+      // title attribute
+      const title = el.getAttribute('title');
+      if (title) return title;
+      // Input value/placeholder
+      if (el instanceof HTMLInputElement) {
+        if (el.value) return el.value;
+        if (el.placeholder) return el.placeholder;
+      }
+      // Alt text from child images/icons
+      const img = el.querySelector('img[alt]') as HTMLImageElement | null;
+      if (img?.alt) return img.alt;
+      return '';
+    };
+
     const candidates = Array.from(
       document.querySelectorAll<HTMLElement>(
-        'button, [role="button"], a, input[type="button"], input[type="submit"]',
+        'a, [role="link"], button, [role="button"], input[type="button"], input[type="submit"]',
       ),
     );
     const visible = candidates.filter((el) => isVisible(el));
-    // Prefer exact match, then includes
-    const exact = visible.find(
-      (el) => norm(el.textContent || el.getAttribute('aria-label') || '') === t,
-    );
+    // Prefer exact match on accessible label, then includes
+    const exact = visible.find((el) => norm(getLabel(el)) === t);
     if (exact) return exact;
-    const partial = visible.find((el) =>
-      norm(el.textContent || el.getAttribute('aria-label') || '').includes(t),
-    );
+    const partial = visible.find((el) => norm(getLabel(el)).includes(t));
     return partial || null;
   };
 
