@@ -215,9 +215,8 @@ async function handler(
     let structured: { reply: string; action: { verb: z.infer<typeof ActionVerb>; target: string } } | null = null;
 
     const mname = (model || 'solar-pro2').trim();
-    const isOpenAIModel = /^gpt-|^o3|^gpt4|^gpt-4o/i.test(mname);
 
-    if (openaiKey && isOpenAIModel) {
+    
       const oai = new OpenAI({ apiKey: openaiKey });
       try {
         const completion: any = await oai.chat.completions.create({
@@ -247,18 +246,7 @@ async function handler(
         const raw = completion.choices?.[0]?.message?.content ?? '';
         ({ content, structured } = locallyValidateOrSanitize(raw));
       }
-    } else {
-      if (!upstageClient) {
-        return res.status(500).json({ error: 'No suitable provider configured' });
-      }
-      const completion = await upstageClient.chat.completions.create({
-        model: mname || 'solar-pro2',
-        messages: finalMessages,
-        stream: false,
-      });
-      const raw = completion.choices?.[0]?.message?.content ?? '';
-      ({ content, structured } = locallyValidateOrSanitize(raw));
-    }
+   
 
     return res.status(200).json({ content, structured: structured ?? undefined });
   } catch (err: any) {
