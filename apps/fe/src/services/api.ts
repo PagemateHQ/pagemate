@@ -36,6 +36,14 @@ export interface Document {
 
 // API Service
 export const tenantService = {
+  // List all tenants
+  listTenants: async (offset = 0, limit = 20): Promise<Tenant[]> => {
+    const response = await api.get('/tenants/', {
+      params: { offset, limit },
+    });
+    return response.data;
+  },
+
   // Get tenant by ID
   getTenant: async (tenantId: string): Promise<Tenant> => {
     const response = await api.get(`/tenants/${tenantId}`);
