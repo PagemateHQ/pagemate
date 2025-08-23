@@ -103,6 +103,13 @@ async def update_document(
 
 async def delete_document(document_id: str, *, tenant_id: str) -> bool:
     """Deletes the document for the given document_id and tenant_id and returns deletion success status."""
+    # First delete all chunks associated with this document
+    await clients.mongo.chunk.delete_chunks_by_document_id(
+        document_id=document_id,
+        tenant_id=tenant_id,
+    )
+    
+    # Then delete the document itself
     return await clients.mongo.document.delete_document(
         document_id=document_id,
         tenant_id=tenant_id,
