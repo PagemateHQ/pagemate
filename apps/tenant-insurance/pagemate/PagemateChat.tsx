@@ -25,8 +25,6 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
   type ToolAction =
     | { type: 'clickByText'; text: string }
     | { type: 'highlightByText'; text: string }
-    | { type: 'clickByXPath'; xpath: string }
-    | { type: 'highlightByXPath'; xpath: string }
     | { type: 'retrieve'; query: string; limit?: number; documentId?: string | null };
 
   type ToolExecResult = {
@@ -58,25 +56,7 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
     const m3 = text.match(re3);
     if (m3) return { type: 'highlightByText', text: m3[1] }; // default to highlight mode
 
-    // Match: click xpath <...> or click <xpath>
-    const cx =
-      text.match(/click\s+xpath\s+(.+)$/i) ||
-      text.match(/click\s+(\/\/|\.\/\/|\/).+$/i);
-    if (cx) {
-      const xpath = (cx[1] ? cx[1] : text.replace(/^[Cc]lick\s+/, '')).trim();
-      return { type: 'highlightByXPath', xpath }; // default to highlight mode
-    }
-
-    // Match: highlight xpath <...> or highlight <xpath>
-    const hx =
-      text.match(/highlight\s+xpath\s+(.+)$/i) ||
-      text.match(/highlight\s+(\/\/|\.\/\/|\/).+$/i);
-    if (hx) {
-      const xpath = (
-        hx[1] ? hx[1] : text.replace(/^[Hh]ighlight\s+/, '')
-      ).trim();
-      return { type: 'highlightByXPath', xpath };
-    }
+    // Note: XPath commands removed. No parsing for xpath-based actions.
 
     // Match: retrieve/search <query>
     const r1 = text.match(/^(?:retrieve|search)\s+(.+)/i);
@@ -110,29 +90,7 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
           return { success: false, kind: tool.type };
         }
       }
-      case 'clickByXPath': {
-        const el = findElementByXPath(tool.xpath);
-        if (!el) return { success: false, kind: tool.type };
-        try {
-          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          flashHighlight(el);
-          (el as HTMLElement).click();
-          return { success: true, kind: tool.type };
-        } catch {
-          return { success: false, kind: tool.type };
-        }
-      }
-      case 'highlightByXPath': {
-        const el = findElementByXPath(tool.xpath);
-        if (!el) return { success: false, kind: tool.type };
-        try {
-          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          showSpotlight(el);
-          return { success: true, kind: tool.type };
-        } catch {
-          return { success: false, kind: tool.type };
-        }
-      }
+      // XPath-based actions have been removed
       case 'retrieve': {
         try {
           const { query, limit = 5, documentId = null } = tool;
@@ -162,8 +120,7 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
     // Match patterns like:
     // ACTION SPOTLIGHT Start Building
     // ACTION CLICK "Start Building"
-    // ACTION CLICK_XPATH //button[normalize-space()="Start Building"]
-    // ACTION SPOTLIGHT_XPATH //div[@id='hero']
+    // (XPath-based directives removed)
     // Capture verb and the rest of the line as target (quotes/backticks optional)
     const re = /ACTION\s+([A-Z_]+)\s*[:\-]?\s*(.+)$/gim;
     let m: RegExpExecArray | null;
@@ -180,35 +137,20 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
       }
       if (!target) continue;
       if (verb === 'SPOTLIGHT') {
-        if (isLikelyXPath(target))
-          actions.push({ type: 'highlightByXPath', xpath: target });
-        else actions.push({ type: 'highlightByText', text: target });
+        actions.push({ type: 'highlightByText', text: target });
       } else if (verb === 'CLICK') {
         // Default to highlight mode instead of clicking
-        if (isLikelyXPath(target))
-          actions.push({ type: 'highlightByXPath', xpath: target });
-        else actions.push({ type: 'highlightByText', text: target });
+        actions.push({ type: 'highlightByText', text: target });
       } else if (verb === 'RETRIEVE') {
         actions.push({ type: 'retrieve', query: target });
-      } else if (verb === 'CLICK_XPATH')
-        // Default to highlight mode for explicit xpath clicks, too
-        actions.push({ type: 'highlightByXPath', xpath: target });
-      else if (verb === 'SPOTLIGHT_XPATH')
-        actions.push({ type: 'highlightByXPath', xpath: target });
+      } else if (verb === 'CLICK_XPATH' || verb === 'SPOTLIGHT_XPATH') {
+        // Ignore XPath-specific directives
+      }
     }
     return actions;
   };
 
-  const isLikelyXPath = (s: string): boolean => {
-    const t = s.trim();
-    return (
-      t.startsWith('//') ||
-      t.startsWith('.//') ||
-      t.startsWith('/') ||
-      /\[\s*normalize-space\s*\(/i.test(t) ||
-      /@\w+\s*=/.test(t)
-    );
-  };
+  // XPath detection removed
 
   const findClickableByText = (targetText: string): HTMLElement | null => {
     const norm = (s: string) => s.replace(/\s+/g, ' ').trim().toLowerCase();
@@ -242,26 +184,7 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
     );
   };
 
-  const findElementByXPath = (xpath: string): HTMLElement | null => {
-    try {
-      const result = document.evaluate(
-        xpath,
-        document,
-        null,
-        XPathResult.FIRST_ORDERED_NODE_TYPE,
-        null,
-      );
-      const node = result.singleNodeValue as Node | null;
-      const el =
-        node && (node as HTMLElement).nodeType === 1
-          ? (node as HTMLElement)
-          : (node && (node as ChildNode).parentElement) || null;
-      if (el && isVisible(el)) return el;
-      return el || null;
-    } catch {
-      return null;
-    }
-  };
+  // XPath helpers removed
 
   const flashHighlight = (el: HTMLElement) => {
     const rect = el.getBoundingClientRect();
