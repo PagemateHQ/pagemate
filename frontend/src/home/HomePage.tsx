@@ -1,7 +1,26 @@
 import styled from '@emotion/styled';
+import Image from 'next/image';
 import React from 'react';
 
 import { FloatingOrb } from '@/pagemate/FloatingOrb';
+
+const DEMO_ITEMS: {
+  title: string;
+  image: string;
+}[] = [
+  {
+    title: 'Commerce',
+    image: '/assets/demo-preview.png',
+  },
+  {
+    title: 'Banking & Finance',
+    image: '/assets/demo-preview.png',
+  },
+  {
+    title: 'SaaS Products',
+    image: '/assets/demo-preview.png',
+  },
+];
 
 const HomePage = () => {
   return (
@@ -47,41 +66,26 @@ const HomePage = () => {
         <DemoSection>
           <DemoLabel>DEMO</DemoLabel>
           <DemoGrid>
-            <DemoCard>
-              <BrowserWindow>
-                <BrowserHeader>
-                  <BrowserDots src="/assets/browser-dots.svg" alt="" />
-                </BrowserHeader>
-                <BrowserContent>
-                  <DemoPreview />
-                </BrowserContent>
-              </BrowserWindow>
-              <DemoCardTitle>Commerce</DemoCardTitle>
-            </DemoCard>
-
-            <DemoCard>
-              <BrowserWindow>
-                <BrowserHeader>
-                  <BrowserDots src="/assets/browser-dots.svg" alt="" />
-                </BrowserHeader>
-                <BrowserContent>
-                  <DemoPreview />
-                </BrowserContent>
-              </BrowserWindow>
-              <DemoCardTitle>Banking & Finance</DemoCardTitle>
-            </DemoCard>
-
-            <DemoCard>
-              <BrowserWindow>
-                <BrowserHeader>
-                  <BrowserDots src="/assets/browser-dots.svg" alt="" />
-                </BrowserHeader>
-                <BrowserContent>
-                  <DemoPreview />
-                </BrowserContent>
-              </BrowserWindow>
-              <DemoCardTitle>SaaS Products</DemoCardTitle>
-            </DemoCard>
+            {DEMO_ITEMS.map((item) => (
+              <DemoCard key={item.title}>
+                <BrowserWindow>
+                  <BrowserHeader>
+                    <BrowserDots src="/assets/browser-dots.svg" alt="" />
+                  </BrowserHeader>
+                  <BrowserContent>
+                    <DemoPreviewBorderProvider>
+                      <DemoPreview
+                        src={item.image}
+                        alt=""
+                        width={600}
+                        height={320}
+                      />
+                    </DemoPreviewBorderProvider>
+                  </BrowserContent>
+                </BrowserWindow>
+                <DemoCardTitle>{item.title}</DemoCardTitle>
+              </DemoCard>
+            ))}
           </DemoGrid>
         </DemoSection>
       </ContentWrapper>
@@ -99,11 +103,13 @@ const Container = styled.div`
 `;
 
 const ContentWrapper = styled.div`
+  max-width: 1200px;
+  width: 100%;
+
   position: absolute;
   left: 50%;
   top: 105px;
   transform: translateX(-50%);
-  width: 1200px;
   display: flex;
   flex-direction: column;
   gap: 80px;
@@ -272,10 +278,15 @@ const DemoCard = styled.div`
 
 const BrowserWindow = styled.div`
   width: 100%;
-  background: #e8f7ff;
   border: 1px solid #abdcf6;
   border-radius: 8px;
   overflow: hidden;
+
+  border: 1px solid transparent;
+  background:
+    linear-gradient(#e8f7ff, #e8f7ff) padding-box,
+    linear-gradient(180deg, #abdcf6 0%, rgba(106, 185, 225, 0.15) 100%)
+      border-box;
 `;
 
 const BrowserHeader = styled.div`
@@ -296,13 +307,21 @@ const BrowserContent = styled.div`
   padding: 8px;
 `;
 
-const DemoPreview = styled.div`
+const DemoPreviewBorderProvider = styled.div`
   width: 100%;
   height: 200px;
-  background: url('/assets/demo-preview.png') center/106.54% 121.83% no-repeat;
-  background-color: #e8f7ff;
-  border: 1px solid #abdcf6;
+  overflow: hidden;
   border-radius: 4px;
+
+  border: 1px solid transparent;
+  background:
+    linear-gradient(#e8f7ff, #e8f7ff) padding-box,
+    linear-gradient(180deg, #abdcf6 0%, #dbf3ff 100%) border-box;
+`;
+const DemoPreview = styled(Image)`
+  width: 100%;
+  height: 200px;
+  background-color: #e8f7ff;
 `;
 
 const DemoCardTitle = styled.div`
@@ -315,11 +334,13 @@ const DemoCardTitle = styled.div`
 `;
 
 const Header = styled.header`
+  max-width: 1200px;
+  width: 100%;
+
   position: absolute;
   left: 50%;
   top: 0;
   transform: translateX(-50%);
-  width: 1200px;
   height: 64px;
   border-bottom: 1px solid #c4e2f1;
 `;
