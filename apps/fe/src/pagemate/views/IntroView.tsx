@@ -117,6 +117,8 @@ export const IntroView: React.FC<IntroViewProps> = () => {
           </InputContent>
         </MotionInputContainer>
       </Content>
+
+      <BottomBlurImage src="/assets/intro-bottom-blur.png" alt="" />
     </MotionContainer>
   );
 };
@@ -137,6 +139,8 @@ const _Container = styled.div`
     ),
     rgba(234, 249, 255, 0.6);
   box-shadow: 0 10px 32px 0 rgba(106, 219, 255, 0.3);
+
+  /* TODO: if hardware acceleration is enabled, make backdrop filter to blur(8px) */
   backdrop-filter: blur(4px);
 `;
 const MotionContainer = motion(_Container);
@@ -155,23 +159,24 @@ const CircleGlow = styled.div`
 `;
 
 const Content = styled.div`
+  padding: 16px 8px 8px;
+  height: 100%;
+
   position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 36px;
-  padding: 16px 8px 8px;
-  height: 100%;
-  box-sizing: border-box;
 `;
 
 const LogoSection = styled.div`
+  padding-top: 32px;
+  padding-bottom: 64px;
+
   position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
   width: 407px;
-  padding: 32px 0 64px;
 `;
 
 const LogoWrapper = styled.div`
@@ -406,10 +411,12 @@ const HighlightedText = styled.span`
 `;
 
 const _SuggestionsContainer = styled.div`
+  margin-top: 36px;
+  width: 100%;
+
   display: flex;
   flex-direction: column;
-  gap: 5px;
-  width: 367px;
+  gap: 6px;
 `;
 const MotionSuggestionsContainer = motion(_SuggestionsContainer);
 
@@ -433,12 +440,16 @@ const SuggestionButton = styled.button`
 const MotionSuggestionButton = motion(SuggestionButton);
 
 const InputContainer = styled.div`
+  position: absolute;
+  bottom: 8px;
+  left: 8px;
+  right: 8px;
+
   display: flex;
   align-items: center;
   gap: 8px;
-  width: 100%;
-  height: 58px;
-  padding: 0 11px;
+
+  padding: 12px;
   background: linear-gradient(
     180deg,
     rgba(234, 248, 255, 0.88) 0%,
@@ -459,20 +470,32 @@ const InputIcon = styled.div`
 const InputContent = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 4px;
   flex: 1;
 `;
-
 const InputText = styled.span`
   font-size: 16px;
   font-weight: 400;
   letter-spacing: -0.64px;
   color: #000000;
 `;
-
 const InputLabel = styled.span`
   font-size: 12px;
   font-weight: 400;
   letter-spacing: -0.48px;
   color: #0093f6;
+`;
+
+const BottomBlurImage = styled.img`
+  width: 377px;
+  height: 212px;
+
+  object-fit: contain;
+  object-position: bottom center;
+
+  position: absolute;
+  left: 50%;
+  bottom: -1px;
+  transform: translateX(-50%);
+  z-index: -1;
 `;
