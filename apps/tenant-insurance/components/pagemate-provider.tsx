@@ -1,10 +1,13 @@
 'use client';
 
-import { Provider } from 'jotai';
+import { Provider, useAtomValue } from 'jotai';
 import React from 'react';
 import { FloatingOrb } from '../pagemate/FloatingOrb';
+import { taskSelectorOpenAtom } from '../lib/atoms';
 
-export function PagemateProvider({ children }: { children: React.ReactNode }) {
+function PagemateContent({ children }: { children: React.ReactNode }) {
+  const taskSelectorOpen = useAtomValue(taskSelectorOpenAtom);
+  
   const defaultSuggestions = [
     'What does tenant insurance cover?',
     'How do I file a claim?',
@@ -12,9 +15,17 @@ export function PagemateProvider({ children }: { children: React.ReactNode }) {
   ];
 
   return (
-    <Provider>
+    <>
       {children}
-      <FloatingOrb defaultSuggestions={defaultSuggestions} />
+      {!taskSelectorOpen && <FloatingOrb defaultSuggestions={defaultSuggestions} />}
+    </>
+  );
+}
+
+export function PagemateProvider({ children }: { children: React.ReactNode }) {
+  return (
+    <Provider>
+      <PagemateContent>{children}</PagemateContent>
     </Provider>
   );
 }

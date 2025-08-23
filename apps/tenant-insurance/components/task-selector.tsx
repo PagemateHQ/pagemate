@@ -2,6 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import * as React from "react";
+import { useAtom } from "jotai";
 import { Button } from "@/components/ui/button";
 import {
 	Dialog,
@@ -11,6 +12,7 @@ import {
 	DialogTitle,
 } from "@/components/ui/dialog";
 import { useTaskStore } from "@/lib/task-store";
+import { taskSelectorOpenAtom } from "@/lib/atoms";
 
 export function TaskSelector() {
 	const t = useTranslations();
@@ -18,12 +20,12 @@ export function TaskSelector() {
 	const finishedAt = useTaskStore((s) => s.finishedAt);
 	const begin = useTaskStore((s) => s.begin);
 
-	const [open, setOpen] = React.useState(false);
+	const [open, setOpen] = useAtom(taskSelectorOpenAtom);
 
 	React.useEffect(() => {
 		// Show on first load of the home page if nothing is running
 		if (!running) setOpen(true);
-	}, [running]);
+	}, [running, setOpen]);
 
 	function startTask(label: string) {
 		begin(label);
