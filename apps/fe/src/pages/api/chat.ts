@@ -12,7 +12,10 @@ type ChatMessage = {
 
 // Structured output schema and helpers
 const ActionVerb = z.enum(['SPOTLIGHT', 'CLICK', 'AUTOFILL']);
-const ActionSchema = z.object({ verb: ActionVerb, target: z.string().min(1) });
+const ActionSchema = z.object({
+  verb: ActionVerb,
+  target: z.union([z.string().min(1), z.record(z.string(), z.any())]),
+});
 const AssistantSchema = z.object({ reply: z.string().min(1), action: ActionSchema });
 const toTextWithSingleAction = (obj: z.infer<typeof AssistantSchema>): string => {
   const reply = obj.reply.trim();

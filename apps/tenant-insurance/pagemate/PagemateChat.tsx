@@ -217,7 +217,13 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
         const obj = JSON.parse(trimmed);
         if (obj && typeof obj === 'object' && obj.action && obj.action.verb) {
           const verb = String(obj.action.verb || '').toUpperCase();
-          const target: string = String(obj.action.target || '');
+          const rawTarget = (obj.action as any).target;
+          const target: string =
+            typeof rawTarget === 'string'
+              ? rawTarget
+              : rawTarget != null
+              ? JSON.stringify(rawTarget)
+              : '';
           const isSelector = isLikelyCssSelector(target);
           if (verb === 'SPOTLIGHT') {
             actions.push(
@@ -235,7 +241,20 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
           } else if (verb === 'RETRIEVE') {
             // Ignore RETRIEVE (server injects RAG automatically)
           } else if (verb === 'AUTOFILL') {
-            const fields = parseAutofillSpec(target);
+            let fields: Record<string, string> = {};
+            if (rawTarget && typeof rawTarget === 'object') {
+              for (const [k, v] of Object.entries(rawTarget)) {
+                if (!k) continue;
+                const key = String(k);
+                const val =
+                  typeof v === 'string' || typeof v === 'number' || typeof v === 'boolean'
+                    ? String(v)
+                    : JSON.stringify(v);
+                fields[key] = val;
+              }
+            } else {
+              fields = parseAutofillSpec(target);
+            }
             actions.push({ type: 'autofill', spec: target, fields });
           }
         }
