@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import OpenAI from 'openai';
+import { stripJunk } from '../../utils/stripJunk';
 
 type ChatMessage = {
   role: 'user' | 'assistant' | 'system';
@@ -21,8 +22,11 @@ export default async function handler(
   }
 
   try {
-    const { messages, model }: { messages: ChatMessage[]; model?: string } =
-      req.body || {};
+    const {
+      messages,
+      model,
+      pageHtml,
+    }: { messages: ChatMessage[]; model?: string; pageHtml?: string } = req.body || {};
 
     if (!Array.isArray(messages) || messages.length === 0) {
       return res.status(400).json({ error: 'messages[] is required' });
@@ -47,12 +51,33 @@ export default async function handler(
         'Never use bold text in your response.',
       ].join(' ');
 
+    const sanitizedHtml = typeof pageHtml === 'string' && pageHtml.trim()
+      ? stripJunk(pageHtml)
+      : '';
+
+    const htmlContextMessage = sanitizedHtml
+      ? {
+          role: 'system' as const,
+          content: `Context: Current page HTML (sanitized)\n${sanitizedHtml}`,
+        }
+      : null;
+
     const finalMessages = (() => {
       const m = messages.map((mm) => ({ role: mm.role, content: mm.content }));
+      // If there is no system message yet, prepend default prompt.
       if (m.length === 0 || m[0].role !== 'system') {
-        return [{ role: 'system' as const, content: DEFAULT_SYSTEM_PROMPT }, ...m];
+        return htmlContextMessage
+          ? [
+              { role: 'system' as const, content: DEFAULT_SYSTEM_PROMPT },
+              htmlContextMessage,
+              ...m,
+            ]
+          : [{ role: 'system' as const, content: DEFAULT_SYSTEM_PROMPT }, ...m];
       }
-      return m;
+      // If caller already sent a system message, preserve it and append the HTML context after it.
+      return htmlContextMessage
+        ? [m[0], htmlContextMessage, ...m.slice(1)]
+        : m;
     })();
 
     const completion = await openai.chat.completions.create({

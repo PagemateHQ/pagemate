@@ -12,13 +12,17 @@ export function ModeToggle() {
 			variant="ghost"
 			size="icon"
 			aria-label="Toggle theme"
+			aria-describedby="theme-toggle-description"
 			onClick={() => setTheme(isDark ? "light" : "dark")}
 		>
 			{isDark ? (
-				<SunIcon className="size-5" />
+				<SunIcon className="size-5" aria-hidden="true" />
 			) : (
-				<MoonIcon className="size-5" />
+				<MoonIcon className="size-5" aria-hidden="true" />
 			)}
+			<span id="theme-toggle-description" className="sr-only">
+				{isDark ? "Switch to light mode" : "Switch to dark mode"}
+			</span>
 		</Button>
 	);
 }
