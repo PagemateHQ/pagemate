@@ -2,13 +2,14 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import OpenAI from 'openai';
 
 import { stripJunk } from '../../utils/stripJunk';
+import { withCORS } from '../../lib/withCORS';
 
 type ChatMessage = {
   role: 'user' | 'assistant' | 'system';
   content: string;
 };
 
-export default async function handler(
+async function handler(
   req: NextApiRequest,
   res: NextApiResponse,
 ) {
@@ -111,6 +112,8 @@ export default async function handler(
     return res.status(500).json({ error: message });
   }
 }
+
+export default withCORS(handler);
 
 export const config = {
   api: {
