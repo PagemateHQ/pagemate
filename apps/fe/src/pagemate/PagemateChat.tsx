@@ -88,7 +88,9 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
     return null;
   };
 
-  const parseAutofillSpec = (raw: string | undefined | null): Record<string, string> => {
+  const parseAutofillSpec = (
+    raw: string | undefined | null,
+  ): Record<string, string> => {
     const out: Record<string, string> = {};
     const s = String(raw || '').trim();
     if (!s) return out;
@@ -98,7 +100,11 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
         const obj = JSON.parse(s);
         if (obj && typeof obj === 'object') {
           for (const [k, v] of Object.entries(obj)) {
-            if (typeof v === 'string' || typeof v === 'number' || typeof v === 'boolean') {
+            if (
+              typeof v === 'string' ||
+              typeof v === 'number' ||
+              typeof v === 'boolean'
+            ) {
               out[String(k)] = String(v);
             }
           }
@@ -187,7 +193,9 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
             : `⚠️ Autofill failed: ${result.error || 'No matching fields'}`;
           const details = result.filled.length
             ? `\n${result.filled
-                .map((f) => `- ${f.label || f.key}: ${truncateText(f.value, 80)}`)
+                .map(
+                  (f) => `- ${f.label || f.key}: ${truncateText(f.value, 80)}`,
+                )
                 .join('\n')}`
             : '';
           try {
@@ -196,7 +204,11 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
               { role: 'assistant', content: `${statusLine}${details}` },
             ]);
           } catch {}
-          return { success: result.success, kind: tool.type, details: statusLine };
+          return {
+            success: result.success,
+            kind: tool.type,
+            details: statusLine,
+          };
         } catch (e: any) {
           return { success: false, kind: tool.type, details: e?.message };
         }
@@ -220,8 +232,8 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
             typeof rawTarget === 'string'
               ? rawTarget
               : rawTarget != null
-              ? JSON.stringify(rawTarget)
-              : '';
+                ? JSON.stringify(rawTarget)
+                : '';
           const isSelector = isLikelyCssSelector(target);
           if (verb === 'SPOTLIGHT') {
             actions.push(
@@ -245,7 +257,9 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
                 if (!k) continue;
                 const key = String(k);
                 const val =
-                  typeof v === 'string' || typeof v === 'number' || typeof v === 'boolean'
+                  typeof v === 'string' ||
+                  typeof v === 'number' ||
+                  typeof v === 'boolean'
                     ? String(v)
                     : JSON.stringify(v);
                 fields[key] = val;
@@ -311,7 +325,7 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           messages: msgs,
-          model: process.env.PAGEMATE_MODEL || 'solar-pro2',
+          model: process.env.NEXT_PUBLIC_PAGEMATE_MODEL || 'solar-pro2',
           pageHtml:
             typeof document !== 'undefined' ? document.body.innerHTML : '',
           ...(opts.ragContext ? { ragContext: opts.ragContext } : {}),
@@ -331,7 +345,9 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
     try {
       const baseMessages = messagesRef.current;
       if (!baseMessages || baseMessages.length === 0) return;
-      try { refreshInjectedHtml(); } catch {}
+      try {
+        refreshInjectedHtml();
+      } catch {}
       // Start a fresh controller and mark loading
       abortControllerRef.current?.abort();
       abortControllerRef.current = new AbortController();
@@ -340,7 +356,9 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
 
       let reply: string | null = null;
       try {
-        reply = await callAI(working, { signal: abortControllerRef.current.signal });
+        reply = await callAI(working, {
+          signal: abortControllerRef.current.signal,
+        });
       } catch (e: any) {
         if (e?.name === 'AbortError') return; // stopped externally
         throw e;
@@ -359,7 +377,8 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
   }, [callAI, executeTool, parseAssistantActions, setLoading, setMessages]);
 
   React.useEffect(() => {
-    const win: Window | undefined = typeof window !== 'undefined' ? window : undefined;
+    const win: Window | undefined =
+      typeof window !== 'undefined' ? window : undefined;
     if (!win) return;
     const origPush = win.history.pushState.bind(win.history);
     const origReplace = win.history.replaceState.bind(win.history);
@@ -384,11 +403,14 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
       try {
         // Replace actionable directives so they won't match our ACTION parser,
         // while keeping human-readable content.
-        return text.replace(/^(\s*)ACTION\s+([A-Z_]+)\b(.*)$/gim, (_m, ws: string, verb: string, rest: string) => {
-          const v = (verb || '').toUpperCase();
-          if (v === 'NOTE') return `${ws}NOTE${rest}`.trimEnd();
-          return `${ws}NOTE (${v})${rest}`.trimEnd();
-        });
+        return text.replace(
+          /^(\s*)ACTION\s+([A-Z_]+)\b(.*)$/gim,
+          (_m, ws: string, verb: string, rest: string) => {
+            const v = (verb || '').toUpperCase();
+            if (v === 'NOTE') return `${ws}NOTE${rest}`.trimEnd();
+            return `${ws}NOTE (${v})${rest}`.trimEnd();
+          },
+        );
       } catch {
         return text;
       }
@@ -398,7 +420,9 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
       const href = win.location.href;
       if (href === currentUrlRef.current) return;
       currentUrlRef.current = href;
-      try { refreshInjectedHtml(); } catch {}
+      try {
+        refreshInjectedHtml();
+      } catch {}
       // Disable already-executed commands in existing messages
       try {
         if (messagesRef.current && messagesRef.current.length) {
@@ -550,7 +574,8 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
     return t.length > max ? `${t.slice(0, max - 1)}…` : t;
   };
 
-  const normText = (s: string): string => s.replace(/\s+/g, ' ').trim().toLowerCase();
+  const normText = (s: string): string =>
+    s.replace(/\s+/g, ' ').trim().toLowerCase();
 
   const getAssociatedLabel = (el: HTMLElement): string => {
     try {
@@ -643,7 +668,8 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
             const at = new Set(a.split(/[^a-z0-9]+/g).filter(Boolean));
             const kt = new Set(k.split(/[^a-z0-9]+/g).filter(Boolean));
             const inter = Array.from(kt).filter((t) => at.has(t));
-            if (inter.length) best = Math.max(best, Math.min(50, inter.length * 10));
+            if (inter.length)
+              best = Math.max(best, Math.min(50, inter.length * 10));
           }
         }
         return best;
@@ -670,7 +696,9 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
           // choose radio in the same group by matching value or label text
           const name = el.name;
           const group = Array.from(
-            document.querySelectorAll<HTMLInputElement>(`input[type="radio"][name="${CSS.escape(name)}"]`),
+            document.querySelectorAll<HTMLInputElement>(
+              `input[type="radio"][name="${CSS.escape(name)}"]`,
+            ),
           );
           const targetVal = String(value).trim().toLowerCase();
           for (const r of group) {
@@ -739,7 +767,13 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
     const entries = Object.entries(mapping)
       .map(([k, v]) => [k.trim(), String(v)] as const)
       .filter(([k]) => !!k);
-    if (!entries.length) return { success: false, filledCount: 0, filled: [], error: 'No fields provided' };
+    if (!entries.length)
+      return {
+        success: false,
+        filledCount: 0,
+        filled: [],
+        error: 'No fields provided',
+      };
 
     const candidates = collectFormFields();
     const filled: Array<{ key: string; label: string; value: string }> = [];
@@ -753,8 +787,14 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
       const target = ranked[0].c.el;
       const ok = setElementValue(target as any, value);
       if (ok) {
-        const label = getAssociatedLabel(target) || (target.getAttribute('placeholder') || '') || '';
-        try { flashHighlight(target); } catch {}
+        const label =
+          getAssociatedLabel(target) ||
+          target.getAttribute('placeholder') ||
+          '' ||
+          '';
+        try {
+          flashHighlight(target);
+        } catch {}
         filled.push({ key, label, value });
       }
     }
@@ -776,7 +816,10 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
   // XPath helpers removed
 
   // Compute a border-radius string expanded by `expandPx` to account for the overlay padding
-  const computeExpandedBorderRadius = (el: HTMLElement, expandPx = 6): string => {
+  const computeExpandedBorderRadius = (
+    el: HTMLElement,
+    expandPx = 6,
+  ): string => {
     const cs = window.getComputedStyle(el);
     const parseCorner = (val: string) => {
       if (!val) return `${Math.max(0, expandPx + 8)}px`;
@@ -839,7 +882,9 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
 
   // Refresh injected DOM/CSS used for highlighting to avoid stale elements
   const refreshInjectedHtml = () => {
-    try { removeSpotlight(); } catch {}
+    try {
+      removeSpotlight();
+    } catch {}
     try {
       document
         .querySelectorAll('.pagemate-spotlight-overlay')
@@ -849,7 +894,9 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
       const st = document.getElementById('pagemate-spotlight-styles');
       if (st) st.remove();
     } catch {}
-    try { ensureSpotlightStyles(); } catch {}
+    try {
+      ensureSpotlightStyles();
+    } catch {}
   };
 
   const positionSpotlight = () => {
@@ -941,7 +988,7 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               messages: msgs,
-              model: process.env.PAGEMATE_MODEL || 'solar-pro2',
+              model: process.env.NEXT_PUBLIC_PAGEMATE_MODEL || 'solar-pro2',
               pageHtml:
                 typeof document !== 'undefined' ? document.body.innerHTML : '',
               ...(opts.ragContext ? { ragContext: opts.ragContext } : {}),
@@ -954,9 +1001,13 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
         };
 
         // Prepare abort controller for this agent run
-        try { abortControllerRef.current?.abort(); } catch {}
+        try {
+          abortControllerRef.current?.abort();
+        } catch {}
         abortControllerRef.current = new AbortController();
-        try { refreshInjectedHtml(); } catch {}
+        try {
+          refreshInjectedHtml();
+        } catch {}
 
         // 1) If the user message is a tool command, execute it (no RETRIEVE tool).
         const tool = parseToolIntent(text);
@@ -967,7 +1018,8 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
             // Sync workingMessages to the latest state
             workingMessages = messagesRef.current;
           } else {
-            const verb = tool.type === 'highlightByText' ? 'Highlighted' : 'Clicked';
+            const verb =
+              tool.type === 'highlightByText' ? 'Highlighted' : 'Clicked';
             const successText = result.success
               ? `✅ ${verb} "${'text' in tool ? tool.text : ''}"`
               : `⚠️ Couldn't find target for "${'text' in tool ? tool.text : ''}"`;
@@ -982,7 +1034,9 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
         }
 
         // 2) Normal flow: call AI, then execute any tools and call again, up to a small limit
-        try { refreshInjectedHtml(); } catch {}
+        try {
+          refreshInjectedHtml();
+        } catch {}
         let reply = await callAI(workingMessages);
         // Parse possible JSON action envelope
         let envelopeActions: ToolAction[] = [];
@@ -1034,10 +1088,16 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
 
   async function fetchRetrieval(
     query: string,
-    opts: { limit?: number; documentId?: string | null; signal?: AbortSignal } = {},
+    opts: {
+      limit?: number;
+      documentId?: string | null;
+      signal?: AbortSignal;
+    } = {},
   ): Promise<DocumentChunk[]> {
     const baseUrl = 'https://api.pagemate.app';
-    const tenantId = process.env.NEXT_PUBLIC_PAGEMATE_TENANT_ID as string | undefined;
+    const tenantId = process.env.NEXT_PUBLIC_PAGEMATE_TENANT_ID as
+      | string
+      | undefined;
     if (!tenantId) throw new Error('Missing NEXT_PUBLIC_PAGEMATE_TENANT_ID');
     const params = new URLSearchParams();
     params.set('query', query);
@@ -1061,7 +1121,9 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
     chunks: DocumentChunk[],
   ): string {
     const lines: string[] = [];
-    lines.push(`RAG_BLOCK_START Retrieved ${chunks.length} results for "${query}"`);
+    lines.push(
+      `RAG_BLOCK_START Retrieved ${chunks.length} results for "${query}"`,
+    );
     const top = chunks.slice(0, Math.min(5, chunks.length));
     for (let i = 0; i < top.length; i++) {
       const c = top[i];
@@ -1123,11 +1185,7 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
           suggestions={defaultSuggestions}
         />
       ) : (
-        <ChatView
-          messages={messages}
-          loading={loading}
-          error={error}
-        />
+        <ChatView messages={messages} loading={loading} error={error} />
       )}
     </ViewContainer>
   );

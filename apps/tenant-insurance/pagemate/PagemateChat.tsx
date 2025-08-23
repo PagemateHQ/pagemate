@@ -313,7 +313,7 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           messages: msgs,
-          model: process.env.PAGEMATE_MODEL || 'solar-pro2',
+          model: process.env.NEXT_PUBLIC_PAGEMATE_MODEL || 'solar-pro2',
           pageHtml:
             typeof document !== 'undefined' ? document.body.innerHTML : '',
           ...(opts.ragContext ? { ragContext: opts.ragContext } : {}),
@@ -946,7 +946,7 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               messages: msgs,
-              model: process.env.PAGEMATE_MODEL || 'solar-pro2',
+              model: process.env.NEXT_PUBLIC_PAGEMATE_MODEL || 'solar-pro2',
               pageHtml:
                 typeof document !== 'undefined' ? document.body.innerHTML : '',
               ...(opts.ragContext ? { ragContext: opts.ragContext } : {}),
