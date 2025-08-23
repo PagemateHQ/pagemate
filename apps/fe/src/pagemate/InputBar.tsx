@@ -1,5 +1,5 @@
 import styled from '@emotion/styled';
-import React, { useState, useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 
 import { SparkleIcon } from '@/components/icons/SparkleIcon';
 
@@ -9,10 +9,10 @@ interface InputBarProps {
   placeholder?: string;
 }
 
-export const InputBar: React.FC<InputBarProps> = ({ 
-  onSendMessage, 
+export const InputBar: React.FC<InputBarProps> = ({
+  onSendMessage,
   loading = false,
-  placeholder = "Ask anything about your product…"
+  placeholder = 'Ask anything about your product…',
 }) => {
   const [input, setInput] = useState('');
 
@@ -24,7 +24,7 @@ export const InputBar: React.FC<InputBarProps> = ({
         setInput('');
       }
     },
-    [input, loading, onSendMessage]
+    [input, loading, onSendMessage],
   );
 
   return (

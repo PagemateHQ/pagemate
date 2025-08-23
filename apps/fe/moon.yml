@@ -12,19 +12,19 @@ tasks:
   dev:
     command: 'bun run dev'
     platform: 'bun'
-    
+
   build:
     command: 'bun run build'
     platform: 'bun'
     outputs:
       - '.next'
-    
+
   start:
     command: 'bun run start'
     platform: 'bun'
     deps:
       - '~:build'
-    
+
   lint:
     command: 'bun run lint'
     platform: 'bun'

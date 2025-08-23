@@ -42,4 +42,3 @@ export function stripJunk(html: string) {
     disallowedTagsMode: 'discard',
   });
 }
-

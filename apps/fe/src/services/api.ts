@@ -1,6 +1,7 @@
 import axios from 'axios';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.pagemate.app';
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_URL || 'https://api.pagemate.app';
 
 export const api = axios.create({
   baseURL: API_BASE_URL,
@@ -54,7 +55,7 @@ export const tenantService = {
   listDocuments: async (
     tenantId: string,
     offset = 0,
-    limit = 20
+    limit = 20,
   ): Promise<Document[]> => {
     const response = await api.get(`/tenants/${tenantId}/documents/`, {
       params: { offset, limit },
@@ -74,7 +75,7 @@ export const tenantService = {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
-      }
+      },
     );
     return response.data;
   },

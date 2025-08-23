@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import OpenAI from 'openai';
+
 import { stripJunk } from '../../utils/stripJunk';
 
 type ChatMessage = {
@@ -9,7 +10,7 @@ type ChatMessage = {
 
 export default async function handler(
   req: NextApiRequest,
-  res: NextApiResponse
+  res: NextApiResponse,
 ) {
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');
@@ -26,7 +27,8 @@ export default async function handler(
       messages,
       model,
       pageHtml,
-    }: { messages: ChatMessage[]; model?: string; pageHtml?: string } = req.body || {};
+    }: { messages: ChatMessage[]; model?: string; pageHtml?: string } =
+      req.body || {};
 
     if (!Array.isArray(messages) || messages.length === 0) {
       return res.status(400).json({ error: 'messages[] is required' });
@@ -37,24 +39,24 @@ export default async function handler(
       baseURL: 'https://api.upstage.ai/v1',
     });
 
-    const DEFAULT_SYSTEM_PROMPT =
-      [
-        'You are Pagemate, an on-page AI assistant embedded in a website.',
-        'Your purpose is to help users complete tasks with smart guidance and optional automation (Autopilot).',
-        'Interpret imperative requests as UI actions when possible (click, highlight, navigate, fill forms).',
-        'If the user says "highlight <text>", they mean visually highlight the on-page element — do NOT format text as bold/italics.',
-        'When you want to request a UI action, include a single directive line in your response: ACTION <VERB> <TARGET>.',
-        'Supported VERB values: SPOTLIGHT (highlight by visible text), CLICK (click by visible text), SPOTLIGHT_XPATH (highlight by XPath), CLICK_XPATH (click by XPath).',
-        'When multiple components share the same visible text, include a precise XPath TARGET to disambiguate (e.g., indexed or attribute-constrained XPath).',
-        'Examples: ACTION SPOTLIGHT Start Building | ACTION CLICK "Start Building" | ACTION CLICK_XPATH //button[normalize-space()="Start Building"][2] | ACTION SPOTLIGHT_XPATH //div[@id=\'hero\']',
-        'Keep replies concise and confirm actions you take (e.g., "Highlighting Start Building").',
-        'When uncertain, ask a short clarifying question. Do not hallucinate UI that is not present.',
-        'Never use bold text in your response. Do not quote commands in your response; commands should not show up in your response unless they are being executed.',
-      ].join(' ');
+    const DEFAULT_SYSTEM_PROMPT = [
+      'You are Pagemate, an on-page AI assistant embedded in a website.',
+      'Your purpose is to help users complete tasks with smart guidance and optional automation (Autopilot).',
+      'Interpret imperative requests as UI actions when possible (click, highlight, navigate, fill forms).',
+      'If the user says "highlight <text>", they mean visually highlight the on-page element — do NOT format text as bold/italics.',
+      'When you want to request a UI action, include a single directive line in your response: ACTION <VERB> <TARGET>.',
+      'Supported VERB values: SPOTLIGHT (highlight by visible text), CLICK (click by visible text), SPOTLIGHT_XPATH (highlight by XPath), CLICK_XPATH (click by XPath).',
+      'When multiple components share the same visible text, include a precise XPath TARGET to disambiguate (e.g., indexed or attribute-constrained XPath).',
+      'Examples: ACTION SPOTLIGHT Start Building | ACTION CLICK "Start Building" | ACTION CLICK_XPATH //button[normalize-space()="Start Building"][2] | ACTION SPOTLIGHT_XPATH //div[@id=\'hero\']',
+      'Keep replies concise and confirm actions you take (e.g., "Highlighting Start Building").',
+      'When uncertain, ask a short clarifying question. Do not hallucinate UI that is not present.',
+      'Never use bold text in your response. Do not quote commands in your response; commands should not show up in your response unless they are being executed.',
+    ].join(' ');
 
-    const sanitizedHtml = typeof pageHtml === 'string' && pageHtml.trim()
-      ? stripJunk(pageHtml)
-      : '';
+    const sanitizedHtml =
+      typeof pageHtml === 'string' && pageHtml.trim()
+        ? stripJunk(pageHtml)
+        : '';
 
     const htmlContextMessage = sanitizedHtml
       ? {
@@ -76,9 +78,7 @@ export default async function handler(
           : [{ role: 'system' as const, content: DEFAULT_SYSTEM_PROMPT }, ...m];
       }
       // If caller already sent a system message, preserve it and append the HTML context after it.
-      return htmlContextMessage
-        ? [m[0], htmlContextMessage, ...m.slice(1)]
-        : m;
+      return htmlContextMessage ? [m[0], htmlContextMessage, ...m.slice(1)] : m;
     })();
 
     const completion = await openai.chat.completions.create({

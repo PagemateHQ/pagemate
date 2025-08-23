@@ -109,7 +109,11 @@ const CustomersPage: React.FC = () => {
                 </TenantHeader>
 
                 <TenantActions>
-                  <Link href={`/customer/${tenant._id}`} passHref legacyBehavior>
+                  <Link
+                    href={`/customer/${tenant._id}`}
+                    passHref
+                    legacyBehavior
+                  >
                     <ActionButton $primary>View Customer</ActionButton>
                   </Link>
                 </TenantActions>

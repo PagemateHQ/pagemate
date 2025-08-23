@@ -1,15 +1,18 @@
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 
 import { ViewContainer } from './ViewContainer';
+import { ChatMessage, ChatView } from './views/ChatView';
 import { IntroView } from './views/IntroView';
-import { ChatView, ChatMessage } from './views/ChatView';
 
 interface PagemateChatProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
-export const PagemateChat: React.FC<PagemateChatProps> = ({ isOpen, onClose }) => {
+export const PagemateChat: React.FC<PagemateChatProps> = ({
+  isOpen,
+  onClose,
+}) => {
   const [currentView, setCurrentView] = useState<'intro' | 'chat'>('intro');
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [loading, setLoading] = useState(false);
@@ -45,16 +48,22 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({ isOpen, onClose }) =
     if (m3) return { type: 'clickByText', text: m3[1] };
 
     // Match: click xpath <...> or click <xpath>
-    const cx = text.match(/click\s+xpath\s+(.+)$/i) || text.match(/click\s+(\/\/|\.\/\/|\/).+$/i);
+    const cx =
+      text.match(/click\s+xpath\s+(.+)$/i) ||
+      text.match(/click\s+(\/\/|\.\/\/|\/).+$/i);
     if (cx) {
       const xpath = (cx[1] ? cx[1] : text.replace(/^[Cc]lick\s+/, '')).trim();
       return { type: 'clickByXPath', xpath };
     }
 
     // Match: highlight xpath <...> or highlight <xpath>
-    const hx = text.match(/highlight\s+xpath\s+(.+)$/i) || text.match(/highlight\s+(\/\/|\.\/\/|\/).+$/i);
+    const hx =
+      text.match(/highlight\s+xpath\s+(.+)$/i) ||
+      text.match(/highlight\s+(\/\/|\.\/\/|\/).+$/i);
     if (hx) {
-      const xpath = (hx[1] ? hx[1] : text.replace(/^[Hh]ighlight\s+/, '')).trim();
+      const xpath = (
+        hx[1] ? hx[1] : text.replace(/^[Hh]ighlight\s+/, '')
+      ).trim();
       return { type: 'highlightByXPath', xpath };
     }
 
@@ -128,26 +137,39 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({ isOpen, onClose }) =
       const verb = (m[1] || '').toUpperCase().trim();
       let target = (m[2] || '').trim();
       // strip surrounding quotes/backticks if present
-      if ((target.startsWith('"') && target.endsWith('"')) || (target.startsWith("'") && target.endsWith("'")) || (target.startsWith('`') && target.endsWith('`'))) {
+      if (
+        (target.startsWith('"') && target.endsWith('"')) ||
+        (target.startsWith("'") && target.endsWith("'")) ||
+        (target.startsWith('`') && target.endsWith('`'))
+      ) {
         target = target.slice(1, -1);
       }
       if (!target) continue;
       if (verb === 'SPOTLIGHT') {
-        if (isLikelyXPath(target)) actions.push({ type: 'highlightByXPath', xpath: target });
+        if (isLikelyXPath(target))
+          actions.push({ type: 'highlightByXPath', xpath: target });
         else actions.push({ type: 'highlightByText', text: target });
       } else if (verb === 'CLICK') {
-        if (isLikelyXPath(target)) actions.push({ type: 'clickByXPath', xpath: target });
+        if (isLikelyXPath(target))
+          actions.push({ type: 'clickByXPath', xpath: target });
         else actions.push({ type: 'clickByText', text: target });
-      }
-      else if (verb === 'CLICK_XPATH') actions.push({ type: 'clickByXPath', xpath: target });
-      else if (verb === 'SPOTLIGHT_XPATH') actions.push({ type: 'highlightByXPath', xpath: target });
+      } else if (verb === 'CLICK_XPATH')
+        actions.push({ type: 'clickByXPath', xpath: target });
+      else if (verb === 'SPOTLIGHT_XPATH')
+        actions.push({ type: 'highlightByXPath', xpath: target });
     }
     return actions;
   };
 
   const isLikelyXPath = (s: string): boolean => {
     const t = s.trim();
-    return t.startsWith('//') || t.startsWith('.//') || t.startsWith('/') || /\[\s*normalize-space\s*\(/i.test(t) || /@\w+\s*=/.test(t);
+    return (
+      t.startsWith('//') ||
+      t.startsWith('.//') ||
+      t.startsWith('/') ||
+      /\[\s*normalize-space\s*\(/i.test(t) ||
+      /@\w+\s*=/.test(t)
+    );
   };
 
   const findClickableByText = (targetText: string): HTMLElement | null => {
@@ -155,14 +177,18 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({ isOpen, onClose }) =
     const t = norm(targetText);
     const candidates = Array.from(
       document.querySelectorAll<HTMLElement>(
-        'button, [role="button"], a, input[type="button"], input[type="submit"]'
-      )
+        'button, [role="button"], a, input[type="button"], input[type="submit"]',
+      ),
     );
     const visible = candidates.filter((el) => isVisible(el));
     // Prefer exact match, then includes
-    const exact = visible.find((el) => norm(el.textContent || el.getAttribute('aria-label') || '') === t);
+    const exact = visible.find(
+      (el) => norm(el.textContent || el.getAttribute('aria-label') || '') === t,
+    );
     if (exact) return exact;
-    const partial = visible.find((el) => norm(el.textContent || el.getAttribute('aria-label') || '').includes(t));
+    const partial = visible.find((el) =>
+      norm(el.textContent || el.getAttribute('aria-label') || '').includes(t),
+    );
     return partial || null;
   };
 
@@ -185,12 +211,13 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({ isOpen, onClose }) =
         document,
         null,
         XPathResult.FIRST_ORDERED_NODE_TYPE,
-        null
+        null,
       );
       const node = result.singleNodeValue as Node | null;
-      const el = (node && (node as HTMLElement).nodeType === 1)
-        ? (node as HTMLElement)
-        : (node && (node as ChildNode).parentElement) || null;
+      const el =
+        node && (node as HTMLElement).nodeType === 1
+          ? (node as HTMLElement)
+          : (node && (node as ChildNode).parentElement) || null;
       if (el && isVisible(el)) return el;
       return el || null;
     } catch {
@@ -245,7 +272,8 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({ isOpen, onClose }) =
   const positionSpotlight = () => {
     if (!activeSpotlightOverlay || !activeSpotlightTarget) return;
     const rect = activeSpotlightTarget.getBoundingClientRect();
-    const radius = window.getComputedStyle(activeSpotlightTarget).borderRadius || '8px';
+    const radius =
+      window.getComputedStyle(activeSpotlightTarget).borderRadius || '8px';
     Object.assign(activeSpotlightOverlay.style, {
       left: `${rect.left - 6}px`,
       top: `${rect.top - 6}px`,
@@ -296,69 +324,83 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({ isOpen, onClose }) =
     spotlightInterval = setInterval(positionSpotlight, 300);
   };
 
-  const sendMessage = useCallback(async (text: string) => {
-    if (!text.trim() || loading) return;
-    
-    setError(null);
-    setLoading(true);
+  const sendMessage = useCallback(
+    async (text: string) => {
+      if (!text.trim() || loading) return;
 
-    const nextMessages: ChatMessage[] = [
-      ...messages,
-      { role: 'user', content: text.trim() },
-    ];
-    setMessages(nextMessages);
-    
-    // Switch to chat view if we're still in intro
-    if (currentView === 'intro') {
-      setCurrentView('chat');
-    }
+      setError(null);
+      setLoading(true);
 
-    try {
-      // Tool calling (local): check if user asked to click/highlight by text
-      const tool = parseToolIntent(text);
-      if (tool) {
-        const ok = executeTool(tool);
-        const verb = tool.type === 'highlightByText' ? 'Highlighted' : 'Clicked';
-        const assistantText = ok
-          ? `✅ ${verb} "${'text' in tool ? tool.text : ''}"`
-          : `⚠️ Couldn't find target for "${'text' in tool ? tool.text : ''}"`;
-        setMessages((prev) => [...prev, { role: 'assistant', content: assistantText }]);
+      const nextMessages: ChatMessage[] = [
+        ...messages,
+        { role: 'user', content: text.trim() },
+      ];
+      setMessages(nextMessages);
+
+      // Switch to chat view if we're still in intro
+      if (currentView === 'intro') {
+        setCurrentView('chat');
+      }
+
+      try {
+        // Tool calling (local): check if user asked to click/highlight by text
+        const tool = parseToolIntent(text);
+        if (tool) {
+          const ok = executeTool(tool);
+          const verb =
+            tool.type === 'highlightByText' ? 'Highlighted' : 'Clicked';
+          const assistantText = ok
+            ? `✅ ${verb} "${'text' in tool ? tool.text : ''}"`
+            : `⚠️ Couldn't find target for "${'text' in tool ? tool.text : ''}"`;
+          setMessages((prev) => [
+            ...prev,
+            { role: 'assistant', content: assistantText },
+          ]);
+          setLoading(false);
+          return; // Skip network call when a local tool is executed
+        }
+
+        const resp = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            messages: nextMessages,
+            model: 'solar-pro2',
+            pageHtml:
+              typeof document !== 'undefined' ? document.body.innerHTML : '',
+          }),
+        });
+        const data = await resp.json();
+        if (!resp.ok) throw new Error(data?.error || 'Failed to fetch');
+
+        const reply = data?.content ?? '';
+        if (reply) {
+          setMessages((prev) => [
+            ...prev,
+            { role: 'assistant', content: reply },
+          ]);
+          // Parse any ACTION directives in the assistant reply and execute tools.
+          try {
+            const actions = parseAssistantActions(reply);
+            actions.forEach((a) => executeTool(a));
+          } catch {}
+        }
+      } catch (e: any) {
+        console.error(e);
+        setError(e?.message || 'Failed to fetch response');
+      } finally {
         setLoading(false);
-        return; // Skip network call when a local tool is executed
       }
+    },
+    [loading, messages, currentView],
+  );
 
-      const resp = await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          messages: nextMessages,
-          model: 'solar-pro2',
-          pageHtml: typeof document !== 'undefined' ? document.body.innerHTML : '',
-        }),
-      });
-      const data = await resp.json();
-      if (!resp.ok) throw new Error(data?.error || 'Failed to fetch');
-
-      const reply = data?.content ?? '';
-      if (reply) {
-        setMessages(prev => [...prev, { role: 'assistant', content: reply }]);
-        // Parse any ACTION directives in the assistant reply and execute tools.
-        try {
-          const actions = parseAssistantActions(reply);
-          actions.forEach((a) => executeTool(a));
-        } catch {}
-      }
-    } catch (e: any) {
-      console.error(e);
-      setError(e?.message || 'Failed to fetch response');
-    } finally {
-      setLoading(false);
-    }
-  }, [loading, messages, currentView]);
-
-  const handleSwitchToChat = useCallback((initialMessage: string) => {
-    sendMessage(initialMessage);
-  }, [sendMessage]);
+  const handleSwitchToChat = useCallback(
+    (initialMessage: string) => {
+      sendMessage(initialMessage);
+    },
+    [sendMessage],
+  );
 
   return (
     <ViewContainer
@@ -369,17 +411,13 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({ isOpen, onClose }) =
       showInput={true}
     >
       {currentView === 'intro' ? (
-        <IntroView 
+        <IntroView
           onClose={onClose}
           onSendMessage={sendMessage}
           onSwitchToChat={handleSwitchToChat}
         />
       ) : (
-        <ChatView 
-          messages={messages}
-          loading={loading}
-          error={error}
-        />
+        <ChatView messages={messages} loading={loading} error={error} />
       )}
     </ViewContainer>
   );

@@ -1,5 +1,5 @@
 import styled from '@emotion/styled';
-import React, { useRef, useEffect, Fragment } from 'react';
+import React, { Fragment, useEffect, useRef } from 'react';
 
 export type ChatMessage = {
   role: 'user' | 'assistant' | 'system';
@@ -36,18 +36,14 @@ export const ChatView: React.FC<ChatViewProps> = ({
         <EmptyState>Start the conversation below.</EmptyState>
       ) : (
         messages.map((m, i) => (
-
-          
           <BubbleWrapper key={i}>
             <Bubble data-role={m.role}>
               <BubbleRole data-role={m.role}>
                 {m.role === 'user' ? 'You' : 'Pagemate'}
               </BubbleRole>
-<BubbleText>{renderMessageContent(m.content)}</BubbleText>
-
+              <BubbleText>{renderMessageContent(m.content)}</BubbleText>
             </Bubble>
           </BubbleWrapper>
-
         ))
       )}
       {loading && <LoadingText>Thinking…</LoadingText>}
@@ -182,7 +178,7 @@ function renderMessageContent(content: string) {
         <CommandRow key={`cmd-${idx}`}>
           <CommandVerb>{verb}</CommandVerb>
           <CommandTarget>{target}</CommandTarget>
-        </CommandRow>
+        </CommandRow>,
       );
     } else {
       out.push(<Fragment key={`ln-${idx}`}>{line}</Fragment>);
