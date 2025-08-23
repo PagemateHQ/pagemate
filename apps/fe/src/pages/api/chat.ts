@@ -11,6 +11,16 @@ type ChatMessage = {
   content: string;
 };
 
+// Structured output schema and helpers
+const ActionVerb = z.enum(['SPOTLIGHT', 'CLICK', 'RETRIEVE']);
+const ActionSchema = z.object({ verb: ActionVerb, target: z.string().min(1) });
+const AssistantSchema = z.object({ reply: z.string().min(1), action: ActionSchema });
+const toTextWithSingleAction = (obj: z.infer<typeof AssistantSchema>): string => {
+  const reply = obj.reply.trim();
+  const target = obj.action.target.trim().replace(/^(["'`])|(["'`])$/g, '');
+  return `${reply}\nACTION ${obj.action.verb} ${target}`.trim();
+};
+
 async function handler(
   req: NextApiRequest,
   res: NextApiResponse,
@@ -53,7 +63,6 @@ async function handler(
       'If the user says "highlight <text>", they mean visually highlight the on-page element — do NOT format text as bold/italics.',
       'You MUST respond as a strict JSON object, no markdown/code fences, no extra text. JSON ONLY.',
       'Schema: { "reply": string, "action": { "verb": "SPOTLIGHT"|"CLICK"|"RETRIEVE", "target": string } }',
-      'On the FIRST assistant response in any conversation, set action.verb to "RETRIEVE" and set action.target to a concise retrieval query derived from the user\'s last message.',
       'Exactly one action is required. Think carefully and choose one.',
       'Keep the "reply" concise and confirm the action (e.g., "Highlighting Start Building").',
       'When uncertain, ask a short clarifying question in "reply". Do not hallucinate UI that is not present.',
@@ -80,6 +89,71 @@ async function handler(
           }
         : null;
 
+    // Programmatic retrieval injection on the first assistant response
+    type DocumentChunk = {
+      id?: string;
+      document_id?: string | null;
+      content?: string;
+      text?: string;
+      score?: number;
+      metadata?: Record<string, any>;
+    };
+
+    const fetchRetrieval = async (
+      query: string,
+      opts: { limit?: number; documentId?: string | null } = {},
+    ): Promise<DocumentChunk[]> => {
+      const baseUrl = 'https://api.pagemate.app';
+      const tenantId = process.env.NEXT_PUBLIC_PAGEMATE_TENANT_ID as string | undefined;
+      if (!tenantId) return [];
+      const params = new URLSearchParams();
+      params.set('query', query);
+      if (opts.limit) params.set('limit', String(opts.limit));
+      if (opts.documentId) params.set('document_id', String(opts.documentId));
+      const url = `${baseUrl}/tenants/${encodeURIComponent(tenantId)}/retrieval?${params.toString()}`;
+      try {
+        const resp = await fetch(url, { method: 'GET' });
+        if (!resp.ok) return [];
+        const data = (await resp.json()) as DocumentChunk[];
+        return Array.isArray(data) ? data : [];
+      } catch {
+        return [];
+      }
+    };
+
+    const buildRagContextFromChunks = (
+      query: string,
+      chunks: DocumentChunk[],
+    ): string => {
+      const parts: string[] = [];
+      parts.push(`RAG_CONTEXT Query: ${query}`);
+      const top = chunks.slice(0, Math.min(8, chunks.length));
+      for (let i = 0; i < top.length; i++) {
+        const c = top[i];
+        const text = (c.content || c.text || '').replace(/\s+/g, ' ').trim();
+        const doc = c.document_id ?? '';
+        const score = typeof c.score === 'number' ? c.score.toFixed(4) : '';
+        parts.push(`[${i + 1}] doc:${doc} score:${score}`);
+        parts.push(text);
+      }
+      return parts.join('\n');
+    };
+
+    const hasAssistantBefore = Array.isArray(messages) && messages.some((m) => m.role === 'assistant');
+    const lastUserMsg = Array.isArray(messages)
+      ? [...messages].reverse().find((m) => m.role === 'user')?.content?.trim() ?? ''
+      : '';
+    const shouldInjectRag = !hasAssistantBefore && !!lastUserMsg;
+
+    let serverRagContextMessage: { role: 'system'; content: string } | null = null;
+    if (shouldInjectRag) {
+      const chunks = await fetchRetrieval(lastUserMsg, { limit: 8 });
+      if (chunks.length > 0) {
+        const ragText = buildRagContextFromChunks(lastUserMsg, chunks);
+        serverRagContextMessage = { role: 'system' as const, content: `RAG Context\n${ragText}` } as const;
+      }
+    }
+
     const finalMessages = (() => {
       const m = messages.map((mm) => ({ role: mm.role, content: mm.content }));
       // If there is no system message yet, prepend default prompt.
@@ -89,12 +163,14 @@ async function handler(
         ];
         if (htmlContextMessage) head.push(htmlContextMessage);
         if (ragContextMessage) head.push(ragContextMessage);
+        if (serverRagContextMessage) head.push(serverRagContextMessage);
         return [...head, ...m];
       }
       // If caller already sent a system message, preserve it and append extra context after it.
       const head = [m[0]] as any[];
       if (htmlContextMessage) head.push(htmlContextMessage);
       if (ragContextMessage) head.push(ragContextMessage);
+      if (serverRagContextMessage) head.push(serverRagContextMessage);
       return [...head, ...m.slice(1)];
     })();
 
@@ -137,14 +213,6 @@ async function handler(
 
     let content = '';
     let structured: { reply: string; action: { verb: z.infer<typeof ActionVerb>; target: string } } | null = null;
-
-    // Determine if this is the first assistant response (no prior assistant messages) and no RAG context yet
-    const hasAssistantBefore = Array.isArray(messages) && messages.some((m) => m.role === 'assistant');
-    const hasRagContext = typeof ragContext === 'string' && ragContext.trim().length > 0;
-    const shouldForceFirstRetrieve = !hasAssistantBefore && !hasRagContext;
-    const lastUserMsg = Array.isArray(messages)
-      ? [...messages].reverse().find((m) => m.role === 'user')?.content?.trim() ?? ''
-      : '';
 
     const mname = (model || 'solar-pro2').trim();
     const isOpenAIModel = /^gpt-|^o3|^gpt4|^gpt-4o/i.test(mname);
@@ -189,14 +257,6 @@ async function handler(
       });
       const raw = completion.choices?.[0]?.message?.content ?? '';
       ({ content, structured } = locallyValidateOrSanitize(raw));
-    }
-
-    // Policy: Always perform a retrieval on the very first assistant response
-    if (shouldForceFirstRetrieve) {
-      const query = lastUserMsg || content || 'general query';
-      const forced = { reply: 'Retrieving context for your request…', action: { verb: 'RETRIEVE' as const, target: query } };
-      structured = forced;
-      content = toTextWithSingleAction(forced as any);
     }
 
     return res.status(200).json({ content, structured: structured ?? undefined });
