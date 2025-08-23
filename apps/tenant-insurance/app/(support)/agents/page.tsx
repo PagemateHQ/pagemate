@@ -14,19 +14,9 @@ const offices = [
 export default function AgentsPage() {
   const stop = useTaskStore((s) => s.stop)
 
-  const onAustinClick = useCallback(async () => {
+  const onAustinClick = useCallback(() => {
     // Stop the global task timer using the current label
     stop()
-    try {
-      const mod = await import("canvas-confetti")
-      const confetti = mod.default
-      // Simple burst sequence
-      confetti({ particleCount: 80, spread: 60, origin: { y: 0.6 } })
-      setTimeout(() => confetti({ particleCount: 60, spread: 80, origin: { y: 0.6 } }), 200)
-      setTimeout(() => confetti({ particleCount: 40, spread: 120, origin: { y: 0.7 } }), 400)
-    } catch {
-      // ignore if confetti fails
-    }
   }, [stop])
 
   return (

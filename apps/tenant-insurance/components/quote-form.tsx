@@ -65,15 +65,6 @@ export default function QuoteForm({ initialPlan }: { initialPlan: string }) {
       const matched = isMA && mentionsCar && mentions20k && mentionsHome && mentions1m
       if (matched) {
         useTaskStore.getState().stop()
-        try {
-          const mod = await import("canvas-confetti")
-          const confetti = mod.default
-          confetti({ particleCount: 80, spread: 60, origin: { y: 0.6 } })
-          setTimeout(() => confetti({ particleCount: 60, spread: 80, origin: { y: 0.6 } }), 200)
-          setTimeout(() => confetti({ particleCount: 40, spread: 120, origin: { y: 0.7 } }), 400)
-        } catch {
-          // ignore if confetti fails
-        }
       }
     } catch (_err) {
       const { toast } = await import("@/components/ui/sonner")
