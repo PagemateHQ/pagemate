@@ -195,27 +195,55 @@ def requeue_one_failed(emb_col) -> bool:
         return False
 
 
-def _chunk_text(
-    text: str, max_chars: int = 1200, overlap: int = 200
+def _words_with_spans(text: str) -> List[Tuple[str, int, int]]:
+    """Split text into tokens and return (token, start, end) spans.
+    Uses a simple \S+ regex to approximate tokens and positions.
+    """
+    import re
+
+    spans: List[Tuple[str, int, int]] = []
+    for m in re.finditer(r"\S+", text):
+        s, e = m.span()
+        spans.append((text[s:e], s, e))
+    return spans
+
+
+def _chunk_text_tokens(
+    text: str,
+    max_tokens: Optional[int] = None,
+    overlap_tokens: Optional[int] = None,
 ) -> List[Tuple[str, int, int]]:
-    max_chars = max(1, max_chars)
-    overlap = max(0, min(overlap, max_chars - 1))
+    """Chunk text by token count with token-span-derived char offsets.
+
+    Returns list of tuples: (chunk_text, char_start, char_end)
+    """
+    if max_tokens is None:
+        max_tokens = int(os.getenv("CHUNK_MAX_TOKENS", "750"))
+    if overlap_tokens is None:
+        overlap_tokens = int(os.getenv("CHUNK_OVERLAP_TOKENS", "100"))
+    max_tokens = max(1, max_tokens)
+    overlap_tokens = max(0, min(overlap_tokens, max_tokens - 1))
+
+    toks = _words_with_spans(text)
+    if not toks:
+        return []
 
     chunks: List[Tuple[str, int, int]] = []
-    n = len(text)
-    start = 0
-    while start < n:
-        end = min(n, start + max_chars)
-        piece = text[start:end]
-        if piece.strip():
-            chunks.append((piece, start, end))
-        if end >= n:
+    i = 0
+    n = len(toks)
+    while i < n:
+        j = min(n, i + max_tokens)
+        token_slice = toks[i:j]
+        start_char = token_slice[0][1]
+        end_char = token_slice[-1][2]
+        chunk_text = text[start_char:end_char]
+        if chunk_text.strip():
+            chunks.append((chunk_text, start_char, end_char))
+        if j >= n:
             break
-        start = end - overlap
-        if start < 0:
-            start = 0
-        if start >= n:
-            break
+        i = j - overlap_tokens
+        if i < 0:
+            i = 0
     return chunks
 
 
@@ -248,29 +276,38 @@ def create_chunks_for_document(
     # Remove existing chunks for idempotency
     chunks_col.delete_many({"document_id": doc_id})
 
-    pieces = _chunk_text(full_text)
+    # Prefer token-based chunking to respect embedding context limits
+    pieces = _chunk_text_tokens(full_text)
     if not pieces:
         return
 
-    texts = [p[0] for p in pieces]
-    vecs = _embed_batch(client, model, texts)
+    # Embed in batches to avoid large requests
+    batch_size = int(os.getenv("CHUNK_EMBED_BATCH_SIZE", "16"))
     now = utc_now()
-    docs = []
-    for idx, ((txt, start, end), vec) in enumerate(zip(pieces, vecs)):
-        docs.append(
-            {
-                "_id": f"{doc_id}:{idx}",
-                "document_id": doc_id,
-                "tenant_id": tenant_id,
-                "index": idx,
-                "text": txt,
-                "embedding": vec,
-                "char_start": start,
-                "char_end": end,
-                "createdAt": now,
-                "updatedAt": now,
-            }
-        )
+    docs: List[Dict[str, Any]] = []
+    idx_global = 0
+    for bstart in range(0, len(pieces), batch_size):
+        bend = min(len(pieces), bstart + batch_size)
+        batch = pieces[bstart:bend]
+        texts = [t[0] for t in batch]
+        vecs = _embed_batch(client, model, texts)
+        for (txt, start, end), vec in zip(batch, vecs):
+            docs.append(
+                {
+                    "_id": f"{doc_id}:{idx_global}",
+                    "document_id": doc_id,
+                    "tenant_id": tenant_id,
+                    "index": idx_global,
+                    "text": txt,
+                    "embedding": vec,
+                    "char_start": start,
+                    "char_end": end,
+                    "createdAt": now,
+                    "updatedAt": now,
+                }
+            )
+            idx_global += 1
+
     if docs:
         chunks_col.insert_many(docs)
 
@@ -304,36 +341,30 @@ def process_embedding(
         return
 
     try:
-        # Compute document-level embedding
-        resp = client.embeddings.create(model=model, input=text)
-        embedding = resp.data[0].embedding  # type: ignore[attr-defined]
+        # Only chunk-level embeddings to avoid context limit errors
+        if os.getenv("CHUNK_ENABLE", "true").lower() in ("1", "true", "yes", "y"):
+            create_chunks_for_document(
+                documents_col=documents_col,
+                emb_col=emb_col,
+                emb_doc=emb_doc,
+                full_text=text,
+                client=client,
+                model=model,
+            )
 
-        # Optionally create chunk embeddings for similarity search
-        try:
-            if os.getenv("CHUNK_ENABLE", "true").lower() in ("1", "true", "yes", "y"):
-                create_chunks_for_document(
-                    documents_col=documents_col,
-                    emb_col=emb_col,
-                    emb_doc=emb_doc,
-                    full_text=text,
-                    client=client,
-                    model=model,
-                )
-        except Exception as ce:
-            print(f"Chunking failed for doc {emb_doc.get('document_id')}: {ce}", file=sys.stderr)
-
+        # Mark task completed (document-level embedding is optional per schema)
         emb_col.update_one(
             {"_id": emb_id},
             {
                 "$set": {
                     "status": "completed",
-                    "embedding": embedding,
                     "completedAt": utc_now(),
                     "updatedAt": utc_now(),
-                }
+                },
+                "$unset": {"embedding": ""},
             },
         )
-        print(f"Completed embedding {_short_id(emb_id)} (dim={len(embedding)})")
+        print(f"Completed embedding {_short_id(emb_id)} (chunked)")
     except Exception as e:
         print(f"Embedding {emb_id} failed: {e}", file=sys.stderr)
         try:
