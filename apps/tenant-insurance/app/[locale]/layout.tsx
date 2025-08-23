@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { NextIntlClientProvider, useMessages } from "next-intl";
 import { setRequestLocale } from "next-intl/server";
 import { use } from "react";
-import { CookieConsent } from "@/components/cookie-consent";
 import { DisclaimerBar } from "@/components/disclaimer-bar";
 import { GTM } from "@/components/gtm";
 import { SiteFooter } from "@/components/site-footer";
@@ -40,7 +39,6 @@ export default function LocaleLayout({
 				</div>
 				<Toaster richColors position="bottom-center" />
 				<TaskTimer />
-				<CookieConsent />
 			</ThemeProvider>
 		</NextIntlClientProvider>
 	);
