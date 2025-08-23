@@ -131,7 +131,7 @@ function WizardContent() {
     )
     // Stop the global demo timer when task completes
     import("@/lib/task-store").then(({ useTaskStore }) => {
-      useTaskStore.getState().stop("Application Wizard")
+      useTaskStore.getState().stop()
     })
   }
 

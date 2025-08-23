@@ -14,7 +14,7 @@ const items = [
 export function SupportSidebar() {
   const pathname = usePathname()
   return (
-    <aside className="sticky top-20 hidden h-[calc(100vh-5rem)] w-64 shrink-0 border-r pr-4 pt-2 md:block">
+    <aside className="sticky top-20 hidden h-[calc(100vh-5rem)] w-64 shrink-0 pr-4 pt-2 md:block">
       <nav className="grid gap-1 text-sm">
         {items.map((i) => {
           const active = pathname === i.href

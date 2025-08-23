@@ -1,11 +1,14 @@
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card"
+import { TaskSelector } from "@/components/task-selector"
 import { CheckIcon, ShieldCheckIcon } from "lucide-react"
 
 export default function Home() {
   return (
     <div className="space-y-16">
+      {/* Task selection modal on first home load */}
+      <TaskSelector />
       <section className="grid gap-6 md:grid-cols-2 md:gap-10">
         <div className="space-y-4">
           <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">

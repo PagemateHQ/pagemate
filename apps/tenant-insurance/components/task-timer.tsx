@@ -35,13 +35,7 @@ export function TaskTimer() {
   const idRef = React.useRef<string | number | null>(null)
   const intervalRef = React.useRef<number | null>(null)
 
-  // Ensure a timer starts on first mount for the demo
-  React.useEffect(() => {
-    if (!running && !finishedAt) {
-      start("Find the phone number of Austin, TX agent")
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  // Do not auto-start; Task selection kicks off the timer.
 
   // Create/update the Sonner timer toast when running
   React.useEffect(() => {
@@ -102,18 +96,13 @@ export function TaskTimer() {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Congrats!</DialogTitle>
-          <DialogDescription>
-            {label ? (
-              <span>
-                You finished <span className="font-medium">{label}</span>.
-              </span>
-            ) : (
-              <span>You finished the task.</span>
-            )}
-          </DialogDescription>
+          <DialogTitle>It took {formatElapsed(finalMs)}!</DialogTitle>
+          {label && (
+            <DialogDescription>
+              Task: <span className="font-medium">{label}</span>
+            </DialogDescription>
+          )}
         </DialogHeader>
-        <div className="text-lg font-medium">It took {formatElapsed(finalMs)}.</div>
         <DialogFooter>
           <Button onClick={() => setOpen(false)}>Close</Button>
         </DialogFooter>
