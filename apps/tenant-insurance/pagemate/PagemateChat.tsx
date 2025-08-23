@@ -680,7 +680,21 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
             while (followups < maxFollowups) {
               if (abortControllerRef.current?.signal.aborted) return;
               try { refreshInjectedHtml(); } catch {}
-              const reply = await callAI(workingMessages, { ragContext: pendingRag });
+              let reply = await callAI(workingMessages, { ragContext: pendingRag });
+              // Parse possible JSON action envelope
+              let envelopeActions: ToolAction[] = [];
+              try {
+                const trimmed = (reply || '').trim();
+                if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
+                  const obj = JSON.parse(trimmed);
+                  if (obj && typeof obj === 'object') {
+                    if (typeof obj.reply === 'string') reply = obj.reply;
+                    if (obj.action && obj.action.verb) {
+                      envelopeActions = parseAssistantActions(JSON.stringify(obj));
+                    }
+                  }
+                }
+              } catch {}
               if (reply) {
                 workingMessages = [
                   ...workingMessages,
@@ -691,7 +705,7 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
                 try { setSuppressActions(false); } catch {}
               }
               // Parse and execute any ACTION directives
-              const actions = parseAssistantActions(reply);
+              const actions = [...envelopeActions, ...parseAssistantActions(reply)];
               if (!actions.length) break;
               // Execute tools; only continue if at least one RETRIEVE occurred
               pendingRag = null;
@@ -715,6 +729,20 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
         // 2) Normal flow: call AI, then execute any tools and call again, up to a small limit
         try { refreshInjectedHtml(); } catch {}
         let reply = await callAI(workingMessages);
+        // Parse possible JSON action envelope
+        let envelopeActions: ToolAction[] = [];
+        try {
+          const trimmed = (reply || '').trim();
+          if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
+            const obj = JSON.parse(trimmed);
+            if (obj && typeof obj === 'object') {
+              if (typeof obj.reply === 'string') reply = obj.reply;
+              if (obj.action && obj.action.verb) {
+                envelopeActions = parseAssistantActions(JSON.stringify(obj));
+              }
+            }
+          }
+        } catch {}
         if (reply) {
           workingMessages = [
             ...workingMessages,
@@ -728,7 +756,7 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
         const maxFollowups = 3;
         let followups = 0;
         while (followups < maxFollowups) {
-          const actions = parseAssistantActions(reply);
+          const actions = [...envelopeActions, ...parseAssistantActions(reply)];
           if (!actions.length) break;
           let rag: string | null = null;
           for (const a of actions) {
@@ -742,6 +770,19 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
           if (abortControllerRef.current?.signal.aborted) return;
           try { refreshInjectedHtml(); } catch {}
           reply = await callAI(workingMessages, { ragContext: rag });
+          envelopeActions = [];
+          try {
+            const trimmed = (reply || '').trim();
+            if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
+              const obj = JSON.parse(trimmed);
+              if (obj && typeof obj === 'object') {
+                if (typeof obj.reply === 'string') reply = obj.reply;
+                if (obj.action && obj.action.verb) {
+                  envelopeActions = parseAssistantActions(JSON.stringify(obj));
+                }
+              }
+            }
+          } catch {}
           if (reply) {
             workingMessages = [
               ...workingMessages,

@@ -214,6 +214,7 @@ async function handler(
       model: mname,
       messages: finalMessages,
       stream: false,
+      temperature: 0.0,
     });
     
     const raw = completion.choices?.[0]?.message?.content ?? '';
