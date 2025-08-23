@@ -31,20 +31,20 @@ export function TaskSelector() {
 	}
 
 	return (
-		<Dialog open={open} onOpenChange={setOpen}>
-			<DialogContent>
-				<DialogHeader>
+		<Dialog open={open} onOpenChange={setOpen} aria-label="Task selection dialog">
+			<DialogContent aria-label="Task selection options">
+				<DialogHeader aria-label="Task selection header">
 					<DialogTitle>{t("TaskSelector.title")}</DialogTitle>
 					<DialogDescription>{t("TaskSelector.desc")}</DialogDescription>
 				</DialogHeader>
-				<div className="grid gap-2">
-					<Button onClick={() => startTask(t("TaskSelector.tasks.t1"))}>
+				<div className="grid gap-2" aria-label="Available tasks">
+					<Button onClick={() => startTask(t("TaskSelector.tasks.t1"))} aria-label="Select task 1">
 						{t("TaskSelector.tasks.t1")}
 					</Button>
-					<Button onClick={() => startTask(t("TaskSelector.tasks.t2"))}>
+					<Button onClick={() => startTask(t("TaskSelector.tasks.t2"))} aria-label="Select task 2">
 						{t("TaskSelector.tasks.t2")}
 					</Button>
-					<Button onClick={() => startTask(t("TaskSelector.tasks.t3"))}>
+					<Button onClick={() => startTask(t("TaskSelector.tasks.t3"))} aria-label="Select task 3">
 						{t("TaskSelector.tasks.t3")}
 					</Button>
 				</div>

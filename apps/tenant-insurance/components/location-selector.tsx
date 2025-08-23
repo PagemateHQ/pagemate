@@ -27,13 +27,13 @@ export function LocationSelector() {
 		localStorage.setItem("state-selector:v1", v);
 	}
 	return (
-		<Select value={state} onValueChange={onChange}>
-			<SelectTrigger className="w-[160px]">
+		<Select value={state} onValueChange={onChange} aria-label="Select state or location">
+			<SelectTrigger className="w-[160px]" aria-label="State selection dropdown">
 				<SelectValue placeholder={t("Common.labels.state")} />
 			</SelectTrigger>
-			<SelectContent>
+			<SelectContent aria-label="Available states">
 				{states.map((s) => (
-					<SelectItem key={s} value={s}>
+					<SelectItem key={s} value={s} aria-label={`Select state ${s}`}>
 						{s}
 					</SelectItem>
 				))}

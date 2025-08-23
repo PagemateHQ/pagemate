@@ -48,48 +48,50 @@ export default async function PlansPage({
 	];
 
 	return (
-		<div className="space-y-6">
-			<div className="space-y-1">
-				<h1 className="text-2xl font-semibold tracking-tight">
+		<div className="space-y-6" aria-label="Insurance plans page">
+			<div className="space-y-1" aria-label="Page header">
+				<h1 className="text-2xl font-semibold tracking-tight" aria-label="Page title">
 					{t("Plans.title")}
 				</h1>
-				<p className="text-muted-foreground">{t("Plans.desc")}</p>
+				<p className="text-muted-foreground" aria-label="Page description">{t("Plans.desc")}</p>
 			</div>
-			<div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+			<div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" aria-label="Plans comparison grid">
 				{plans.map((p) => (
 					<Link
 						href={{ pathname: "/quote", query: { plan: p.key } }}
 						key={p.key}
+						aria-label={`Get quote for ${p.name} plan`}
 					>
-						<Card className="flex flex-col h-full overflow-hidden">
-							<div className="flex justify-center bg-gradient-to-b from-muted/50 to-background p-4">
+						<Card className="flex flex-col h-full overflow-hidden" aria-label={`${p.name} plan details`}>
+							<div className="flex justify-center bg-gradient-to-b from-muted/50 to-background p-4" aria-label="Plan illustration">
 								<img
 									src={`/plan-${p.key.toLowerCase()}.png`}
-									alt={`${p.name} plan`}
+									alt={`${p.name} plan illustration`}
 									className="h-auto w-[200px] object-contain"
+									aria-describedby={`plan-${p.key.toLowerCase()}-info`}
 								/>
 							</div>
-							<CardHeader>
-								<div className="flex items-start justify-between gap-2">
-									<div>
+							<CardHeader aria-label="Plan header">
+								<div className="flex items-start justify-between gap-2" aria-label="Plan name and badge">
+									<div aria-label="Plan title and description">
 										<CardTitle>{p.name}</CardTitle>
 										<CardDescription>{p.tagline}</CardDescription>
 									</div>
 									{p.popular ? (
-										<Badge variant="secondary">{t("Plans.popular")}</Badge>
+										<Badge variant="secondary" aria-label="Popular plan indicator">{t("Plans.popular")}</Badge>
 									) : null}
 								</div>
 							</CardHeader>
-							<CardContent>
-								<div>
-									<span className="text-2xl font-semibold">${p.price}</span>
-									<span className="text-sm text-muted-foreground">
+							<CardContent aria-label="Plan pricing and features">
+								<div aria-label="Plan pricing">
+									<span className="text-2xl font-semibold" aria-label="Monthly price">${p.price}</span>
+									<span className="text-sm text-muted-foreground" aria-label="Billing period">
 										{t("Home.plan.mo")}
 									</span>
 								</div>
-								<ul className="mt-4 grid gap-2 text-sm text-muted-foreground">
+								<ul className="mt-4 grid gap-2 text-sm text-muted-foreground" aria-label="Plan features list">
 									{p.features.map((f) => (
-										<li key={f}>• {f}</li>
+										<li key={f} aria-label="Plan feature">• {f}</li>
 									))}
 								</ul>
 							</CardContent>

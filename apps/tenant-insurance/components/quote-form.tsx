@@ -98,35 +98,35 @@ export default function QuoteForm({ initialPlan }: { initialPlan: string }) {
 	}
 
 	return (
-		<div className="grid gap-6 md:grid-cols-2">
-			<div className="space-y-1">
-				<h1 className="text-2xl font-semibold tracking-tight">
+		<div className="grid gap-6 md:grid-cols-2" aria-label="Insurance quote form section">
+			<div className="space-y-1" aria-label="Quote form header">
+				<h1 className="text-2xl font-semibold tracking-tight" aria-label="Quote form title">
 					{t("Quote.title")}
 				</h1>
 				<p className="text-muted-foreground">{t("Quote.desc")}</p>
 			</div>
 
-			<Card className="md:col-span-2">
-				<CardContent className="p-6">
-					<form className="grid gap-4 sm:grid-cols-2" onSubmit={onSubmit}>
-						<div className="grid gap-2">
+			<Card className="md:col-span-2" aria-label="Quote form card">
+				<CardContent className="p-6" aria-label="Quote form inputs">
+					<form className="grid gap-4 sm:grid-cols-2" onSubmit={onSubmit} aria-label="Insurance quote form">
+						<div className="grid gap-2" aria-label="Plan selection">
 							<Label htmlFor="plan">{t("Common.labels.plan")}</Label>
 							<Select value={plan} onValueChange={setPlan}>
-								<SelectTrigger id="plan" aria-label="Plan">
+								<SelectTrigger id="plan" aria-label="Plan" aria-describedby="plan-description">
 									<SelectValue />
 								</SelectTrigger>
-								<SelectContent>
-									<SelectItem value="Essential">
+								<SelectContent aria-label="Available insurance plans">
+									<SelectItem value="Essential" aria-label="Essential plan - basic coverage">
 										{t("Home.plan.Essential")}
 									</SelectItem>
-									<SelectItem value="Standard">
+									<SelectItem value="Standard" aria-label="Standard plan - comprehensive coverage">
 										{t("Home.plan.Standard")}
 									</SelectItem>
-									<SelectItem value="Plus">{t("Home.plan.Plus")}</SelectItem>
+									<SelectItem value="Plus" aria-label="Plus plan - premium coverage">{t("Home.plan.Plus")}</SelectItem>
 								</SelectContent>
 							</Select>
 						</div>
-						<div className="grid gap-2">
+						<div className="grid gap-2" aria-label="ZIP code input">
 							<Label htmlFor="zip">{t("Common.labels.zip")}</Label>
 							<Input
 								id="zip"
@@ -135,10 +135,12 @@ export default function QuoteForm({ initialPlan }: { initialPlan: string }) {
 								value={zip}
 								onChange={(e) => setZip(e.target.value.replace(/[^0-9]/g, ""))}
 								placeholder={t("Common.placeholders.zip")}
+								aria-label="ZIP code"
+								aria-describedby="zip-description"
 								required
 							/>
 						</div>
-						<div className="grid gap-2">
+						<div className="grid gap-2" aria-label="Property value input">
 							<Label htmlFor="propertyValue">
 								{t("Common.labels.personalProperty")}
 							</Label>
@@ -152,10 +154,12 @@ export default function QuoteForm({ initialPlan }: { initialPlan: string }) {
 									)
 								}
 								placeholder="25000"
+								aria-label="Property value in dollars"
+								aria-describedby="property-description"
 								required
 							/>
 						</div>
-						<div className="grid gap-2">
+						<div className="grid gap-2" aria-label="Email address input">
 							<Label htmlFor="email">{t("Common.labels.email")}</Label>
 							<Input
 								id="email"
@@ -163,27 +167,31 @@ export default function QuoteForm({ initialPlan }: { initialPlan: string }) {
 								value={email}
 								onChange={(e) => setEmail(e.target.value)}
 								placeholder={t("Common.placeholders.email")}
+								aria-label="Email address"
+								aria-describedby="email-description"
 								required
 							/>
 						</div>
-						<div className="grid gap-2 sm:col-span-2">
+						<div className="grid gap-2 sm:col-span-2" aria-label="Additional notes">
 							<Label htmlFor="notes">{t("Common.labels.notes")}</Label>
 							<Textarea
 								id="notes"
 								value={notes}
 								onChange={(e) => setNotes(e.target.value)}
 								placeholder={t("Common.placeholders.notes")}
+								aria-label="Additional notes or comments"
+								aria-describedby="notes-description"
 							/>
 						</div>
-						<div className="sm:col-span-2 flex items-center justify-between">
-							<div className="text-sm text-muted-foreground">
+						<div className="sm:col-span-2 flex items-center justify-between" aria-label="Quote summary and submit">
+							<div className="text-sm text-muted-foreground" aria-label="Estimated premium display">
 								{t("Common.labels.estimatedPremium")}:{" "}
-								<span className="font-medium">
+								<span className="font-medium" aria-label="Monthly premium amount">
 									${premium}
 									{t("Home.plan.mo")}
 								</span>
 							</div>
-							<Button type="submit">{t("Common.actions.emailQuote")}</Button>
+							<Button type="submit" aria-label="Submit quote request and receive email quote">{t("Common.actions.emailQuote")}</Button>
 						</div>
 					</form>
 				</CardContent>
