@@ -13,19 +13,19 @@ interface ViewContainerProps {
   showInput?: boolean;
 }
 
-export const ViewContainer: React.FC<ViewContainerProps> = ({ 
-  children, 
+export const ViewContainer: React.FC<ViewContainerProps> = ({
+  children,
   isOpen = true,
   onClose,
   onSendMessage,
   loading = false,
-  showInput = true
+  showInput = true,
 }) => {
   const containerVariants = {
-    hidden: { 
+    hidden: {
       opacity: 0,
       scale: 0.95,
-      y: 20
+      y: 20,
     },
     visible: {
       opacity: 1,
@@ -33,7 +33,7 @@ export const ViewContainer: React.FC<ViewContainerProps> = ({
       y: 0,
       transition: {
         duration: 0.3,
-        ease: [0.4, 0.0, 0.2, 1] as [number, number, number, number],
+        ease: [0.4, 0.0, 0.2, 1],
         staggerChildren: 0.1,
       },
     },
@@ -43,10 +43,10 @@ export const ViewContainer: React.FC<ViewContainerProps> = ({
       y: 20,
       transition: {
         duration: 0.2,
-        ease: [0.4, 0.0, 0.6, 1] as [number, number, number, number],
-      }
-    }
-  };
+        ease: [0.4, 0.0, 0.6, 1],
+      },
+    },
+  } as const;
 
   if (!isOpen) return null;
 
@@ -58,10 +58,8 @@ export const ViewContainer: React.FC<ViewContainerProps> = ({
       exit="exit"
     >
       <CircleGlow />
-      
-      <Content>
-        {children}
-      </Content>
+
+      <Content>{children}</Content>
 
       {showInput && onSendMessage && (
         <InputBar onSendMessage={onSendMessage} loading={loading} />

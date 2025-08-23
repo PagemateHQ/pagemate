@@ -8,7 +8,10 @@ interface IntroViewProps {
   onSwitchToChat?: (initialMessage: string) => void;
 }
 
-export const IntroView: React.FC<IntroViewProps> = ({ onSendMessage, onSwitchToChat }) => {
+export const IntroView: React.FC<IntroViewProps> = ({
+  onSendMessage,
+  onSwitchToChat,
+}) => {
   const handleSuggestionClick = (text: string) => {
     if (onSwitchToChat) {
       onSwitchToChat(text);
@@ -24,10 +27,10 @@ export const IntroView: React.FC<IntroViewProps> = ({ onSendMessage, onSwitchToC
       y: 0,
       transition: {
         duration: 0.5,
-        ease: [0.4, 0.0, 0.2, 1] as [number, number, number, number],
+        ease: [0.4, 0.0, 0.2, 1],
       },
     },
-  };
+  } as const;
 
   return (
     <>
@@ -70,21 +73,34 @@ export const IntroView: React.FC<IntroViewProps> = ({ onSendMessage, onSwitchToC
 
       <MotionSuggestionsContainer variants={itemVariants}>
         <MotionSuggestionButton
-          whileHover={{ scale: 1.02, backgroundColor: 'rgba(171, 220, 246, 0.45)' }}
+          whileHover={{
+            scale: 1.02,
+            backgroundColor: 'rgba(171, 220, 246, 0.45)',
+          }}
           whileTap={{ scale: 0.98 }}
-          onClick={() => handleSuggestionClick('Help me find a specific transaction')}
+          onClick={() =>
+            handleSuggestionClick('Help me find a specific transaction')
+          }
         >
           Help me find a specific transaction
         </MotionSuggestionButton>
         <MotionSuggestionButton
-          whileHover={{ scale: 1.02, backgroundColor: 'rgba(171, 220, 246, 0.45)' }}
+          whileHover={{
+            scale: 1.02,
+            backgroundColor: 'rgba(171, 220, 246, 0.45)',
+          }}
           whileTap={{ scale: 0.98 }}
-          onClick={() => handleSuggestionClick('How can I transfer money between accounts?')}
+          onClick={() =>
+            handleSuggestionClick('How can I transfer money between accounts?')
+          }
         >
           How can I transfer money between accounts?
         </MotionSuggestionButton>
         <MotionSuggestionButton
-          whileHover={{ scale: 1.02, backgroundColor: 'rgba(171, 220, 246, 0.45)' }}
+          whileHover={{
+            scale: 1.02,
+            backgroundColor: 'rgba(171, 220, 246, 0.45)',
+          }}
           whileTap={{ scale: 0.98 }}
           onClick={() => handleSuggestionClick('How do I deposit a check?')}
         >
