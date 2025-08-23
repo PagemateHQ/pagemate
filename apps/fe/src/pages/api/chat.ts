@@ -53,6 +53,7 @@ async function handler(
       'If the user says "highlight <text>", they mean visually highlight the on-page element — do NOT format text as bold/italics.',
       'You MUST respond as a strict JSON object, no markdown/code fences, no extra text. JSON ONLY.',
       'Schema: { "reply": string, "action": { "verb": "SPOTLIGHT"|"CLICK"|"RETRIEVE", "target": string } }',
+      'On the FIRST assistant response in any conversation, set action.verb to "RETRIEVE" and set action.target to a concise retrieval query derived from the user\'s last message.',
       'Exactly one action is required. Think carefully and choose one.',
       'Keep the "reply" concise and confirm the action (e.g., "Highlighting Start Building").',
       'When uncertain, ask a short clarifying question in "reply". Do not hallucinate UI that is not present.',
@@ -137,6 +138,14 @@ async function handler(
     let content = '';
     let structured: { reply: string; action: { verb: z.infer<typeof ActionVerb>; target: string } } | null = null;
 
+    // Determine if this is the first assistant response (no prior assistant messages) and no RAG context yet
+    const hasAssistantBefore = Array.isArray(messages) && messages.some((m) => m.role === 'assistant');
+    const hasRagContext = typeof ragContext === 'string' && ragContext.trim().length > 0;
+    const shouldForceFirstRetrieve = !hasAssistantBefore && !hasRagContext;
+    const lastUserMsg = Array.isArray(messages)
+      ? [...messages].reverse().find((m) => m.role === 'user')?.content?.trim() ?? ''
+      : '';
+
     const mname = (model || 'solar-pro2').trim();
     const isOpenAIModel = /^gpt-|^o3|^gpt4|^gpt-4o/i.test(mname);
 
@@ -180,6 +189,14 @@ async function handler(
       });
       const raw = completion.choices?.[0]?.message?.content ?? '';
       ({ content, structured } = locallyValidateOrSanitize(raw));
+    }
+
+    // Policy: Always perform a retrieval on the very first assistant response
+    if (shouldForceFirstRetrieve) {
+      const query = lastUserMsg || content || 'general query';
+      const forced = { reply: 'Retrieving context for your request…', action: { verb: 'RETRIEVE' as const, target: query } };
+      structured = forced;
+      content = toTextWithSingleAction(forced as any);
     }
 
     return res.status(200).json({ content, structured: structured ?? undefined });

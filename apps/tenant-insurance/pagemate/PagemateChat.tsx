@@ -282,6 +282,7 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
       if (href === currentUrlRef.current) return;
       currentUrlRef.current = href;
       try { removeSpotlight(); } catch {}
+      try { setSuppressActions(true); } catch {}
       if (loadingRef.current) {
         abortControllerRef.current?.abort();
         setTimeout(() => restartAgent(), 0);
@@ -495,8 +496,11 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
       setError(null);
       setLoading(true);
 
+      // If starting from the intro view, treat this as a new task
+      // and clear any previous conversation history.
+      const isNewTask = currentView === 'intro';
       let workingMessages: ChatMessage[] = [
-        ...messages,
+        ...(isNewTask ? [] : messages),
         { role: 'user', content: text.trim() },
       ];
       setMessages(workingMessages);
