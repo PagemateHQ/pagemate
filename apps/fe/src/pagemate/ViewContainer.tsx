@@ -89,6 +89,18 @@ const _Container = styled.div`
 
   /* TODO: if hardware acceleration is enabled, make backdrop filter to blur(8px) */
   backdrop-filter: blur(4px);
+
+  /* dark mode */
+  html.dark & {
+    background:
+      linear-gradient(
+        0deg,
+        rgba(236, 250, 255, 0.33) 0%,
+        rgba(236, 250, 255, 0.33) 100%
+      ),
+      rgba(234, 249, 255, 1);
+    backdrop-filter: none;
+  }
 `;
 
 const MotionContainer = motion(_Container);
