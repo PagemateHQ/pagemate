@@ -24,5 +24,21 @@ button {
 
 img {
   user-select: none;
+  -webkit-user-select: none;
   -webkit-user-drag: none;
+}
+
+div {
+  -webkit-user-select: none;
+}
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p,
+span,
+button {
+  -webkit-user-select: text;
 }

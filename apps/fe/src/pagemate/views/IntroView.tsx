@@ -490,7 +490,7 @@ const InputContent = styled.div`
   flex: 1;
 `;
 
-const InputText = styled.div`
+const InputText = styled.span`
   font-family:
     'Instrument Sans',
     -apple-system,
@@ -503,7 +503,7 @@ const InputText = styled.div`
   color: #000000;
 `;
 
-const InputLabel = styled.div`
+const InputLabel = styled.span`
   font-family:
     'Instrument Sans',
     -apple-system,
