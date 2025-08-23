@@ -420,7 +420,7 @@ const DropZoneText = styled.p`
   margin: 0;
 `;
 
-const ErrorMessage = styled.div`
+const ErrorMessage = styled.span`
   background: #fee;
   color: #c00;
   padding: 12px 16px;
@@ -428,7 +428,7 @@ const ErrorMessage = styled.div`
   font-size: 14px;
 `;
 
-const LoadingMessage = styled.div`
+const LoadingMessage = styled.span`
   background: #e6f4ff;
   color: #0093f6;
   padding: 12px 16px;

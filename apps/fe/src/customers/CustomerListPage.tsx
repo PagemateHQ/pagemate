@@ -590,7 +590,7 @@ const ErrorContainer = styled.div`
   gap: 16px;
 `;
 
-const ErrorMessage = styled.div`
+const ErrorMessage = styled.span`
   font-size: 18px;
   color: #ff3b30;
 `;
