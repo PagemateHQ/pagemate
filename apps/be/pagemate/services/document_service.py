@@ -1,8 +1,8 @@
 from datetime import datetime, timezone
-from typing import Any
+from typing import Any, Optional
 
 from pagemate import clients
-from pagemate.schema.document import Document, DocumentStatus
+from pagemate.schema.document import Document, DocumentStatus, DocumentChunk
 
 
 async def list_documents(offset: int = 0, limit: int = 20) -> list[Document]:
@@ -103,3 +103,20 @@ async def delete_document(document_id: str, *, tenant_id: str) -> bool:
         document_id=document_id,
         tenant_id=tenant_id,
     )
+
+
+async def list_document_chunks(
+    document_id: Optional[str] = None,
+    offset: int = 0,
+    limit: int | None = None,
+    *,
+    tenant_id: str,
+) -> list[DocumentChunk]:
+    """Returns a list of chunks for the given document_id with pagination."""
+    chunks_data = await clients.mongo.chunk.list_document_chunks(
+        document_id=document_id,
+        offset=offset,
+        limit=limit,
+        tenant_id=tenant_id,
+    )
+    return [DocumentChunk(**data) for data in chunks_data]

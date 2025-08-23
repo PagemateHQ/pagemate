@@ -1,6 +1,7 @@
 from fastapi import APIRouter, HTTPException, UploadFile, File
 from fastapi.responses import Response
 
+from pagemate.schema import DocumentChunk
 from pagemate.schema.document import Document, DocumentStatus
 from pagemate.services import document_service, storage_service
 
@@ -105,3 +106,9 @@ async def delete_document(tenant_id: str, document_id: str):
     )
     if not success:
         raise HTTPException(status_code=404, detail="Document not found")
+
+
+async def list_document_chunks(tenant_id: str, document_id: str) -> list[DocumentChunk]:
+    """List chunk embeddings for a document with tenant_id and document_id."""
+
+    document_chunks
