@@ -26,7 +26,13 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
     | { type: 'clickByText'; text: string }
     | { type: 'highlightByText'; text: string }
     | { type: 'clickByXPath'; xpath: string }
-    | { type: 'highlightByXPath'; xpath: string };
+    | { type: 'highlightByXPath'; xpath: string }
+    | {
+        type: 'retrieve';
+        query: string;
+        limit?: number;
+        documentId?: string | null;
+      };
 
   const parseToolIntent = (raw: string): ToolAction | null => {
     const text = raw.trim();
@@ -71,7 +77,9 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
       return { type: 'highlightByXPath', xpath };
     }
 
-    // RETRIEVE disabled: server injects RAG automatically
+    // Match: retrieve/search <query>
+    const r1 = text.match(/^(?:retrieve|search)\s+(.+)/i);
+    if (r1) return { type: 'retrieve', query: r1[1].trim() };
 
     return null;
   };
@@ -91,7 +99,7 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
         }
       }
       case 'highlightByText': {
-        const el = findHighlightableByText(tool.text);
+        const el = findClickableByText(tool.text);
         if (!el) return false;
         try {
           el.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -124,7 +132,7 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
           return false;
         }
       }
-/* RETRIEVE disabled: case removed */
+      case 'retrieve': {
         try {
           const { query, limit = 5, documentId = null } = tool;
           const chunks = await fetchRetrieval(query, { limit, documentId });
@@ -135,7 +143,9 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
           ]);
 
           // Attempt follow-up answer using RAG context and last user message
-          const lastUser = [...messages].reverse().find((m) => m.role === 'user');
+          const lastUser = [...messages]
+            .reverse()
+            .find((m) => m.role === 'user');
           if (lastUser) {
             const ragText = buildRagContextFromChunks(query, chunks);
             try {
@@ -143,17 +153,28 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                  messages: [...messages, { role: 'user', content: lastUser.content }],
+                  messages: [
+                    ...messages,
+                    { role: 'user', content: lastUser.content },
+                  ],
                   model: 'solar-pro2',
                   pageHtml:
-                    typeof document !== 'undefined' ? document.body.innerHTML : '',
+                    typeof document !== 'undefined'
+                      ? document.body.innerHTML
+                      : '',
                   ragContext: ragText,
                 }),
               });
               const data = await resp.json();
               if (resp.ok) {
                 const structured = data?.structured as
-                  | { reply: string; action: { verb: 'SPOTLIGHT' | 'CLICK' | 'AUTOFILL'; target: string } }
+                  | {
+                      reply: string;
+                      action: {
+                        verb: 'SPOTLIGHT' | 'CLICK' | 'RETRIEVE' | 'AUTOFILL';
+                        target: string;
+                      };
+                    }
                   | undefined;
                 if (structured && structured.reply) {
                   setMessages((prev) => [
@@ -162,9 +183,20 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
                   ]);
                   try {
                     const { verb, target } = structured.action || ({} as any);
-                    if (verb === 'SPOTLIGHT') await executeTool(isLikelyXPath(target) ? { type: 'highlightByXPath', xpath: target } : { type: 'highlightByText', text: target });
-                    else if (verb === 'CLICK') await executeTool(isLikelyXPath(target) ? { type: 'clickByXPath', xpath: target } : { type: 'clickByText', text: target });
-                    // RETRIEVE not supported; server injects RAG
+                    if (verb === 'SPOTLIGHT')
+                      await executeTool(
+                        isLikelyXPath(target)
+                          ? { type: 'highlightByXPath', xpath: target }
+                          : { type: 'highlightByText', text: target },
+                      );
+                    else if (verb === 'CLICK')
+                      await executeTool(
+                        isLikelyXPath(target)
+                          ? { type: 'clickByXPath', xpath: target }
+                          : { type: 'clickByText', text: target },
+                      );
+                    else if (verb === 'RETRIEVE')
+                      await executeTool({ type: 'retrieve', query: target });
                   } catch {}
                 } else if (data?.content) {
                   setMessages((prev) => [
@@ -184,7 +216,10 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
         } catch (e: any) {
           setMessages((prev) => [
             ...prev,
-            { role: 'assistant', content: `⚠️ Retrieval failed: ${e?.message || 'Unknown error'}` },
+            {
+              role: 'assistant',
+              content: `⚠️ Retrieval failed: ${e?.message || 'Unknown error'}`,
+            },
           ]);
           return false;
         }
@@ -225,7 +260,7 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
           actions.push({ type: 'clickByXPath', xpath: target });
         else actions.push({ type: 'clickByText', text: target });
       } else if (verb === 'RETRIEVE') {
-        // Ignore RETRIEVE (RAG injected by server)
+        actions.push({ type: 'retrieve', query: target });
       } else if (verb === 'CLICK_XPATH')
         actions.push({ type: 'clickByXPath', xpath: target });
       else if (verb === 'SPOTLIGHT_XPATH')
@@ -255,26 +290,6 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
     );
     const visible = candidates.filter((el) => isVisible(el));
     // Prefer exact match, then includes
-    const exact = visible.find(
-      (el) => norm(el.textContent || el.getAttribute('aria-label') || '') === t,
-    );
-    if (exact) return exact;
-    const partial = visible.find((el) =>
-      norm(el.textContent || el.getAttribute('aria-label') || '').includes(t),
-    );
-    return partial || null;
-  };
-
-  // Highlight can target broader elements (include div)
-  const findHighlightableByText = (targetText: string): HTMLElement | null => {
-    const norm = (s: string) => s.replace(/\s+/g, ' ').trim().toLowerCase();
-    const t = norm(targetText);
-    const candidates = Array.from(
-      document.querySelectorAll<HTMLElement>(
-        'button, [role="button"], a, input[type="button"], input[type="submit"], div',
-      ),
-    );
-    const visible = candidates.filter((el) => isVisible(el));
     const exact = visible.find(
       (el) => norm(el.textContent || el.getAttribute('aria-label') || '') === t,
     );
@@ -436,10 +451,14 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
       }
 
       try {
-        // Tool calling (local): check if user asked to click/highlight
+        // Tool calling (local): check if user asked to click/highlight/retrieve
         const tool = parseToolIntent(text);
         if (tool) {
-
+          if (tool.type === 'retrieve') {
+            await executeTool(tool);
+            setLoading(false);
+            return;
+          } else {
             const ok = await executeTool(tool);
             const verb =
               tool.type === 'highlightByText' ? 'Highlighted' : 'Clicked';
@@ -452,18 +471,7 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
             ]);
             setLoading(false);
             return; // Skip network call when a local tool is executed
-          const ok = await executeTool(tool);
-          const verb =
-            tool.type === 'highlightByText' ? 'Highlighted' : 'Clicked';
-          const assistantText = ok
-            ? `✅ ${verb} "${'text' in tool ? tool.text : ''}"`
-            : `⚠️ Couldn't find target for "${'text' in tool ? tool.text : ''}"`;
-          setMessages((prev) => [
-            ...prev,
-            { role: 'assistant', content: assistantText },
-          ]);
-          setLoading(false);
-          return; // Skip network call when a local tool is executed
+          }
         }
 
         const resp = await fetch('/api/chat', {
@@ -480,7 +488,13 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
         if (!resp.ok) throw new Error(data?.error || 'Failed to fetch');
 
         const structured = data?.structured as
-          | { reply: string; action: { verb: 'SPOTLIGHT' | 'CLICK' | 'AUTOFILL'; target: string } }
+          | {
+              reply: string;
+              action: {
+                verb: 'SPOTLIGHT' | 'CLICK' | 'RETRIEVE' | 'AUTOFILL';
+                target: string;
+              };
+            }
           | undefined;
 
         if (structured && structured.reply) {
@@ -491,9 +505,20 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
           ]);
           try {
             const { verb, target } = structured.action || ({} as any);
-            if (verb === 'SPOTLIGHT') await executeTool(isLikelyXPath(target) ? { type: 'highlightByXPath', xpath: target } : { type: 'highlightByText', text: target });
-            else if (verb === 'CLICK') await executeTool(isLikelyXPath(target) ? { type: 'clickByXPath', xpath: target } : { type: 'clickByText', text: target });
-            // RETRIEVE not supported; server injects RAG
+            if (verb === 'SPOTLIGHT')
+              await executeTool(
+                isLikelyXPath(target)
+                  ? { type: 'highlightByXPath', xpath: target }
+                  : { type: 'highlightByText', text: target },
+              );
+            else if (verb === 'CLICK')
+              await executeTool(
+                isLikelyXPath(target)
+                  ? { type: 'clickByXPath', xpath: target }
+                  : { type: 'clickByText', text: target },
+              );
+            else if (verb === 'RETRIEVE')
+              await executeTool({ type: 'retrieve', query: target });
           } catch {}
         } else {
           const reply = data?.content ?? '';
@@ -508,18 +533,7 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
               const first = actions[0];
               if (first) await executeTool(first);
             } catch {}
-          const ok = await executeTool(tool);
-          const verb =
-            tool.type === 'highlightByText' ? 'Highlighted' : 'Clicked';
-          const assistantText = ok
-            ? `✅ ${verb} "${'text' in tool ? tool.text : ''}"`
-            : `⚠️ Couldn't find target for "${'text' in tool ? tool.text : ''}"`;
-          setMessages((prev) => [
-            ...prev,
-            { role: 'assistant', content: assistantText },
-          ]);
-          setLoading(false);
-          return; // Skip network call when a local tool is executed
+          }
         }
       } catch (e: any) {
         console.error(e);
@@ -546,7 +560,9 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
     opts: { limit?: number; documentId?: string | null } = {},
   ): Promise<DocumentChunk[]> {
     const baseUrl = 'https://api.pagemate.app';
-    const tenantId = process.env.NEXT_PUBLIC_PAGEMATE_TENANT_ID as string | undefined;
+    const tenantId = process.env.NEXT_PUBLIC_PAGEMATE_TENANT_ID as
+      | string
+      | undefined;
     if (!tenantId) throw new Error('Missing NEXT_PUBLIC_PAGEMATE_TENANT_ID');
     const params = new URLSearchParams();
     params.set('query', query);
