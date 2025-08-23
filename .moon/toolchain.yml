@@ -1,0 +1,20 @@
+# https://moonrepo.dev/docs/config/toolchain
+$schema: './cache/schemas/toolchain.json'
+
+# Configure Node.js
+node:
+  version: '22.17.0'
+  packageManager: 'bun'
+  bun:
+    version: '1.2.19'
+
+# Configure TypeScript
+typescript:
+  syncProjectReferences: true
+  createMissingConfig: true
+  routeOutDirToCache: true
+
+# Configure Python
+python:
+  version: '3.13'
+  packageManager: 'uv'

@@ -1,0 +1,12 @@
+# https://moonrepo.dev/docs/config/tasks
+$schema: 'https://moonrepo.dev/schemas/tasks.json'
+
+# Root-level tasks for the workspace
+tasks:
+  install:
+    command: 'bun install'
+    platform: 'bun'
+    
+  tidy:
+    command: 'moon run ~:lint ~:format --affected'
+    platform: 'system'
