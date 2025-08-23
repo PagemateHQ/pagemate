@@ -117,7 +117,14 @@ export default async function Home({
 				</h2>
 				<div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
 					{plans.map((plan) => (
-						<Card key={plan.key} className="flex flex-col">
+						<Card key={plan.key} className="flex flex-col overflow-hidden">
+							<div className="flex justify-center bg-gradient-to-b from-muted/50 to-background p-4">
+								<img
+									src={`/plan-${plan.key}.png`}
+									alt={`${plan.name} plan`}
+									className="h-auto w-[200px] object-contain"
+								/>
+							</div>
 							<CardHeader>
 								<div className="flex items-baseline justify-between">
 									<CardTitle>{plan.name}</CardTitle>
