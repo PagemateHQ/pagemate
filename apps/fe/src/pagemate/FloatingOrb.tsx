@@ -1,8 +1,9 @@
 import styled from '@emotion/styled';
-import { AnimatePresence } from 'framer-motion';
-import React, { useCallback, useEffect, useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import { CornerPosition, useDraggable } from '@/hooks/useDraggable';
+
 import { PagemateChat } from './PagemateChat';
 
 interface FloatingOrbProps {
@@ -14,25 +15,17 @@ export const FloatingOrb: React.FC<FloatingOrbProps> = ({
   initialCorner = 'bottom-right',
   cornerGap = 48,
 }) => {
-  const [showIntro, setShowIntro] = useState(false);
-  const [introPosition, setIntroPosition] = useState({ top: 0, left: 0 });
+  const [showView, setShowView] = useState(false);
+  const [viewPosition, setViewPosition] = useState({ top: 0, left: 0 });
   const [currentCorner, setCurrentCorner] =
     useState<CornerPosition>(initialCorner);
+  const dragStartPosRef = useRef<{ x: number; y: number } | null>(null);
+  const orbElementRef = useRef<HTMLDivElement | null>(null);
 
-  const {
-    ref: dragRef,
-    style,
-    isDragging,
-  } = useDraggable({
-    snapToCorners: true,
-    cornerGap,
-    initialCorner,
-  });
+  const updateViewPosition = useCallback(() => {
+    if (!orbElementRef.current) return;
 
-  const updateIntroPosition = useCallback(() => {
-    if (!dragRef.current) return;
-
-    const orbRect = dragRef.current.getBoundingClientRect();
+    const orbRect = orbElementRef.current.getBoundingClientRect();
     const viewWidth = 471;
     const viewHeight = 577;
     const gap = 24;
@@ -42,7 +35,7 @@ export const FloatingOrb: React.FC<FloatingOrbProps> = ({
     const isLeft = orbRect.left < window.innerWidth / 2;
     const corner: CornerPosition =
       `${isTop ? 'top' : 'bottom'}-${isLeft ? 'left' : 'right'}` as CornerPosition;
-    
+
     let top = 0;
     let left = 0;
 
@@ -66,32 +59,51 @@ export const FloatingOrb: React.FC<FloatingOrbProps> = ({
     left = Math.max(8, Math.min(left, window.innerWidth - viewWidth - 8));
     top = Math.max(8, Math.min(top, window.innerHeight - viewHeight - 8));
 
-    setIntroPosition({ top, left });
+    setViewPosition({ top, left });
     setCurrentCorner(corner);
   }, []);
 
-  useEffect(() => {
-    if (showIntro) {
-      updateIntroPosition();
-    }
-  }, [showIntro, updateIntroPosition]);
+  const {
+    ref: dragRef,
+    style,
+    isDragging,
+  } = useDraggable({
+    snapToCorners: true,
+    cornerGap,
+    initialCorner,
+    onDragEnd: () => {
+      // Update view position when drag ends
+      if (showView) {
+        setTimeout(() => {
+          updateViewPosition();
+        }, 300);
+      }
+    },
+  });
 
-  // Update position when orb moves
+  // Sync orbElementRef with dragRef
   useEffect(() => {
-    if (showIntro) {
-      updateIntroPosition();
+    if (dragRef.current) {
+      orbElementRef.current = dragRef.current;
     }
-  }, [style.left, style.top]); // Depend on position changes
+  }, [dragRef, style]); // Update when style changes too
+
+  // Update view position when it becomes visible
+  useEffect(() => {
+    if (showView) {
+      updateViewPosition();
+    }
+  }, [showView, updateViewPosition]);
 
   // Handle window resize with throttling
   useEffect(() => {
-    if (!showIntro) return;
+    if (!showView) return;
 
     let resizeTimer: NodeJS.Timeout;
     const handleResize = () => {
       clearTimeout(resizeTimer);
       resizeTimer = setTimeout(() => {
-        updateIntroPosition();
+        updateViewPosition();
       }, 100); // Throttle to 100ms
     };
 
@@ -100,14 +112,35 @@ export const FloatingOrb: React.FC<FloatingOrbProps> = ({
       clearTimeout(resizeTimer);
       window.removeEventListener('resize', handleResize);
     };
-  }, [showIntro, updateIntroPosition]);
+  }, [showView, updateViewPosition]);
 
   // Removed click outside handler - view only closes when clicking the orb
 
-  const handleOrbClick = () => {
-    if (!isDragging) {
-      setShowIntro(!showIntro);
+  const handleMouseDown = (e: React.MouseEvent) => {
+    // Record the start position
+    dragStartPosRef.current = { x: e.clientX, y: e.clientY };
+  };
+
+  const handleOrbClick = (e: React.MouseEvent) => {
+    // Don't toggle if currently dragging
+    if (isDragging) {
+      return;
     }
+
+    // Check if the mouse moved significantly (dragged)
+    if (dragStartPosRef.current) {
+      const dx = Math.abs(e.clientX - dragStartPosRef.current.x);
+      const dy = Math.abs(e.clientY - dragStartPosRef.current.y);
+      const threshold = 5; // pixels
+
+      if (dx > threshold || dy > threshold) {
+        // This was a drag, not a click
+        dragStartPosRef.current = null;
+        return;
+      }
+    }
+
+    setShowView(!showView);
   };
 
   return (
@@ -116,18 +149,32 @@ export const FloatingOrb: React.FC<FloatingOrbProps> = ({
         ref={dragRef}
         style={style}
         $isDragging={isDragging}
+        onMouseDown={handleMouseDown}
         onClick={handleOrbClick}
       />
       <AnimatePresence>
-        {showIntro && (
-          <ViewContainerWrapper
-            style={{
-              top: introPosition.top,
-              left: introPosition.left,
+        {showView && (
+          <MotionViewContainerWrapper
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{
+              opacity: 1,
+              scale: 1,
+              top: viewPosition.top,
+              left: viewPosition.left,
+            }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            transition={{
+              type: 'spring',
+              stiffness: 300,
+              damping: 30,
+              opacity: { duration: 0.2 },
             }}
           >
-            <PagemateChat isOpen={showIntro} onClose={() => setShowIntro(false)} />
-          </ViewContainerWrapper>
+            <PagemateChat
+              isOpen={showView}
+              onClose={() => setShowView(false)}
+            />
+          </MotionViewContainerWrapper>
         )}
       </AnimatePresence>
     </>
@@ -138,6 +185,8 @@ const ViewContainerWrapper = styled.div`
   position: fixed;
   z-index: 10000;
 `;
+
+const MotionViewContainerWrapper = motion(ViewContainerWrapper);
 
 const StyledFloatingOrb = styled.div<{ $isDragging?: boolean }>`
   width: 64px;

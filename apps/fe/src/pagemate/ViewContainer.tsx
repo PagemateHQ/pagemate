@@ -107,7 +107,7 @@ const CircleGlow = styled.div`
 `;
 
 const Content = styled.div`
-  padding: 16px 8px 8px;
+  width: 100%;
   height: 100%;
 
   position: relative;

@@ -109,7 +109,7 @@ const CustomersPage: React.FC = () => {
                 </TenantHeader>
 
                 <TenantActions>
-                  <Link href={`/customer/${tenant._id}`} passHref>
+                  <Link href={`/customer/${tenant._id}`} passHref legacyBehavior>
                     <ActionButton $primary>View Customer</ActionButton>
                   </Link>
                 </TenantActions>
@@ -247,7 +247,7 @@ const TenantActions = styled.div`
 `;
 
 const ActionButton = styled.a<{ $primary?: boolean }>`
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
