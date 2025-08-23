@@ -556,6 +556,7 @@ def process_embedding(
             {
                 "$set": {
                     "embedding_status": "completed",
+                    "error": None,
                     "completed_at": utc_now(),
                     "updated_at": utc_now(),
                 },
