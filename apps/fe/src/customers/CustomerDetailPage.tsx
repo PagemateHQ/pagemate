@@ -349,6 +349,10 @@ const UploadSection = styled.div<{ $isDragging: boolean }>`
     border-color: #0093f6;
     box-shadow: 0 0 0 2px rgba(0, 147, 246, 0.2);
   `}
+
+  @media screen and (max-width: 800px) {
+    flex-direction: column;
+  }
 `;
 
 const UploadContent = styled.div`
@@ -525,7 +529,7 @@ const StatusBadge = styled.span<{ status: string }>`
   }};
 `;
 
-const EmptyState = styled.div`
+const EmptyState = styled.span`
   text-align: center;
   padding: 40px;
   color: #6c8bab;
