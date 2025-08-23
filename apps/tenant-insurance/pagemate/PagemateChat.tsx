@@ -550,6 +550,7 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
             ];
             messagesRef.current = workingMessages;
             setMessages(workingMessages);
+            try { setSuppressActions(false); } catch {}
           }
           // Only call the agent again after a RETRIEVE tool
           if (tool.type === 'retrieve') {
@@ -565,6 +566,7 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
                 ];
                 messagesRef.current = workingMessages;
                 setMessages(workingMessages);
+                try { setSuppressActions(false); } catch {}
               }
               // Parse and execute any ACTION directives
               const actions = parseAssistantActions(reply);
