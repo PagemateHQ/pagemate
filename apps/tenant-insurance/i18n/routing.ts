@@ -7,7 +7,7 @@ export type Locale = (typeof locales)[number];
 export const localePrefix = "always" as const;
 
 // Keep defaultLocale in a single place to share across middleware and helpers
-export const defaultLocale: Locale = "ko";
+export const defaultLocale: Locale = "en";
 
 export const routing = {
     locales: locales as readonly string[],
