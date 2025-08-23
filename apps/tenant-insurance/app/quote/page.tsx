@@ -1,10 +1,11 @@
 import QuoteForm from "@/components/quote-form"
 
-export default function QuotePage({
+export default async function QuotePage({
   searchParams,
 }: {
-  searchParams: { [key: string]: string | string[] | undefined }
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }) {
-  const initialPlan = (searchParams["plan"] as string) ?? "Standard"
+  const params = await searchParams
+  const initialPlan = (params.plan as string) ?? "Standard"
   return <QuoteForm initialPlan={initialPlan} />
 }
