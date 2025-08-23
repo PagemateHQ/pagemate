@@ -31,9 +31,9 @@ async function handler(
   }
 
   const apiKey = process.env.UPSTAGE_API_KEY;
-  const openaiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey && !openaiKey) {
-    return res.status(500).json({ error: 'Missing UPSTAGE_API_KEY or OPENAI_API_KEY' });
+
+  if (!apiKey) {
+    return res.status(500).json({ error: 'Missing UPSTAGE_API_KEY' });
   }
 
   try {
@@ -216,8 +216,7 @@ async function handler(
 
     const mname = (model || 'solar-pro2').trim();
 
-    
-      const oai = new OpenAI({ apiKey: openaiKey });
+    const oai = new OpenAI({ apiKey: apiKey, baseURL: 'https://api.upstage.ai/v1' });
       try {
         const completion: any = await oai.chat.completions.create({
           model: mname,
