@@ -24,7 +24,7 @@
 		},
 		"actions": {
 			"getQuote": "Get a Quote",
-			"explorePlans": "Explore Plans",
+			"getCustomerSupport": "Get customer support",
 			"startWith": "Start with {plan}",
 			"emailQuote": "Email me my quote",
 			"send": "Send",
@@ -158,7 +158,11 @@
 					"$300k liability",
 					"$500 deductible"
 				],
-				"plus": ["$50k personal property", "$500k liability", "$250 deductible"]
+				"plus": [
+					"$50k personal property",
+					"$500k liability",
+					"$250 deductible"
+				]
 			}
 		}
 	},
@@ -278,7 +282,13 @@
 		"desc": "Enter your claim number to see the current status.",
 		"progressTitle": "Claim Progress",
 		"progressDesc": "Where your claim is in the process.",
-		"stages": ["Submitted", "Assigned", "In Review", "Approved", "Closed"]
+		"stages": [
+			"Submitted",
+			"Assigned",
+			"In Review",
+			"Approved",
+			"Closed"
+		]
 	},
 	"Agents": {
 		"title": "Find an Agent",
@@ -348,7 +358,12 @@
 	"Wizard": {
 		"title": "Get a Quote (Wizard)",
 		"desc": "A multi-step flow with validation and a rating breakdown.",
-		"steps": ["About you", "Location", "Coverage", "Review"],
+		"steps": [
+			"About you",
+			"Location",
+			"Coverage",
+			"Review"
+		],
 		"review": {
 			"helper": "Review your selections and estimated premium.",
 			"plan": "Plan:",
@@ -358,7 +373,9 @@
 			"deductible": "Deductible:",
 			"estimated": "Estimated premium: ${price}/mo"
 		},
-		"table": { "endorsement": "Endorsement: {key}" },
+		"table": {
+			"endorsement": "Endorsement: {key}"
+		},
 		"submitOk": {
 			"title": "Application submitted",
 			"desc": "An agent will contact you."

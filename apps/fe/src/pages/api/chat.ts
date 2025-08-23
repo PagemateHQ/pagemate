@@ -1,7 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import OpenAI from 'openai';
 import { z } from 'zod';
-import { zodResponseFormat } from 'openai/helpers/zod';
 
 import { stripJunk } from '../../utils/stripJunk';
 import { withCORS } from '../../lib/withCORS';
@@ -12,7 +11,7 @@ type ChatMessage = {
 };
 
 // Structured output schema and helpers
-const ActionVerb = z.enum(['SPOTLIGHT', 'CLICK', 'RETRIEVE']);
+const ActionVerb = z.enum(['SPOTLIGHT', 'CLICK', 'AUTOFILL']);
 const ActionSchema = z.object({ verb: ActionVerb, target: z.string().min(1) });
 const AssistantSchema = z.object({ reply: z.string().min(1), action: ActionSchema });
 const toTextWithSingleAction = (obj: z.infer<typeof AssistantSchema>): string => {
@@ -31,9 +30,8 @@ async function handler(
   }
 
   const apiKey = process.env.UPSTAGE_API_KEY;
-  const openaiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey && !openaiKey) {
-    return res.status(500).json({ error: 'Missing UPSTAGE_API_KEY or OPENAI_API_KEY' });
+  if (!apiKey) {
+    return res.status(500).json({ error: 'Missing UPSTAGE_API_KEY' });
   }
 
   try {
@@ -53,18 +51,20 @@ async function handler(
       return res.status(400).json({ error: 'messages[] is required' });
     }
 
-    const upstageClient = apiKey
-      ? new OpenAI({ apiKey, baseURL: 'https://api.upstage.ai/v1' })
-      : null;
+    const upstageClient = new OpenAI({ apiKey, baseURL: 'https://api.upstage.ai/v1' });
 
     const DEFAULT_SYSTEM_PROMPT = [
       'You are Pagemate, an on-page AI assistant embedded in a website.',
-      'Interpret imperative requests as UI actions when possible (click, highlight, navigate, fill forms).',
+      'Interpret imperative requests as UI actions when possible (click, highlight, fill forms).',
       'If the user says "highlight <text>", they mean visually highlight the on-page element — do NOT format text as bold/italics.',
+      'You receive the entire conversation history; use it to maintain context and progress.',
+      'Do not repeat the same action you already did. If a previously executed action would be repeated (same verb+target or identical autofill mapping), choose a different appropriate action or ask a concise clarifying question instead.',
       'You MUST respond as a strict JSON object, no markdown/code fences, no extra text. JSON ONLY.',
-      'Schema: { "reply": string, "action": { "verb": "SPOTLIGHT"|"CLICK"|"RETRIEVE", "target": string } }',
-      'Exactly one action is required. Think carefully and choose one.',
-      'Keep the "reply" concise and confirm the action (e.g., "Highlighting Start Building").',
+      'Schema: { "reply": string, "action": { "verb": "SPOTLIGHT"|"CLICK"|"AUTOFILL", "target": string } }',
+      'CLICK: set target to the visible text (or a clear label) of the element to click, not a URL.',
+      'AUTOFILL: use when the user asks to fill a form. Set target to a JSON object mapping fields to values (prefer visible labels/placeholders or names). Example: {"Full Name":"Jane Roe","Email":"jane@acme.com"}. Keep mappings minimal and only for fields visible or clearly requested. Do not repeat fields that were already filled.',
+      'Exactly one action is required. Think carefully and choose one that advances the task.',
+      'Keep the "reply" concise and confirm the chosen action (e.g., "Filling your details now").',
       'When uncertain, ask a short clarifying question in "reply". Do not hallucinate UI that is not present.',
       'Never use bold text or emojis. Do not include an ACTION line; JSON only.',
     ].join(' ');
@@ -139,14 +139,13 @@ async function handler(
       return parts.join('\n');
     };
 
-    const hasAssistantBefore = Array.isArray(messages) && messages.some((m) => m.role === 'assistant');
     const lastUserMsg = Array.isArray(messages)
       ? [...messages].reverse().find((m) => m.role === 'user')?.content?.trim() ?? ''
       : '';
-    const shouldInjectRag = !hasAssistantBefore && !!lastUserMsg;
 
+    // Always inject RAG for the last user message if available
     let serverRagContextMessage: { role: 'system'; content: string } | null = null;
-    if (shouldInjectRag) {
+    if (lastUserMsg) {
       const chunks = await fetchRetrieval(lastUserMsg, { limit: 8 });
       if (chunks.length > 0) {
         const ragText = buildRagContextFromChunks(lastUserMsg, chunks);
@@ -211,53 +210,16 @@ async function handler(
       return { content: raw.trim(), structured: null };
     };
 
-    let content = '';
-    let structured: { reply: string; action: { verb: z.infer<typeof ActionVerb>; target: string } } | null = null;
-
     const mname = (model || 'solar-pro2').trim();
-    const isOpenAIModel = /^gpt-|^o3|^gpt4|^gpt-4o/i.test(mname);
-
-    if (openaiKey && isOpenAIModel) {
-      const oai = new OpenAI({ apiKey: openaiKey });
-      try {
-        const completion: any = await oai.chat.completions.create({
-          model: mname,
-          messages: finalMessages,
-          response_format: zodResponseFormat(AssistantSchema, 'assistant_reply'),
-        } as any);
-        const msg = completion?.choices?.[0]?.message || {};
-        if (msg.refusal) {
-          content = String(msg.refusal || 'Refused');
-        } else if (msg.parsed) {
-          const parsed = msg.parsed as z.infer<typeof AssistantSchema>;
-          structured = { reply: parsed.reply, action: parsed.action };
-          content = toTextWithSingleAction(parsed);
-        } else {
-          const text = msg?.content?.[0]?.text || msg?.content || '';
-          ({ content, structured } = locallyValidateOrSanitize(String(text || '')));
-        }
-      } catch (e: any) {
-        if (!upstageClient) throw e;
-        const completion = await upstageClient.chat.completions.create({
-          model: 'solar-pro2',
-          messages: finalMessages,
-          stream: false,
-        });
-        const raw = completion.choices?.[0]?.message?.content ?? '';
-        ({ content, structured } = locallyValidateOrSanitize(raw));
-      }
-    } else {
-      if (!upstageClient) {
-        return res.status(500).json({ error: 'No suitable provider configured' });
-      }
-      const completion = await upstageClient.chat.completions.create({
-        model: mname || 'solar-pro2',
-        messages: finalMessages,
-        stream: false,
-      });
-      const raw = completion.choices?.[0]?.message?.content ?? '';
-      ({ content, structured } = locallyValidateOrSanitize(raw));
-    }
+    
+    const completion = await upstageClient.chat.completions.create({
+      model: mname,
+      messages: finalMessages,
+      stream: false,
+    });
+    
+    const raw = completion.choices?.[0]?.message?.content ?? '';
+    const { content, structured } = locallyValidateOrSanitize(raw);
 
     return res.status(200).json({ content, structured: structured ?? undefined });
   } catch (err: any) {

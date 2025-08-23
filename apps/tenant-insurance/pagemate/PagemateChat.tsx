@@ -42,12 +42,15 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
   type ToolAction =
     | { type: 'clickByText'; text: string }
     | { type: 'highlightByText'; text: string }
-    | { type: 'retrieve'; query: string; limit?: number; documentId?: string | null };
+    | { type: 'clickBySelector'; selector: string }
+    | { type: 'highlightBySelector'; selector: string }
+    | { type: 'autofill'; spec?: string; fields?: Record<string, string> };
 
   type ToolExecResult = {
     success: boolean;
     kind: ToolAction['type'];
     ragContext?: string | null;
+    details?: string;
   };
 
   const parseToolIntent = (raw: string): ToolAction | null => {
@@ -75,11 +78,56 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
 
     // Note: XPath commands removed. No parsing for xpath-based actions.
 
-    // Match: retrieve/search <query>
-    const r1 = text.match(/^(?:retrieve|search)\s+(.+)/i);
-    if (r1) return { type: 'retrieve', query: r1[1].trim() };
+    // Match: autofill <spec>
+    const a1 = text.match(/^autofill\s+([\s\S]+)/i);
+    if (a1) {
+      const spec = a1[1].trim();
+      const fields = parseAutofillSpec(spec);
+      return { type: 'autofill', spec, fields };
+    }
 
     return null;
+  };
+
+  const parseAutofillSpec = (raw: string | undefined | null): Record<string, string> => {
+    const out: Record<string, string> = {};
+    const s = String(raw || '').trim();
+    if (!s) return out;
+    // Try JSON object first
+    try {
+      if (s.startsWith('{') && s.endsWith('}')) {
+        const obj = JSON.parse(s);
+        if (obj && typeof obj === 'object') {
+          for (const [k, v] of Object.entries(obj)) {
+            if (typeof v === 'string' || typeof v === 'number' || typeof v === 'boolean') {
+              out[String(k)] = String(v);
+            }
+          }
+          return out;
+        }
+      }
+    } catch {}
+    // Fallback: parse key=value or key: value pairs separated by semicolons or newlines
+    const normalized = s.replace(/\r/g, '\n');
+    const lines = normalized
+      .split(/\n|;/)
+      .map((l) => l.trim())
+      .filter(Boolean);
+    for (const line of lines) {
+      const m = line.match(/^([^:=]+)\s*[:=]\s*([\s\S]+)$/);
+      if (!m) continue;
+      let key = (m[1] || '').trim();
+      let val = (m[2] || '').trim();
+      if (
+        (val.startsWith('"') && val.endsWith('"')) ||
+        (val.startsWith("'") && val.endsWith("'")) ||
+        (val.startsWith('`') && val.endsWith('`'))
+      ) {
+        val = val.slice(1, -1);
+      }
+      if (key) out[key] = val;
+    }
+    return out;
   };
 
   const executeTool = async (tool: ToolAction): Promise<ToolExecResult> => {
@@ -97,7 +145,30 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
         }
       }
       case 'highlightByText': {
-        const el = findClickableByText(tool.text);
+        const el = findHighlightableByText(tool.text);
+        if (!el) return { success: false, kind: tool.type };
+        try {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          showSpotlight(el);
+          return { success: true, kind: tool.type };
+        } catch {
+          return { success: false, kind: tool.type };
+        }
+      }
+      case 'clickBySelector': {
+        const el = findElementBySelector(tool.selector);
+        if (!el) return { success: false, kind: tool.type };
+        try {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          flashHighlight(el);
+          (el as HTMLElement).click();
+          return { success: true, kind: tool.type };
+        } catch {
+          return { success: false, kind: tool.type };
+        }
+      }
+      case 'highlightBySelector': {
+        const el = findElementBySelector(tool.selector);
         if (!el) return { success: false, kind: tool.type };
         try {
           el.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -108,24 +179,28 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
         }
       }
       // XPath-based actions have been removed
-      case 'retrieve': {
+      case 'autofill': {
         try {
-          const { query, limit = 5, documentId = null } = tool;
-          const chunks = await fetchRetrieval(query, { limit, documentId });
-          const summary = formatRetrievalSummary(query, chunks);
-          setMessages((prev) => [
-            ...prev,
-            { role: 'assistant', content: summary },
-          ]);
-          try { setSuppressActions(false); } catch {}
-          const ragText = buildRagContextFromChunks(query, chunks);
-          return { success: true, kind: tool.type, ragContext: ragText };
+          const fields = tool.fields || parseAutofillSpec(tool.spec);
+          const result = autofillFields(fields);
+          const statusLine = result.success
+            ? `✅ Autofilled ${result.filledCount} ${result.filledCount === 1 ? 'field' : 'fields'}`
+            : `⚠️ Autofill failed: ${result.error || 'No matching fields'}`;
+          const details = result.filled.length
+            ? `\n${result.filled
+                .map((f) => `- ${f.label || f.key}: ${truncateText(f.value, 80)}`)
+                .join('\n')}`
+            : '';
+          try {
+            setMessages((prev) => [
+              ...prev,
+              { role: 'assistant', content: `${statusLine}${details}` },
+            ]);
+            try { setSuppressActions(false); } catch {}
+          } catch {}
+          return { success: result.success, kind: tool.type, details: statusLine };
         } catch (e: any) {
-          setMessages((prev) => [
-            ...prev,
-            { role: 'assistant', content: `⚠️ Retrieval failed: ${e?.message || 'Unknown error'}` },
-          ]);
-          return { success: false, kind: tool.type };
+          return { success: false, kind: tool.type, details: e?.message };
         }
       }
       default:
@@ -135,6 +210,38 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
 
   const parseAssistantActions = (text: string): ToolAction[] => {
     const actions: ToolAction[] = [];
+    // Try JSON envelope: { reply: string, action: { verb, target } }
+    try {
+      const trimmed = (text || '').trim();
+      if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
+        const obj = JSON.parse(trimmed);
+        if (obj && typeof obj === 'object' && obj.action && obj.action.verb) {
+          const verb = String(obj.action.verb || '').toUpperCase();
+          const target: string = String(obj.action.target || '');
+          const isSelector = isLikelyCssSelector(target);
+          if (verb === 'SPOTLIGHT') {
+            actions.push(
+              isSelector
+                ? { type: 'highlightBySelector', selector: target }
+                : { type: 'highlightByText', text: target },
+            );
+          } else if (verb === 'CLICK') {
+            // Keep non-destructive default: highlight instead of clicking
+            actions.push(
+              isSelector
+                ? { type: 'highlightBySelector', selector: target }
+                : { type: 'highlightByText', text: target },
+            );
+          } else if (verb === 'RETRIEVE') {
+            // Ignore RETRIEVE (server injects RAG automatically)
+          } else if (verb === 'AUTOFILL') {
+            const fields = parseAutofillSpec(target);
+            actions.push({ type: 'autofill', spec: target, fields });
+          }
+        }
+      }
+    } catch {}
+
     // Match patterns like:
     // ACTION SPOTLIGHT Start Building
     // ACTION CLICK "Start Building"
@@ -160,12 +267,21 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
         // Default to highlight mode instead of clicking
         actions.push({ type: 'highlightByText', text: target });
       } else if (verb === 'RETRIEVE') {
-        actions.push({ type: 'retrieve', query: target });
+        // Ignore RETRIEVE actions
+      } else if (verb === 'AUTOFILL') {
+        const fields = parseAutofillSpec(target);
+        actions.push({ type: 'autofill', spec: target, fields });
       } else if (verb === 'CLICK_XPATH' || verb === 'SPOTLIGHT_XPATH') {
         // Ignore XPath-specific directives
       }
     }
     return actions;
+  };
+
+  const isLikelyCssSelector = (s: string): boolean => {
+    const t = (s || '').trim();
+    if (!t) return false;
+    return /^[#\.\[]/.test(t) || /[\[\]#.>:~+]/.test(t);
   };
 
   const callAI = useCallback(
@@ -219,38 +335,7 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
         try { setSuppressActions(false); } catch {}
       }
 
-      const maxFollowups = 3;
-      let followups = 0;
-      while (followups < maxFollowups) {
-        if (abortControllerRef.current?.signal.aborted) return;
-        const actions = parseAssistantActions(reply || '');
-        if (!actions.length) break;
-        let rag: string | null = null;
-        for (const a of actions) {
-          const res = await executeTool(a);
-          if (res.kind === 'retrieve' && res.ragContext) {
-            rag = rag ? `${rag}\n${res.ragContext}` : res.ragContext;
-          }
-        }
-        if (!rag) break;
-        try {
-          try { refreshInjectedHtml(); } catch {}
-          reply = await callAI(working, {
-            ragContext: rag,
-            signal: abortControllerRef.current?.signal,
-          });
-        } catch (e: any) {
-          if (e?.name === 'AbortError') return;
-          throw e;
-        }
-        if (reply) {
-          working = [...working, { role: 'assistant', content: reply }];
-          messagesRef.current = working;
-          setMessages(working);
-          try { setSuppressActions(false); } catch {}
-        }
-        followups++;
-      }
+      // No RETRIEVE tool. RAG is injected by server; do not loop.
     } finally {
       restartPendingRef.current = false;
       setLoading(false);
@@ -381,6 +466,284 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
     if (exact) return exact;
     const partial = visible.find((el) => norm(getLabel(el)).includes(t));
     return partial || null;
+  };
+
+  // For spotlighting, allow matching common containers like div as well
+  const findHighlightableByText = (targetText: string): HTMLElement | null => {
+    const norm = (s: string) => s.replace(/\s+/g, ' ').trim().toLowerCase();
+    const t = norm(targetText);
+
+    const getLabel = (el: HTMLElement): string => {
+      // Prefer visible text
+      let txt = (el.textContent || '').trim();
+      if (txt) return txt;
+      // Accessible name via aria-label
+      const aria = el.getAttribute('aria-label');
+      if (aria) return aria;
+      // aria-labelledby references
+      const labelledby = el.getAttribute('aria-labelledby');
+      if (labelledby) {
+        const ids = labelledby.split(/\s+/).filter(Boolean);
+        const parts: string[] = [];
+        ids.forEach((id) => {
+          const ref = document.getElementById(id);
+          if (ref) parts.push((ref.textContent || '').trim());
+        });
+        const joined = parts.join(' ');
+        if (joined.trim()) return joined;
+      }
+      // title attribute
+      const title = el.getAttribute('title');
+      if (title) return title;
+      // Input value/placeholder
+      if (el instanceof HTMLInputElement) {
+        if (el.value) return el.value;
+        if (el.placeholder) return el.placeholder;
+      }
+      // Alt text from child images/icons
+      const img = el.querySelector('img[alt]') as HTMLImageElement | null;
+      if (img?.alt) return img.alt;
+      return '';
+    };
+
+    const candidates = Array.from(
+      document.querySelectorAll<HTMLElement>(
+        'a, [role="link"], button, [role="button"], input[type="button"], input[type="submit"], div',
+      ),
+    );
+    const visible = candidates.filter((el) => isVisible(el));
+    // Prefer exact match on accessible label, then includes
+    const exact = visible.find((el) => norm(getLabel(el)) === t);
+    if (exact) return exact;
+    const partial = visible.find((el) => norm(getLabel(el)).includes(t));
+    return partial || null;
+  };
+
+  const findElementBySelector = (selector: string): HTMLElement | null => {
+    try {
+      const el = document.querySelector(selector) as HTMLElement | null;
+      if (el && isVisible(el)) return el;
+      return el || null;
+    } catch {
+      return null;
+    }
+  };
+
+  // --- Autofill helpers ---
+  const truncateText = (s: string, max = 80): string => {
+    const t = String(s);
+    return t.length > max ? `${t.slice(0, max - 1)}…` : t;
+  };
+
+  const normText = (s: string): string => s.replace(/\s+/g, ' ').trim().toLowerCase();
+
+  const getAssociatedLabel = (el: HTMLElement): string => {
+    try {
+      // label[for] association
+      const id = el.getAttribute('id');
+      if (id) {
+        const lab = document.querySelector(`label[for="${CSS.escape(id)}"]`);
+        if (lab) return (lab.textContent || '').trim();
+      }
+      // wrapped by <label>
+      let parent: HTMLElement | null = el;
+      while (parent) {
+        if (parent.tagName.toLowerCase() === 'label') {
+          return (parent.textContent || '').trim();
+        }
+        parent = parent.parentElement;
+      }
+      // aria-label
+      const aria = el.getAttribute('aria-label');
+      if (aria) return aria.trim();
+      // aria-labelledby
+      const labelledby = el.getAttribute('aria-labelledby');
+      if (labelledby) {
+        const ids = labelledby.split(/\s+/).filter(Boolean);
+        const texts: string[] = [];
+        ids.forEach((i) => {
+          const ref = document.getElementById(i);
+          if (ref) texts.push((ref.textContent || '').trim());
+        });
+        if (texts.length) return texts.join(' ').trim();
+      }
+    } catch {}
+    return '';
+  };
+
+  const collectFormFields = (): Array<{
+    el: HTMLElement;
+    tag: string;
+    type: string;
+    label: string;
+    placeholder: string;
+    name: string;
+    id: string;
+    scoreWith: (key: string) => number;
+  }> => {
+    const list: Array<{
+      el: HTMLElement;
+      tag: string;
+      type: string;
+      label: string;
+      placeholder: string;
+      name: string;
+      id: string;
+      scoreWith: (key: string) => number;
+    }> = [];
+    const nodes = Array.from(
+      document.querySelectorAll<HTMLElement>(
+        'input:not([type="hidden"]):not([disabled]), textarea:not([disabled]), select:not([disabled])',
+      ),
+    );
+    for (const n of nodes) {
+      if (!isVisible(n)) continue;
+      const tag = n.tagName.toLowerCase();
+      const type = (n as HTMLInputElement).type?.toLowerCase?.() || tag;
+      const label = getAssociatedLabel(n) || '';
+      const placeholder = (n.getAttribute('placeholder') || '').trim();
+      const name = (n.getAttribute('name') || '').trim();
+      const id = (n.getAttribute('id') || '').trim();
+      const aliases = [
+        label,
+        placeholder,
+        name,
+        id,
+        n.getAttribute('autocomplete') || '',
+        type,
+      ]
+        .map((x) => normText(String(x || '')))
+        .filter(Boolean);
+      const uniqueAliases = Array.from(new Set(aliases));
+      const scoreWith = (key: string): number => {
+        const k = normText(key);
+        if (!k) return 0;
+        let best = 0;
+        for (const a of uniqueAliases) {
+          if (!a) continue;
+          if (a === k) best = Math.max(best, 100);
+          else if (a.includes(k) || k.includes(a)) best = Math.max(best, 60);
+          else {
+            // token overlap
+            const at = new Set(a.split(/[^a-z0-9]+/g).filter(Boolean));
+            const kt = new Set(k.split(/[^a-z0-9]+/g).filter(Boolean));
+            const inter = Array.from(kt).filter((t) => at.has(t));
+            if (inter.length) best = Math.max(best, Math.min(50, inter.length * 10));
+          }
+        }
+        return best;
+      };
+      list.push({ el: n, tag, type, label, placeholder, name, id, scoreWith });
+    }
+    return list;
+  };
+
+  const setElementValue = (el: HTMLElement, value: string): boolean => {
+    try {
+      if (el instanceof HTMLInputElement) {
+        const t = (el.type || '').toLowerCase();
+        if (t === 'checkbox') {
+          const truthy = /^(1|y|yes|true|on|checked)$/i.test(String(value));
+          if (el.checked !== truthy) {
+            el.checked = truthy;
+            el.dispatchEvent(new Event('input', { bubbles: true }));
+            el.dispatchEvent(new Event('change', { bubbles: true }));
+          }
+          return true;
+        }
+        if (t === 'radio') {
+          // choose radio in the same group by matching value or label text
+          const name = el.name;
+          const group = Array.from(
+            document.querySelectorAll<HTMLInputElement>(`input[type="radio"][name="${CSS.escape(name)}"]`),
+          );
+          const targetVal = String(value).trim().toLowerCase();
+          for (const r of group) {
+            const lab = getAssociatedLabel(r).toLowerCase();
+            if (
+              (r.value && r.value.toLowerCase() === targetVal) ||
+              (lab && (lab === targetVal || lab.includes(targetVal)))
+            ) {
+              if (!r.checked) {
+                r.checked = true;
+                r.dispatchEvent(new Event('input', { bubbles: true }));
+                r.dispatchEvent(new Event('change', { bubbles: true }));
+              }
+              flashHighlight(r);
+              return true;
+            }
+          }
+          return false;
+        }
+        el.value = String(value);
+        el.dispatchEvent(new Event('input', { bubbles: true }));
+        el.dispatchEvent(new Event('change', { bubbles: true }));
+        el.blur?.();
+        return true;
+      }
+      if (el instanceof HTMLTextAreaElement) {
+        el.value = String(value);
+        el.dispatchEvent(new Event('input', { bubbles: true }));
+        el.dispatchEvent(new Event('change', { bubbles: true }));
+        el.blur?.();
+        return true;
+      }
+      if (el instanceof HTMLSelectElement) {
+        const val = String(value).trim().toLowerCase();
+        let matched = false;
+        for (const opt of Array.from(el.options)) {
+          const txt = (opt.textContent || '').trim().toLowerCase();
+          const v = (opt.value || '').trim().toLowerCase();
+          if (v === val || txt === val || txt.includes(val)) {
+            el.value = opt.value;
+            matched = true;
+            break;
+          }
+        }
+        if (!matched) el.value = String(value);
+        el.dispatchEvent(new Event('input', { bubbles: true }));
+        el.dispatchEvent(new Event('change', { bubbles: true }));
+        el.blur?.();
+        return true;
+      }
+      return false;
+    } catch {
+      return false;
+    }
+  };
+
+  const autofillFields = (
+    fields: Record<string, string> | undefined | null,
+  ): {
+    success: boolean;
+    filledCount: number;
+    filled: Array<{ key: string; label: string; value: string }>;
+    error?: string;
+  } => {
+    const mapping = fields || {};
+    const entries = Object.entries(mapping)
+      .map(([k, v]) => [k.trim(), String(v)] as const)
+      .filter(([k]) => !!k);
+    if (!entries.length) return { success: false, filledCount: 0, filled: [], error: 'No fields provided' };
+
+    const candidates = collectFormFields();
+    const filled: Array<{ key: string; label: string; value: string }> = [];
+    for (const [key, value] of entries) {
+      // rank candidates by score
+      const ranked = candidates
+        .map((c) => ({ c, s: c.scoreWith(key) }))
+        .filter((x) => x.s > 0)
+        .sort((a, b) => b.s - a.s);
+      if (!ranked.length) continue;
+      const target = ranked[0].c.el;
+      const ok = setElementValue(target as any, value);
+      if (ok) {
+        const label = getAssociatedLabel(target) || (target.getAttribute('placeholder') || '') || '';
+        try { flashHighlight(target); } catch {}
+        filled.push({ key, label, value });
+      }
+    }
+    return { success: filled.length > 0, filledCount: filled.length, filled };
   };
 
   const isVisible = (el: HTMLElement): boolean => {
@@ -581,15 +944,14 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
         abortControllerRef.current = new AbortController();
         try { refreshInjectedHtml(); } catch {}
 
-        // 1) If the user message is a tool command, execute it.
+        // 1) If the user message is a tool command, execute it (no RETRIEVE tool).
         const tool = parseToolIntent(text);
-        let pendingRag: string | null | undefined = null;
         if (tool) {
           const result = await executeTool(tool);
-          if (tool.type === 'retrieve') {
-            // Retrieval already appended a summary message
-            // Capture rag context for a follow-up call
-            pendingRag = result.ragContext ?? null;
+          if (tool.type === 'autofill') {
+            // Detailed message already appended inside executeTool('autofill')
+            // Sync workingMessages to the latest state
+            workingMessages = messagesRef.current;
           } else {
             const verb = tool.type === 'highlightByText' ? 'Highlighted' : 'Clicked';
             const successText = result.success
@@ -603,48 +965,26 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
             setMessages(workingMessages);
             try { setSuppressActions(false); } catch {}
           }
-          // Only call the agent again after a RETRIEVE tool
-          if (tool.type === 'retrieve') {
-            const maxFollowups = 3;
-            let followups = 0;
-            while (followups < maxFollowups) {
-              if (abortControllerRef.current?.signal.aborted) return;
-              try { refreshInjectedHtml(); } catch {}
-              const reply = await callAI(workingMessages, { ragContext: pendingRag });
-              if (reply) {
-                workingMessages = [
-                  ...workingMessages,
-                  { role: 'assistant', content: reply },
-                ];
-                messagesRef.current = workingMessages;
-                setMessages(workingMessages);
-                try { setSuppressActions(false); } catch {}
-              }
-              // Parse and execute any ACTION directives
-              const actions = parseAssistantActions(reply);
-              if (!actions.length) break;
-              // Execute tools; only continue if at least one RETRIEVE occurred
-              pendingRag = null;
-              let executedRetrieve = false;
-              for (const a of actions) {
-                const res = await executeTool(a);
-                if (res.kind === 'retrieve' && res.ragContext) {
-                  executedRetrieve = true;
-                  pendingRag = pendingRag
-                    ? `${pendingRag}\n${res.ragContext}`
-                    : res.ragContext;
-                }
-              }
-              if (!executedRetrieve) break;
-              followups++;
-            }
-          }
           return;
         }
 
         // 2) Normal flow: call AI, then execute any tools and call again, up to a small limit
         try { refreshInjectedHtml(); } catch {}
         let reply = await callAI(workingMessages);
+        // Parse possible JSON action envelope
+        let envelopeActions: ToolAction[] = [];
+        try {
+          const trimmed = (reply || '').trim();
+          if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
+            const obj = JSON.parse(trimmed);
+            if (obj && typeof obj === 'object') {
+              if (typeof obj.reply === 'string') reply = obj.reply;
+              if (obj.action && obj.action.verb) {
+                envelopeActions = parseAssistantActions(JSON.stringify(obj));
+              }
+            }
+          }
+        } catch {}
         if (reply) {
           workingMessages = [
             ...workingMessages,
@@ -655,33 +995,10 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
           try { setSuppressActions(false); } catch {}
         }
 
-        const maxFollowups = 3;
-        let followups = 0;
-        while (followups < maxFollowups) {
-          const actions = parseAssistantActions(reply);
-          if (!actions.length) break;
-          let rag: string | null = null;
-          for (const a of actions) {
-            const res = await executeTool(a);
-            if (res.kind === 'retrieve' && res.ragContext) {
-              rag = rag ? `${rag}\n${res.ragContext}` : res.ragContext;
-            }
-          }
-          // Only call AI again if a RETRIEVE tool provided context
-          if (!rag) break;
-          if (abortControllerRef.current?.signal.aborted) return;
-          try { refreshInjectedHtml(); } catch {}
-          reply = await callAI(workingMessages, { ragContext: rag });
-          if (reply) {
-            workingMessages = [
-              ...workingMessages,
-              { role: 'assistant', content: reply },
-            ];
-            messagesRef.current = workingMessages;
-            setMessages(workingMessages);
-            try { setSuppressActions(false); } catch {}
-          }
-          followups++;
+        // No RETRIEVE follow-up loops; execute at most one round of actions.
+        const actions = [...envelopeActions, ...parseAssistantActions(reply)];
+        for (const a of actions) {
+          await executeTool(a);
         }
       } catch (e: any) {
         console.error(e);

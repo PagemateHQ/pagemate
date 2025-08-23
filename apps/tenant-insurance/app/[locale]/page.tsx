@@ -66,7 +66,7 @@ export default async function Home({
 							<Link href="/quote">{t("Common.actions.getQuote")}</Link>
 						</Button>
 						<Button asChild variant="secondary" aria-label="Explore insurance plans">
-							<Link href="/plans">{t("Common.actions.explorePlans")}</Link>
+							<Link href="/plans">{t("Common.actions.getCustomerSupport")}</Link>
 						</Button>
 					</div>
 					<ul className="mt-4 grid gap-2 text-sm text-muted-foreground" aria-label="Key benefits list">
