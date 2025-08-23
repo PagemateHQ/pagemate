@@ -1,5 +1,5 @@
 import styled from '@emotion/styled';
-import React, { useRef, useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 
 export type ChatMessage = {
   role: 'user' | 'assistant' | 'system';
@@ -12,10 +12,10 @@ interface ChatViewProps {
   error?: string | null;
 }
 
-export const ChatView: React.FC<ChatViewProps> = ({ 
+export const ChatView: React.FC<ChatViewProps> = ({
   messages,
   loading = false,
-  error = null
+  error = null,
 }) => {
   const chatScrollRef = useRef<HTMLDivElement | null>(null);
 
@@ -36,10 +36,14 @@ export const ChatView: React.FC<ChatViewProps> = ({
         <EmptyState>Start the conversation below.</EmptyState>
       ) : (
         messages.map((m, i) => (
-          <Bubble key={i} data-role={m.role}>
-            <BubbleRole data-role={m.role}>{m.role === 'user' ? 'You' : 'Pagemate'}</BubbleRole>
-            <BubbleText>{m.content}</BubbleText>
-          </Bubble>
+          <BubbleWrapper key={i}>
+            <Bubble data-role={m.role}>
+              <BubbleRole data-role={m.role}>
+                {m.role === 'user' ? 'You' : 'Pagemate'}
+              </BubbleRole>
+              <BubbleText>{m.content}</BubbleText>
+            </Bubble>
+          </BubbleWrapper>
         ))
       )}
       {loading && <LoadingText>Thinking…</LoadingText>}
@@ -49,28 +53,48 @@ export const ChatView: React.FC<ChatViewProps> = ({
 };
 
 const ChatArea = styled.div`
+  margin-top: 8px;
   width: 100%;
-  max-width: 407px;
-  margin: 8px auto 0;
+
   flex: 1;
   overflow-y: auto;
+
   display: flex;
   flex-direction: column;
   gap: 8px;
   padding-bottom: 80px; /* Space for the input bar */
 `;
 
+const BubbleWrapper = styled.div`
+  padding: 0 8px;
+  width: 100%;
+  display: flex;
+`;
 const Bubble = styled.div`
   width: 100%;
+  padding: 10px 12px;
+
   display: flex;
   flex-direction: column;
   gap: 4px;
-  padding: 10px 12px;
+
   border-radius: 8px;
   border: 1px solid rgba(0, 147, 246, 0.16);
   background: rgba(171, 220, 246, 0.2);
+
   &[data-role='user'] {
-    background: rgba(171, 220, 246, 0.31);
+    margin-left: auto;
+    width: fit-content;
+    max-width: 80%;
+    border: 1px solid #bae3f8;
+    background: #fff;
+  }
+
+  &[data-role='assistant'] {
+    width: fit-content;
+    max-width: 80%;
+    border: 1px solid #bae3f8;
+    background: #dff4ff;
   }
 `;
 
