@@ -113,11 +113,15 @@ const BubbleText = styled.div`
 `;
 
 const LoadingText = styled.span`
+  width: 100%;
+  padding: 0 8px;
   font-size: 12px;
   color: #6c8bab;
 `;
 
 const ErrorText = styled.span`
+  width: 100%;
+  padding: 0 8px;
   font-size: 12px;
   color: #c0392b;
 `;
