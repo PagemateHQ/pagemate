@@ -51,7 +51,11 @@ const HomePage = () => {
               <Link href="/customers" style={{ textDecoration: 'none' }}>
                 <StartBuildingButton>Start Building</StartBuildingButton>
               </Link>
-              <ReadDocsButton>Read Docs</ReadDocsButton>
+              <Link
+                href="https://insurance.pagemate.app"
+              >
+                <DemoButton>Demo</DemoButton>
+              </Link>
             </ButtonGroup>
           </HeroContent>
         </HeroSection>
@@ -217,7 +221,7 @@ const StartBuildingButton = styled.button`
   }
 `;
 
-const ReadDocsButton = styled.button`
+const DemoButton = styled.button`
   padding: 13px 28px;
   background: transparent;
   border: 1px solid #c4e2f1;
