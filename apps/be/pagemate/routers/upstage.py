@@ -24,10 +24,7 @@ class ChatCompletionRequest(BaseModel):
 
 
 @router.post("/v1/chat/completions")
-async def upstage_chat_completions(
-    request: ChatCompletionRequest,
-    stream: bool = Query(False),
-):
+async def upstage_chat_completions(request: ChatCompletionRequest):
     """Proxy for Upstage chat completions endpoint."""
     try:
         messages = []
@@ -39,27 +36,15 @@ async def upstage_chat_completions(
             [{"role": msg.role, "content": msg.content} for msg in request.messages]
         )
 
-        openai_params = {
+        params = {
             "model": settings.upstage_completion_model,
             "messages": messages,
-            "stream": stream,
         }
 
-        if stream:
-            response = openai_client.chat.completions.create(**openai_params)
+        response = openai_client.chat.completions.create(**params)
+        content = response.choices[0].message["content"]
 
-            async def generate():
-                for chunk in response:
-                    yield f"data: {chunk.model_dump_json()}\n\n"
-                yield "data: [DONE]\n\n"
-
-            return StreamingResponse(
-                generate(),
-                media_type="text/event-stream",
-            )
-        else:
-            response = openai_client.chat.completions.create(**openai_params)
-            return response.model_dump()
+        return content
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
