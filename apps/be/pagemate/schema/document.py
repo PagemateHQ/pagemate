@@ -26,10 +26,10 @@ class Document(BaseModel):
         default_factory=lambda: datetime.now(timezone.utc),
         description="Last update timestamp",
     )
+    embedding_status: DocumentEmbeddingStatus = Field(DocumentEmbeddingStatus.PENDING, description="Embedding pipeline status")
 
     text: Optional[str] = Field(None, description="Text used for embedding (optional)")
     embedding: Optional[List[float]] = Field(None, description="Embedding vector (optional)")
-    embedding_status: DocumentEmbeddingStatus = Field(DocumentEmbeddingStatus.PENDING, description="Embedding pipeline status")
     error: Optional[str] = Field(None, description="Embedding error details (if any)")
 
     started_at: Optional[datetime] = Field(None, alias="startedAt")
