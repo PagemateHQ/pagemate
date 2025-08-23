@@ -9,9 +9,9 @@ function PagemateContent({ children }: { children: React.ReactNode }) {
   const taskSelectorOpen = useAtomValue(taskSelectorOpenAtom);
   
   const defaultSuggestions = [
-    'What does tenant insurance cover?',
-    'How do I file a claim?',
-    'How much coverage do I need for my rental?',
+    'What is the Austin Office Phone Number?',
+    'Are there any updates on the claim ACM-123456?',
+    'Insurance quote for $20k Car and $1M Home in MA',
   ];
 
   return (
