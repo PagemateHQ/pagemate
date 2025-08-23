@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { useEffect } from "react"
+import { useEffect, Suspense } from "react"
 import { z } from "zod"
 import { useSearchParams, useRouter } from "next/navigation"
 import { useForm } from "react-hook-form"
@@ -41,7 +41,7 @@ type FormValues = z.infer<typeof schema>
 
 const steps = ["About you", "Location", "Coverage", "Review"] as const
 
-export default function QuoteWizard() {
+function WizardContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const initialPlan = (searchParams.get("plan") as FormValues["plan"]) || undefined
@@ -292,5 +292,13 @@ export default function QuoteWizard() {
         </CardContent>
       </Card>
     </div>
+  )
+}
+
+export default function QuoteWizardPage() {
+  return (
+    <Suspense fallback={<div className="space-y-6"><div className="h-6 w-40 rounded bg-muted/50" /><div className="h-2 w-full rounded bg-muted/40" /><div className="h-64 rounded border" /></div>}>
+      <WizardContent />
+    </Suspense>
   )
 }
