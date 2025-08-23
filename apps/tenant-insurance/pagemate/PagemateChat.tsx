@@ -63,11 +63,26 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
 
     // Match: spotlight ... (treat same as highlight)
     const s1 = text.match(/spotlight\s+["']([^"']+)["']/i);
-    if (s1) return { type: 'highlightByText', text: s1[1] };
+    if (s1) {
+      const t = s1[1];
+      return isLikelyCssSelector(t)
+        ? { type: 'highlightBySelector', selector: t }
+        : { type: 'highlightByText', text: t };
+    }
     const s2 = text.match(/spotlight\s+(.+?)\s+(?:button|link|field)?$/i);
-    if (s2) return { type: 'highlightByText', text: s2[1] };
+    if (s2) {
+      const t = s2[1];
+      return isLikelyCssSelector(t)
+        ? { type: 'highlightBySelector', selector: t }
+        : { type: 'highlightByText', text: t };
+    }
     const s3 = text.match(/^spotlight\s+(.+)$/i);
-    if (s3) return { type: 'highlightByText', text: s3[1] };
+    if (s3) {
+      const t = s3[1];
+      return isLikelyCssSelector(t)
+        ? { type: 'highlightBySelector', selector: t }
+        : { type: 'highlightByText', text: t };
+    }
 
     // Match: click button with text '...'
     const re1 = /click\s+(?:the\s+)?button\s+with\s+text\s+["']([^"']+)["']/i;
