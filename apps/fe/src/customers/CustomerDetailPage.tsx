@@ -116,7 +116,10 @@ const CustomerDetailPage: React.FC = () => {
             ) : (
               <>
                 <TenantHeader>
-                  <TenantLogo src="/app/logo-acme-insurance.png" alt="Acme Insurance" />
+                  <TenantLogo
+                    src="/app/logo-acme-insurance.png"
+                    alt="Acme Insurance"
+                  />
                   <Divider />
                 </TenantHeader>
                 <TenantInfo>
@@ -240,16 +243,25 @@ const Content = styled.div`
   margin: 0 auto;
 
   display: flex;
-  gap: 25px;
+  gap: 24px;
   padding: 88px 24px 24px;
+
+  @media screen and (max-width: 1160px) {
+    flex-direction: column;
+  }
 `;
 
 const Sidebar = styled.aside`
   width: 348px;
   flex-shrink: 0;
+
+  @media screen and (max-width: 1160px) {
+    width: 100%;
+  }
 `;
 
 const TenantCard = styled.div`
+  width: 100%;
   background: white;
   border-radius: 8px;
   padding: 22px 18px;
@@ -290,7 +302,7 @@ const TenantDetails = styled.div`
   gap: 3px;
 `;
 
-const TenantCategory = styled.div`
+const TenantCategory = styled.span`
   font-family:
     'Instrument Sans',
     -apple-system,
@@ -319,7 +331,7 @@ const TenantName = styled.h2`
   font-variation-settings: 'wdth' 100;
 `;
 
-const TenantCreated = styled.div`
+const TenantCreated = styled.span`
   font-family:
     'Instrument Sans',
     -apple-system,
