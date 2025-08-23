@@ -28,12 +28,33 @@ export const FloatingOrb: React.FC<FloatingOrbProps> = ({
   const orbElementRef = useRef<HTMLDivElement | null>(null);
   const viewElementRef = useRef<HTMLDivElement | null>(null);
 
+  // Initialize view position based on window dimensions
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      // Calculate initial position based on bottom-right corner
+      const viewWidth = 471;
+      const viewHeight = 577;
+      const orbSize = 64;
+      const gap = 24;
+
+      // Position for bottom-right corner (converted to top-left coordinates)
+      const initialTop =
+        window.innerHeight - viewHeight - orbSize - gap - cornerGap;
+      const initialLeft = window.innerWidth - viewWidth;
+
+      setViewPosition({
+        top: Math.max(8, initialTop),
+        left: Math.max(8, initialLeft),
+      });
+    }
+  }, []); // Run once on mount
+
   const updateViewPosition = useCallback(() => {
     if (!orbElementRef.current) return;
 
     const orbRect = orbElementRef.current.getBoundingClientRect();
     const gap = 24;
-    
+
     // Get actual view dimensions or use defaults
     const viewWidth = viewElementRef.current?.offsetWidth || 471;
     const viewHeight = viewElementRef.current?.offsetHeight || 577;
@@ -184,7 +205,12 @@ export const FloatingOrb: React.FC<FloatingOrbProps> = ({
         {showView && (
           <MotionViewContainerWrapper
             ref={viewElementRef}
-            initial={{ opacity: 0, scale: 0.95 }}
+            initial={{
+              opacity: 0,
+              scale: 0.95,
+              top: viewPosition.top,
+              left: viewPosition.left,
+            }}
             animate={{
               opacity: 1,
               scale: 1,
