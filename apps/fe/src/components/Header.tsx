@@ -42,7 +42,7 @@ const HeaderContent = styled.div`
 `;
 
 const HeaderLogo = styled.img`
-  margin-left: -18px;
+  margin-left: -20px;
   margin-bottom: -6px;
 
   width: 173px;

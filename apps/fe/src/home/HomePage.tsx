@@ -48,7 +48,7 @@ const HomePage = () => {
               one-click experiences.
             </Description>
             <ButtonGroup>
-              <Link href="/tenants" style={{ textDecoration: 'none' }}>
+              <Link href="/customers" style={{ textDecoration: 'none' }}>
                 <StartBuildingButton>Start Building</StartBuildingButton>
               </Link>
               <ReadDocsButton>Read Docs</ReadDocsButton>

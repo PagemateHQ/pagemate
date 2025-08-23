@@ -6,9 +6,9 @@ import { Header } from '@/components/Header';
 import { FileIcon } from '@/components/icons/FileIcon';
 import { Document, Tenant, tenantService } from '@/services/api';
 
-const TenantDetailPage: React.FC = () => {
+const CustomerDetailPage: React.FC = () => {
   const router = useRouter();
-  const { tenant_id } = router.query;
+  const { customer_id } = router.query;
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [tenant, setTenant] = useState<Tenant | null>(null);
@@ -20,10 +20,10 @@ const TenantDetailPage: React.FC = () => {
 
   // Fetch tenant and documents
   useEffect(() => {
-    if (tenant_id && typeof tenant_id === 'string') {
-      loadData(tenant_id);
+    if (customer_id && typeof customer_id === 'string') {
+      loadData(customer_id);
     }
-  }, [tenant_id]);
+  }, [customer_id]);
 
   const loadData = async (tenantId: string) => {
     try {
@@ -44,14 +44,14 @@ const TenantDetailPage: React.FC = () => {
 
   // Handle file upload
   const handleFileUpload = async (files: FileList | null) => {
-    if (!files || !tenant_id || typeof tenant_id !== 'string') return;
+    if (!files || !customer_id || typeof customer_id !== 'string') return;
 
     setUploading(true);
     setError(null);
 
     try {
       const uploadPromises = Array.from(files).map((file) =>
-        tenantService.createDocument(tenant_id, file),
+        tenantService.createDocument(customer_id, file),
       );
 
       const newDocuments = await Promise.all(uploadPromises);
@@ -85,7 +85,7 @@ const TenantDetailPage: React.FC = () => {
         handleFileUpload(e.dataTransfer.files);
       }
     },
-    [tenant_id],
+    [customer_id],
   );
 
   const formatFileSize = (bytes: number) => {
@@ -114,7 +114,7 @@ const TenantDetailPage: React.FC = () => {
             {loading ? (
               <LoadingText>Loading...</LoadingText>
             ) : (
-              <TenantName>{tenant?.name || 'TENANT NAME'}</TenantName>
+              <TenantName>{tenant?.name || 'CUSTOMER NAME'}</TenantName>
             )}
           </TenantCard>
         </Sidebar>
@@ -510,4 +510,4 @@ const EmptyState = styled.div`
   font-size: 16px;
 `;
 
-export default TenantDetailPage;
+export default CustomerDetailPage;

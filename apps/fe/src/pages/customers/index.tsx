@@ -6,7 +6,7 @@ import React, { useEffect, useState } from 'react';
 import { Header } from '@/components/Header';
 import { Tenant, tenantService } from '@/services/api';
 
-const TenantsPage: React.FC = () => {
+const CustomersPage: React.FC = () => {
   const router = useRouter();
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [loading, setLoading] = useState(true);
@@ -40,12 +40,12 @@ const TenantsPage: React.FC = () => {
   return (
     <Container>
       <Header />
-      
+
       <Content>
         <PageHeader>
-          <PageTitle>Tenants</PageTitle>
+          <PageTitle>Customers</PageTitle>
           <PageDescription>
-            Manage your tenants and their documents
+            Manage your customers and their documents
           </PageDescription>
         </PageHeader>
 
@@ -56,18 +56,30 @@ const TenantsPage: React.FC = () => {
           </ErrorContainer>
         ) : loading ? (
           <EmptyState>
-            <EmptyStateTitle>Loading tenants...</EmptyStateTitle>
+            <EmptyStateTitle>Loading customers...</EmptyStateTitle>
           </EmptyState>
         ) : tenants.length === 0 ? (
           <EmptyState>
             <EmptyStateIcon>
-              <svg width="64" height="64" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M3 21h18M5 21V7l8-4v18M19 21V11l-6-3M9 9v.01M9 12v.01M9 15v.01M9 18v.01" stroke="#6c8bab" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <svg
+                width="64"
+                height="64"
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M3 21h18M5 21V7l8-4v18M19 21V11l-6-3M9 9v.01M9 12v.01M9 15v.01M9 18v.01"
+                  stroke="#6c8bab"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
               </svg>
             </EmptyStateIcon>
-            <EmptyStateTitle>No tenants yet</EmptyStateTitle>
+            <EmptyStateTitle>No customers yet</EmptyStateTitle>
             <EmptyStateDescription>
-              Create your first tenant to get started
+              Create your first customer to get started
             </EmptyStateDescription>
           </EmptyState>
         ) : (
@@ -76,10 +88,22 @@ const TenantsPage: React.FC = () => {
               <TenantCard key={tenant._id}>
                 <TenantHeader>
                   <TenantIcon>
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M3 21h18M5 21V7l8-4v18M19 21V11l-6-3M9 9v.01M9 12v.01M9 15v.01M9 18v.01" stroke="#0093f6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                </TenantIcon>
+                    <svg
+                      width="24"
+                      height="24"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        d="M3 21h18M5 21V7l8-4v18M19 21V11l-6-3M9 9v.01M9 12v.01M9 15v.01M9 18v.01"
+                        stroke="#0093f6"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </TenantIcon>
                   <TenantInfo>
                     <TenantName>{tenant.name}</TenantName>
                     <TenantMeta>
@@ -87,12 +111,10 @@ const TenantsPage: React.FC = () => {
                     </TenantMeta>
                   </TenantInfo>
                 </TenantHeader>
-                
+
                 <TenantActions>
-                  <Link href={`/tenant/${tenant._id}`} passHref>
-                    <ActionButton $primary>
-                      View Tenant
-                    </ActionButton>
+                  <Link href={`/customer/${tenant._id}`} passHref>
+                    <ActionButton $primary>View Customer</ActionButton>
                   </Link>
                 </TenantActions>
               </TenantCard>
@@ -107,6 +129,8 @@ const TenantsPage: React.FC = () => {
 // Styled Components
 const Container = styled.div`
   min-height: 100vh;
+  width: 100%;
+  padding: 0 20px;
 `;
 
 const ErrorContainer = styled.div`
@@ -142,7 +166,7 @@ const RetryButton = styled.button`
 const Content = styled.div`
   max-width: 1200px;
   margin: 0 auto;
-  padding: 104px 24px 40px;
+  padding: 104px 0 40px;
 `;
 
 const PageHeader = styled.div`
@@ -150,7 +174,6 @@ const PageHeader = styled.div`
 `;
 
 const PageTitle = styled.h1`
-  font-family: 'Instrument Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   font-size: 36px;
   font-weight: 600;
   letter-spacing: -1.44px;
@@ -159,7 +182,6 @@ const PageTitle = styled.h1`
 `;
 
 const PageDescription = styled.p`
-  font-family: 'Instrument Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   font-size: 18px;
   font-weight: 400;
   letter-spacing: -0.72px;
@@ -179,7 +201,7 @@ const TenantCard = styled.div`
   padding: 24px;
   border: 1px solid #e1f0f7;
   transition: all 0.2s ease;
-  
+
   &:hover {
     box-shadow: 0 4px 12px rgba(106, 219, 255, 0.15);
     transform: translateY(-2px);
@@ -209,7 +231,6 @@ const TenantInfo = styled.div`
 `;
 
 const TenantName = styled.h3`
-  font-family: 'Instrument Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   font-size: 20px;
   font-weight: 600;
   letter-spacing: -0.8px;
@@ -218,7 +239,6 @@ const TenantName = styled.h3`
 `;
 
 const TenantMeta = styled.p`
-  font-family: 'Instrument Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   font-size: 14px;
   font-weight: 400;
   color: #6c8bab;
@@ -236,11 +256,11 @@ const ActionButton = styled.a<{ $primary?: boolean }>`
   justify-content: center;
   gap: 8px;
   padding: 10px 24px;
-  background: ${props => props.$primary ? '#0093f6' : 'white'};
-  color: ${props => props.$primary ? 'white' : '#0093f6'};
-  border: 1px solid ${props => props.$primary ? '#0093f6' : '#c4e2f1'};
+  background: ${(props) => (props.$primary ? '#0093f6' : 'white')};
+  color: ${(props) => (props.$primary ? 'white' : '#0093f6')};
+  border: 1px solid ${(props) => (props.$primary ? '#0093f6' : '#c4e2f1')};
   border-radius: 8px;
-  font-family: 'Instrument Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+
   font-size: 14px;
   font-weight: 500;
   text-decoration: none;
@@ -248,11 +268,10 @@ const ActionButton = styled.a<{ $primary?: boolean }>`
   transition: all 0.2s ease;
 
   &:hover {
-    background: ${props => props.$primary ? '#0073ff' : '#f0f9ff'};
-    border-color: ${props => props.$primary ? '#0073ff' : '#0093f6'};
+    background: ${(props) => (props.$primary ? '#0073ff' : '#f0f9ff')};
+    border-color: ${(props) => (props.$primary ? '#0073ff' : '#0093f6')};
   }
 `;
-
 
 const EmptyState = styled.div`
   display: flex;
@@ -269,7 +288,6 @@ const EmptyStateIcon = styled.div`
 `;
 
 const EmptyStateTitle = styled.h3`
-  font-family: 'Instrument Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   font-size: 24px;
   font-weight: 600;
   letter-spacing: -0.96px;
@@ -278,7 +296,6 @@ const EmptyStateTitle = styled.h3`
 `;
 
 const EmptyStateDescription = styled.p`
-  font-family: 'Instrument Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   font-size: 16px;
   font-weight: 400;
   letter-spacing: -0.64px;
@@ -286,4 +303,4 @@ const EmptyStateDescription = styled.p`
   margin: 0;
 `;
 
-export default TenantsPage;
+export default CustomersPage;
