@@ -411,12 +411,12 @@ const HighlightedText = styled.span`
 `;
 
 const _SuggestionsContainer = styled.div`
-  margin-top: 36px;
+  margin-top: 28px;
   width: 100%;
 
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
 `;
 const MotionSuggestionsContainer = motion(_SuggestionsContainer);
 
