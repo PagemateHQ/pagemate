@@ -106,6 +106,7 @@ const Container = styled.div`
 
 const ContentWrapper = styled.div`
   padding-top: 105px;
+  padding-bottom: 120px;
   margin: 0 auto;
 
   max-width: 1200px;
@@ -264,6 +265,14 @@ const DemoGrid = styled.div`
   display: flex;
   gap: 12px;
   width: 100%;
+
+  @media screen and (max-width: 900px) {
+    max-width: 600px;
+    margin: 0 auto;
+
+    flex-direction: column;
+    gap: 32px;
+  }
 `;
 
 const DemoCard = styled.div`
