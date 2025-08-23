@@ -2,6 +2,7 @@ import styled from '@emotion/styled';
 import Image from 'next/image';
 import React from 'react';
 
+import { Header } from '@/components/Header';
 import { FloatingOrb } from '@/pagemate/FloatingOrb';
 
 const DEMO_ITEMS: {
@@ -25,15 +26,7 @@ const DEMO_ITEMS: {
 const HomePage = () => {
   return (
     <Container>
-      <Header>
-        <HeaderContent>
-          <LogoGroup>
-            <HeaderLogoBlur src="/assets/logo.png" alt="" />
-            <HeaderLogo src="/assets/logo.png" alt="Pagemate" />
-            <PagemateText src="/assets/pagemate-text.svg" alt="Pagemate" />
-          </LogoGroup>
-        </HeaderContent>
-      </Header>
+      <Header variant="home" />
 
       <FloatingOrb />
 
@@ -339,54 +332,3 @@ const DemoCardTitle = styled.span`
   color: #6ab9e1;
 `;
 
-const Header = styled.header`
-  max-width: 1200px;
-  width: 100%;
-
-  position: absolute;
-  left: 50%;
-  top: 0;
-  transform: translateX(-50%);
-  height: 64px;
-  border-bottom: 1px solid #c4e2f1;
-`;
-
-const HeaderContent = styled.div`
-  height: 64px;
-  padding: 0 8px;
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-`;
-
-const LogoGroup = styled.div`
-  position: relative;
-  display: flex;
-  align-items: center;
-  gap: 2px;
-`;
-
-const HeaderLogoBlur = styled.img`
-  position: absolute;
-  left: -3.27px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 42.968px;
-  height: 42.968px;
-  filter: blur(4.655px);
-  opacity: 0.47;
-`;
-
-const HeaderLogo = styled.img`
-  width: 37px;
-  height: 37px;
-  position: relative;
-  z-index: 1;
-`;
-
-const PagemateText = styled.img`
-  width: 92.269px;
-  height: 25.12px;
-  position: relative;
-  z-index: 1;
-`;
