@@ -198,6 +198,7 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
     try {
       const baseMessages = messagesRef.current;
       if (!baseMessages || baseMessages.length === 0) return;
+      try { refreshInjectedHtml(); } catch {}
       // Start a fresh controller and mark loading
       abortControllerRef.current?.abort();
       abortControllerRef.current = new AbortController();
@@ -233,6 +234,7 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
         }
         if (!rag) break;
         try {
+          try { refreshInjectedHtml(); } catch {}
           reply = await callAI(working, {
             ragContext: rag,
             signal: abortControllerRef.current?.signal,
@@ -295,7 +297,7 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
       const href = win.location.href;
       if (href === currentUrlRef.current) return;
       currentUrlRef.current = href;
-      try { removeSpotlight(); } catch {}
+      try { refreshInjectedHtml(); } catch {}
       try { setSuppressActions(true); } catch {}
       // Disable already-executed commands in existing messages
       try {
@@ -457,6 +459,21 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
     document.head.appendChild(style);
   };
 
+  // Refresh injected DOM/CSS used for highlighting to avoid stale elements
+  const refreshInjectedHtml = () => {
+    try { removeSpotlight(); } catch {}
+    try {
+      document
+        .querySelectorAll('.pagemate-spotlight-overlay')
+        .forEach((n) => n.remove());
+    } catch {}
+    try {
+      const st = document.getElementById('pagemate-spotlight-styles');
+      if (st) st.remove();
+    } catch {}
+    try { ensureSpotlightStyles(); } catch {}
+  };
+
   const positionSpotlight = () => {
     if (!activeSpotlightOverlay || !activeSpotlightTarget) return;
     const rect = activeSpotlightTarget.getBoundingClientRect();
@@ -562,6 +579,7 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
         // Prepare abort controller for this agent run
         try { abortControllerRef.current?.abort(); } catch {}
         abortControllerRef.current = new AbortController();
+        try { refreshInjectedHtml(); } catch {}
 
         // 1) If the user message is a tool command, execute it.
         const tool = parseToolIntent(text);
@@ -591,6 +609,7 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
             let followups = 0;
             while (followups < maxFollowups) {
               if (abortControllerRef.current?.signal.aborted) return;
+              try { refreshInjectedHtml(); } catch {}
               const reply = await callAI(workingMessages, { ragContext: pendingRag });
               if (reply) {
                 workingMessages = [
@@ -624,6 +643,7 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
         }
 
         // 2) Normal flow: call AI, then execute any tools and call again, up to a small limit
+        try { refreshInjectedHtml(); } catch {}
         let reply = await callAI(workingMessages);
         if (reply) {
           workingMessages = [
@@ -650,6 +670,7 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
           // Only call AI again if a RETRIEVE tool provided context
           if (!rag) break;
           if (abortControllerRef.current?.signal.aborted) return;
+          try { refreshInjectedHtml(); } catch {}
           reply = await callAI(workingMessages, { ragContext: rag });
           if (reply) {
             workingMessages = [
