@@ -1,6 +1,7 @@
 import { CheckIcon, ShieldCheckIcon } from "lucide-react";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { TaskSelector } from "@/components/task-selector";
+import { ThemedCard } from "@/components/themed-card";
 import { Button } from "@/components/ui/button";
 import {
 	Card,
@@ -77,15 +78,9 @@ export default async function Home({
 						))}
 					</ul>
 				</div>
-				<Card
+				<ThemedCard
 					className="relative overflow-hidden"
 					aria-label="Why choose us section"
-					style={{
-						backgroundImage: `url('/card-bg-light.png')`,
-						backgroundSize: 'cover',
-						backgroundPosition: 'top right',
-						backgroundRepeat: 'no-repeat',
-					}}
 				>
 					<CardHeader aria-label="Section header">
 						<div className="flex items-center gap-3" aria-label="Section title with icon">
@@ -117,7 +112,7 @@ export default async function Home({
 							))}
 						</div>
 					</CardContent>
-				</Card>
+				</ThemedCard>
 			</section>
 
 			<section className="grid gap-6" aria-label="Insurance plans section">
