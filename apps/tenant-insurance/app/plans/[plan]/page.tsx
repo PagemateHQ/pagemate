@@ -26,8 +26,8 @@ const plans = {
   },
 } as const
 
-export default function PlanDetail({ params }: { params: { plan: string } }) {
-  const planKey = params.plan as string
+export default async function PlanDetail({ params }: { params: Promise<{ plan: string }> }) {
+  const { plan: planKey } = await params
   if (!(planKey in plans)) return notFound()
   const plan = plans[planKey as keyof typeof plans]
   return (
