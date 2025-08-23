@@ -211,6 +211,9 @@ async function handler(
       body: JSON.stringify({
         messages: finalMessages,
       }),
+      headers: {
+        'Content-Type': 'application/json',
+      },
     });
 
     if (!response.ok) {
