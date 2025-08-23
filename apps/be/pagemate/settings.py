@@ -7,6 +7,7 @@ class Settings(BaseSettings):
     mongo_url: str = "mongodb://localhost:27017"
     file_storage_base_path_str: str = "/file-storage"
 
+    upstage_completion_model: str = "solar-pro2"
     upstage_completion_api_key: str = "your-upstage-api-key"
     upstage_completion_base_url: str = "https://api.upstage.ai/v1"
 
