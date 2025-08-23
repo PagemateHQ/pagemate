@@ -170,16 +170,36 @@ export const FloatingOrb: React.FC<FloatingOrbProps> = ({
     dragStartPosRef.current = { x: e.clientX, y: e.clientY };
   };
 
-  const handleOrbClick = (e: React.MouseEvent) => {
+  const handleTouchStart = (e: React.TouchEvent) => {
+    // Record the start position for touch
+    const touch = e.touches[0];
+    dragStartPosRef.current = { x: touch.clientX, y: touch.clientY };
+  };
+
+  const handleOrbClick = (e: React.MouseEvent | React.TouchEvent) => {
     // Don't toggle if currently dragging
     if (isDragging) {
       return;
     }
 
-    // Check if the mouse moved significantly (dragged)
+    // Get the appropriate coordinates based on event type
+    let currentX: number, currentY: number;
+    if ('touches' in e) {
+      // Touch event - use changedTouches for touchend
+      const touch = e.changedTouches?.[0] || e.touches?.[0];
+      if (!touch) return;
+      currentX = touch.clientX;
+      currentY = touch.clientY;
+    } else {
+      // Mouse event
+      currentX = e.clientX;
+      currentY = e.clientY;
+    }
+
+    // Check if the pointer moved significantly (dragged)
     if (dragStartPosRef.current) {
-      const dx = Math.abs(e.clientX - dragStartPosRef.current.x);
-      const dy = Math.abs(e.clientY - dragStartPosRef.current.y);
+      const dx = Math.abs(currentX - dragStartPosRef.current.x);
+      const dy = Math.abs(currentY - dragStartPosRef.current.y);
       const threshold = 5; // pixels
 
       if (dx > threshold || dy > threshold) {
@@ -199,6 +219,8 @@ export const FloatingOrb: React.FC<FloatingOrbProps> = ({
         style={style}
         $isDragging={isDragging}
         onMouseDown={handleMouseDown}
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleOrbClick}
         onClick={handleOrbClick}
       />
       <AnimatePresence>
