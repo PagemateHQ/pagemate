@@ -2,6 +2,8 @@
 
 import { useTranslations } from "next-intl";
 import { useState } from "react";
+import { useSetAtom } from "jotai";
+import { stopAtom } from "@/lib/task-store";
 import { Button } from "@/components/ui/button";
 import {
 	Card,
@@ -13,19 +15,19 @@ import {
 import { Input } from "@/components/ui/input";
 
 export default function ClaimsTrackPage() {
-	const t = useTranslations();
-	const [id, setId] = useState("");
-	const [current, setCurrent] = useState<number | null>(null);
-	const stages = t.raw("Track.stages") as string[];
+    const t = useTranslations();
+    const [id, setId] = useState("");
+    const [current, setCurrent] = useState<number | null>(null);
+    const stages = t.raw("Track.stages") as string[];
+    const stop = useSetAtom(stopAtom);
 
 	async function lookup() {
 		const sum = id.split("").reduce((a, c) => a + c.charCodeAt(0), 0);
 		const step = sum % stages.length;
 		setCurrent(step);
-		if (id.trim().toUpperCase() === "ACM-123456") {
-			const { useTaskStore } = await import("@/lib/task-store");
-			useTaskStore.getState().stop();
-		}
+    if (id.trim().toUpperCase() === "ACM-123456") {
+            stop();
+        }
 	}
 
 	return (

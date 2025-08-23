@@ -28,7 +28,7 @@ export async function SiteFooter() {
 							<Link href="/terms" className="hover:underline" aria-label="Terms of service">
 								{t("Common.footer.terms")}
 							</Link>
-							<Link href="/contact" className="hover:underline" aria-label="Contact us">
+							<Link href="/agents" className="hover:underline" aria-label="Local Offices">
 								{t("Common.footer.contact")}
 							</Link>
 						</div>

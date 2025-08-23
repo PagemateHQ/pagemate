@@ -1,47 +1,42 @@
 "use client";
 
-import { create } from "zustand";
+import { atom } from "jotai";
 
-type TaskStore = {
-	label: string | null;
-	startedAt: number | null;
-	finishedAt: number | null;
-	running: boolean;
-	start: (label?: string) => void;
-	begin: (label: string) => void;
-	stop: (label?: string) => void;
-	clear: () => void;
-};
+// Task state atoms
+export const labelAtom = atom<string | null>(null);
+export const startedAtAtom = atom<number | null>(null);
+export const finishedAtAtom = atom<number | null>(null);
+export const runningAtom = atom<boolean>(false);
 
-export const useTaskStore = create<TaskStore>((set, get) => ({
-	label: null,
-	startedAt: null,
-	finishedAt: null,
-	running: false,
-	start: (label) => {
-		const now = Date.now();
-		// If already running, ignore additional starts
-		if (get().running) return;
-		set({
-			label: label ?? get().label ?? "Demo Task",
-			startedAt: now,
-			finishedAt: null,
-			running: true,
-		});
-	},
-	begin: (label) => {
-		// Force (re)start a task regardless of prior state
-		const now = Date.now();
-		set({ label, startedAt: now, finishedAt: null, running: true });
-	},
-	stop: (label) => {
-		if (!get().running) return;
-		set({
-			running: false,
-			finishedAt: Date.now(),
-			label: label ?? get().label,
-		});
-	},
-	clear: () =>
-		set({ label: null, startedAt: null, finishedAt: null, running: false }),
-}));
+// Action atoms
+export const startAtom = atom(null, (get, set, label?: string) => {
+  if (get(runningAtom)) return;
+  const now = Date.now();
+  const nextLabel = label ?? get(labelAtom) ?? "Demo Task";
+  set(labelAtom, nextLabel);
+  set(startedAtAtom, now);
+  set(finishedAtAtom, null);
+  set(runningAtom, true);
+});
+
+export const beginAtom = atom(null, (get, set, label: string) => {
+  const now = Date.now();
+  set(labelAtom, label);
+  set(startedAtAtom, now);
+  set(finishedAtAtom, null);
+  set(runningAtom, true);
+});
+
+export const stopAtom = atom(null, (get, set, label?: string) => {
+  if (!get(runningAtom)) return;
+  set(runningAtom, false);
+  set(finishedAtAtom, Date.now());
+  set(labelAtom, label ?? get(labelAtom));
+});
+
+export const clearAtom = atom(null, (_get, set) => {
+  set(labelAtom, null);
+  set(startedAtAtom, null);
+  set(finishedAtAtom, null);
+  set(runningAtom, false);
+});

@@ -14,7 +14,8 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { useTaskStore } from "@/lib/task-store";
+import { useSetAtom } from "jotai";
+import { stopAtom } from "@/lib/task-store";
 
 function estimateMonthlyPremium({
 	propertyValue,
@@ -39,6 +40,8 @@ export default function QuoteForm({ initialPlan }: { initialPlan: string }) {
 	const [propertyValue, setPropertyValue] = React.useState(25000);
 	const [email, setEmail] = React.useState("");
 	const [notes, setNotes] = React.useState("");
+
+	const stop = useSetAtom(stopAtom);
 
 	const premium = estimateMonthlyPremium({ propertyValue, zip, plan });
 
@@ -87,7 +90,7 @@ export default function QuoteForm({ initialPlan }: { initialPlan: string }) {
 
             // If Task 3 matched, stop the timer to mark completion
             if (matched) {
-                useTaskStore.getState().stop();
+                stop();
             }
         } catch (_err) {
             const { toast } = await import("@/components/ui/sonner");

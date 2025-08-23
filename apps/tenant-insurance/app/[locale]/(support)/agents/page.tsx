@@ -2,7 +2,8 @@
 
 import { useTranslations } from "next-intl";
 import { useCallback } from "react";
-import { useTaskStore } from "@/lib/task-store";
+import { useSetAtom } from "jotai";
+import { stopAtom } from "@/lib/task-store";
 
 const offices = [
 	{
@@ -39,7 +40,7 @@ const offices = [
 
 export default function AgentsPage() {
 	const t = useTranslations();
-	const stop = useTaskStore((s) => s.stop);
+    const stop = useSetAtom(stopAtom);
 
 	const onAustinClick = useCallback(() => {
 		stop();

@@ -13,7 +13,8 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "@/components/ui/sonner";
 import { fireConfetti } from "@/lib/confetti";
-import { useTaskStore } from "@/lib/task-store";
+import { useAtomValue } from "jotai";
+import { labelAtom, startedAtAtom, finishedAtAtom, runningAtom } from "@/lib/task-store";
 
 function formatElapsed(ms: number) {
 	const totalSeconds = Math.max(0, Math.floor(ms / 1000));
@@ -26,11 +27,10 @@ function formatElapsed(ms: number) {
 
 export function TaskTimer() {
 	const t = useTranslations();
-	const running = useTaskStore((s) => s.running);
-	const startedAt = useTaskStore((s) => s.startedAt);
-	const finishedAt = useTaskStore((s) => s.finishedAt);
-	const label = useTaskStore((s) => s.label);
-	const start = useTaskStore((s) => s.start);
+    const running = useAtomValue(runningAtom);
+    const startedAt = useAtomValue(startedAtAtom);
+    const finishedAt = useAtomValue(finishedAtAtom);
+    const label = useAtomValue(labelAtom);
 
 	const [open, setOpen] = React.useState(false);
 	const [finalMs, setFinalMs] = React.useState(0);

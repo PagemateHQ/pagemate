@@ -2,7 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import * as React from "react";
-import { useAtom } from "jotai";
+import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { Button } from "@/components/ui/button";
 import {
 	Dialog,
@@ -11,14 +11,14 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from "@/components/ui/dialog";
-import { useTaskStore } from "@/lib/task-store";
+import { runningAtom, finishedAtAtom, beginAtom } from "@/lib/task-store";
 import { taskSelectorOpenAtom } from "@/lib/atoms";
 
 export function TaskSelector() {
 	const t = useTranslations();
-	const running = useTaskStore((s) => s.running);
-	const finishedAt = useTaskStore((s) => s.finishedAt);
-	const begin = useTaskStore((s) => s.begin);
+    const running = useAtomValue(runningAtom);
+    const finishedAt = useAtomValue(finishedAtAtom);
+    const begin = useSetAtom(beginAtom);
 
 	const [open, setOpen] = useAtom(taskSelectorOpenAtom);
 

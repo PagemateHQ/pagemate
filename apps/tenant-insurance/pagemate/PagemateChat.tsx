@@ -29,6 +29,12 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
     | { type: 'highlightByXPath'; xpath: string }
     | { type: 'retrieve'; query: string; limit?: number; documentId?: string | null };
 
+  type ToolExecResult = {
+    success: boolean;
+    kind: ToolAction['type'];
+    ragContext?: string | null;
+  };
+
   const parseToolIntent = (raw: string): ToolAction | null => {
     const text = raw.trim();
     // Match: highlight ...
@@ -79,52 +85,52 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
     return null;
   };
 
-  const executeTool = async (tool: ToolAction): Promise<boolean> => {
+  const executeTool = async (tool: ToolAction): Promise<ToolExecResult> => {
     switch (tool.type) {
       case 'clickByText': {
         const el = findClickableByText(tool.text);
-        if (!el) return false;
+        if (!el) return { success: false, kind: tool.type };
         try {
           el.scrollIntoView({ behavior: 'smooth', block: 'center' });
           flashHighlight(el);
           (el as HTMLElement).click();
-          return true;
+          return { success: true, kind: tool.type };
         } catch {
-          return false;
+          return { success: false, kind: tool.type };
         }
       }
       case 'highlightByText': {
         const el = findClickableByText(tool.text);
-        if (!el) return false;
+        if (!el) return { success: false, kind: tool.type };
         try {
           el.scrollIntoView({ behavior: 'smooth', block: 'center' });
           showSpotlight(el);
-          return true;
+          return { success: true, kind: tool.type };
         } catch {
-          return false;
+          return { success: false, kind: tool.type };
         }
       }
       case 'clickByXPath': {
         const el = findElementByXPath(tool.xpath);
-        if (!el) return false;
+        if (!el) return { success: false, kind: tool.type };
         try {
           el.scrollIntoView({ behavior: 'smooth', block: 'center' });
           flashHighlight(el);
           (el as HTMLElement).click();
-          return true;
+          return { success: true, kind: tool.type };
         } catch {
-          return false;
+          return { success: false, kind: tool.type };
         }
       }
       case 'highlightByXPath': {
         const el = findElementByXPath(tool.xpath);
-        if (!el) return false;
+        if (!el) return { success: false, kind: tool.type };
         try {
           el.scrollIntoView({ behavior: 'smooth', block: 'center' });
           showSpotlight(el);
-          return true;
+          return { success: true, kind: tool.type };
         } catch {
-          return false;
+          return { success: false, kind: tool.type };
         }
       }
       case 'retrieve': {
@@ -136,43 +142,18 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
             ...prev,
             { role: 'assistant', content: summary },
           ]);
-
-          // Attempt follow-up answer using RAG context and last user message
-          const lastUser = [...messages].reverse().find((m) => m.role === 'user');
-          if (lastUser) {
-            const ragText = buildRagContextFromChunks(query, chunks);
-            try {
-              const resp = await fetch('https://pagemate.app/api/chat', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  messages: [...messages, { role: 'user', content: lastUser.content }],
-                  model: 'solar-pro2',
-                  pageHtml:
-                    typeof document !== 'undefined' ? document.body.innerHTML : '',
-                  ragContext: ragText,
-                }),
-              });
-              const data = await resp.json();
-              if (resp.ok && data?.content) {
-                setMessages((prev) => [
-                  ...prev,
-                  { role: 'assistant', content: data.content },
-                ]);
-              }
-            } catch {}
-          }
-          return true;
+          const ragText = buildRagContextFromChunks(query, chunks);
+          return { success: true, kind: tool.type, ragContext: ragText };
         } catch (e: any) {
           setMessages((prev) => [
             ...prev,
             { role: 'assistant', content: `⚠️ Retrieval failed: ${e?.message || 'Unknown error'}` },
           ]);
-          return false;
+          return { success: false, kind: tool.type };
         }
       }
       default:
-        return false;
+        return { success: false, kind: 'clickByText' };
     }
   };
 
@@ -386,11 +367,11 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
       setError(null);
       setLoading(true);
 
-      const nextMessages: ChatMessage[] = [
+      let workingMessages: ChatMessage[] = [
         ...messages,
         { role: 'user', content: text.trim() },
       ];
-      setMessages(nextMessages);
+      setMessages(workingMessages);
 
       // Switch to chat view if we're still in intro
       if (currentView === 'intro') {
@@ -398,55 +379,109 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
       }
 
       try {
-        // Tool calling (local): check if user asked to click/highlight/retrieve
+        // Helper to call the chat API with optional rag context
+        const callAI = async (
+          msgs: ChatMessage[],
+          opts: { ragContext?: string | null } = {},
+        ) => {
+          const resp = await fetch('https://pagemate.app/api/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              messages: msgs,
+              model: 'solar-pro2',
+              pageHtml:
+                typeof document !== 'undefined' ? document.body.innerHTML : '',
+              ...(opts.ragContext ? { ragContext: opts.ragContext } : {}),
+            }),
+          });
+          const data = await resp.json();
+          if (!resp.ok) throw new Error(data?.error || 'Failed to fetch');
+          return (data?.content as string) || '';
+        };
+
+        // 1) If the user message is a tool command, execute and then continue the loop with a follow-up AI call
         const tool = parseToolIntent(text);
+        let pendingRag: string | null | undefined = null;
         if (tool) {
+          const result = await executeTool(tool);
           if (tool.type === 'retrieve') {
-            await executeTool(tool);
-            setLoading(false);
-            return;
+            // Retrieval already appended a summary message
+            // Track rag context for the follow-up call
+            pendingRag = result.ragContext ?? null;
           } else {
-            const ok = await executeTool(tool);
-            const verb =
-              tool.type === 'highlightByText' ? 'Highlighted' : 'Clicked';
-            const assistantText = ok
+            const verb = tool.type === 'highlightByText' ? 'Highlighted' : 'Clicked';
+            const successText = result.success
               ? `✅ ${verb} "${'text' in tool ? tool.text : ''}"`
               : `⚠️ Couldn't find target for "${'text' in tool ? tool.text : ''}"`;
-            setMessages((prev) => [
-              ...prev,
-              { role: 'assistant', content: assistantText },
-            ]);
-            setLoading(false);
-            return; // Skip network call when a local tool is executed
+            workingMessages = [
+              ...workingMessages,
+              { role: 'assistant', content: successText },
+            ];
+            setMessages(workingMessages);
           }
+
+          // After any tool call, explicitly call the AI again
+          const maxFollowups = 3;
+          let followups = 0;
+          while (followups < maxFollowups) {
+            const reply = await callAI(workingMessages, { ragContext: pendingRag });
+            if (reply) {
+              workingMessages = [
+                ...workingMessages,
+                { role: 'assistant', content: reply },
+              ];
+              setMessages(workingMessages);
+            }
+            // Parse and execute any ACTION directives, then loop again
+            const actions = parseAssistantActions(reply);
+            if (!actions.length) break;
+            pendingRag = null;
+            for (const a of actions) {
+              const res = await executeTool(a);
+              if (res.kind === 'retrieve' && res.ragContext) {
+                pendingRag = pendingRag
+                  ? `${pendingRag}\n${res.ragContext}`
+                  : res.ragContext;
+              }
+            }
+            followups++;
+          }
+          return;
         }
 
-        const resp = await fetch('https://pagemate.app/api/chat', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            messages: nextMessages,
-            model: 'solar-pro2',
-            pageHtml:
-              typeof document !== 'undefined' ? document.body.innerHTML : '',
-          }),
-        });
-        const data = await resp.json();
-        if (!resp.ok) throw new Error(data?.error || 'Failed to fetch');
-
-        const reply = data?.content ?? '';
+        // 2) Normal flow: call AI, then execute any tools and call again, up to a small limit
+        let reply = await callAI(workingMessages);
         if (reply) {
-          setMessages((prev) => [
-            ...prev,
+          workingMessages = [
+            ...workingMessages,
             { role: 'assistant', content: reply },
-          ]);
-          // Parse any ACTION directives in the assistant reply and execute tools.
-          try {
-            const actions = parseAssistantActions(reply);
-            for (const a of actions) {
-              await executeTool(a);
+          ];
+          setMessages(workingMessages);
+        }
+
+        const maxFollowups = 3;
+        let followups = 0;
+        while (followups < maxFollowups) {
+          const actions = parseAssistantActions(reply);
+          if (!actions.length) break;
+          let rag: string | null = null;
+          for (const a of actions) {
+            const res = await executeTool(a);
+            if (res.kind === 'retrieve' && res.ragContext) {
+              rag = rag ? `${rag}\n${res.ragContext}` : res.ragContext;
             }
-          } catch {}
+          }
+          // Call AI again after executing tools
+          reply = await callAI(workingMessages, { ragContext: rag });
+          if (reply) {
+            workingMessages = [
+              ...workingMessages,
+              { role: 'assistant', content: reply },
+            ];
+            setMessages(workingMessages);
+          }
+          followups++;
         }
       } catch (e: any) {
         console.error(e);
