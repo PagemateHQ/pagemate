@@ -46,6 +46,7 @@ h5,
 h6,
 p,
 span,
-button {
+button,
+code {
   -webkit-user-select: text;
 }
