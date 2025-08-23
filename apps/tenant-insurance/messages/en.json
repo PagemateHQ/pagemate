@@ -337,8 +337,8 @@
 		"runningDesc": "Complete a task to stop the timer."
 	},
 	"TaskSelector": {
-		"title": "Select a Task",
-		"desc": "Pick one to start the demo timer.",
+		"title": "How fast can you do it?",
+		"desc": "We'll measure how long each task takes.",
 		"tasks": {
 			"t1": "1) Find Austin Phone Number",
 			"t2": "2) Track a Claim ACM-123456",
