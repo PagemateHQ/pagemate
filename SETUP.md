@@ -13,28 +13,19 @@ This guide will help you set up the Pagemate development environment using Moon,
 
 ### 1. Install Moon
 
-```bash
-# Install Moon globally
-curl -fsSL https://moonrepo.dev/install/moon.sh | bash
-
-# Or with npm/yarn/pnpm
-npm install -g @moonrepo/cli
-```
+https://moonrepo.dev/docs/install
 
 ### 2. Clone the Repository
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/pagematehq/pagemate
 cd pagemate
 ```
 
 ### 3. Initialize Moon Workspace
 
 ```bash
-# Moon will automatically install the required toolchain (Node.js, Python, Bun, UV)
 moon setup
-
-# Sync the entire workspace
 moon sync
 ```
 
@@ -83,31 +74,6 @@ moon run be:test     # Run Python tests
 moon run be:lint     # Run Python linter
 ```
 
-### Project-Specific Commands
-
-#### Frontend (Next.js)
-
-```bash
-cd apps/fe
-
-# Development
-bun dev              # Start dev server
-bun build            # Build for production
-bun start            # Start production server
-bun lint             # Run linter
-```
-
-#### Backend (Python/UV)
-
-```bash
-cd apps/be
-
-# Development
-uv run python main.py     # Run the backend server
-uv pip install <package>  # Install a new package
-uv pip freeze            # Show installed packages
-```
-
 ## Project Structure
 
 ```
@@ -129,87 +95,3 @@ pagemate/
 │       └── main.py      # Backend entry point
 └── packages/            # Shared packages (if any)
 ```
-
-## Environment Variables
-
-### Frontend (.env.local)
-
-Create `apps/fe/.env.local`:
-
-```env
-NEXT_PUBLIC_API_URL=http://localhost:8000
-NEXT_PUBLIC_PAGEMATE_SDK_KEY=your-sdk-key
-```
-
-### Backend (.env)
-
-Create `apps/be/.env`:
-
-```env
-PORT=8000
-DATABASE_URL=your-database-url
-SECRET_KEY=your-secret-key
-```
-
-## Troubleshooting
-
-### Moon Issues
-
-```bash
-# Clear Moon cache if you encounter issues
-moon clean
-
-# Reinstall toolchain
-moon setup --force
-
-# Check Moon version
-moon --version
-```
-
-### Frontend Issues
-
-```bash
-# Clear Next.js cache
-rm -rf apps/fe/.next
-rm -rf apps/fe/node_modules
-cd apps/fe && bun install
-```
-
-### Backend Issues
-
-```bash
-# Recreate UV virtual environment
-cd apps/be
-rm -rf .venv
-uv venv
-uv pip install -r pyproject.toml
-```
-
-## Deployment
-
-### Building for Production
-
-```bash
-# Build all projects
-moon run :build
-
-# Deploy frontend (Next.js)
-cd apps/fe
-bun run build
-# Deploy the .next folder to your hosting provider
-
-# Deploy backend (Python)
-cd apps/be
-# Package and deploy according to your infrastructure
-```
-
-## Additional Resources
-
-- [Moon Documentation](https://moonrepo.dev/docs)
-- [UV Documentation](https://github.com/astral-sh/uv)
-- [Bun Documentation](https://bun.sh/docs)
-- [Next.js Documentation](https://nextjs.org/docs)
-
-## Support
-
-For issues or questions, please refer to the main README or contact the development team.
