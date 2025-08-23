@@ -1,9 +1,67 @@
+import { css } from '@emotion/react';
 import styled from '@emotion/styled';
 import Link from 'next/link';
 import React, { useEffect, useState } from 'react';
 
 import { Header } from '@/components/Header';
 import { Tenant, tenantService } from '@/services/api';
+
+const NpmIcon = () => (
+  <svg
+    width="18"
+    height="18"
+    viewBox="0 0 18 18"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path
+      d="M16.2002 16.1997H1.7998V1.80029H16.2002V16.1997ZM3.34668 14.6528H8.95117V6.19775H11.8018V14.6528H14.6533V3.34717H3.34668V14.6528Z"
+      fill="#BAE3F8"
+    />
+  </svg>
+);
+
+const ReactIcon = () => (
+  <svg
+    width="18"
+    height="18"
+    viewBox="0 0 18 18"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <g clipPath="url(#clip0_23_2271)">
+      <path
+        d="M8.99964 10.6322C9.90338 10.6322 10.636 9.8996 10.636 8.99586C10.636 8.09212 9.90338 7.3595 8.99964 7.3595C8.09591 7.3595 7.36328 8.09212 7.36328 8.99586C7.36328 9.8996 8.09591 10.6322 8.99964 10.6322Z"
+        fill="#BAE3F8"
+      />
+      <path
+        d="M9.00018 12.6777C13.5189 12.6777 17.182 11.0293 17.182 8.99591C17.182 6.96249 13.5189 5.31409 9.00018 5.31409C4.48148 5.31409 0.818359 6.96249 0.818359 8.99591C0.818359 11.0293 4.48148 12.6777 9.00018 12.6777Z"
+        stroke="#BAE3F8"
+        strokeWidth="0.818182"
+      />
+      <path
+        d="M5.81147 10.8368C8.07082 14.7501 11.3299 17.0983 13.0909 16.0816C14.8519 15.0649 14.4479 11.0683 12.1886 7.155C9.92922 3.24169 6.67009 0.893539 4.90911 1.91025C3.14812 2.92695 3.55212 6.92351 5.81147 10.8368Z"
+        stroke="#BAE3F8"
+        strokeWidth="0.818182"
+      />
+      <path
+        d="M5.81129 7.15494C3.55194 11.0682 3.14794 15.0648 4.90893 16.0815C6.66992 17.0982 9.92904 14.7501 12.1884 10.8368C14.4477 6.92346 14.8517 2.9269 13.0907 1.91019C11.3298 0.893483 8.07064 3.24164 5.81129 7.15494Z"
+        stroke="#BAE3F8"
+        strokeWidth="0.818182"
+      />
+    </g>
+    <defs>
+      <clipPath id="clip0_23_2271">
+        <rect
+          width="18"
+          height="16.5845"
+          fill="white"
+          transform="translate(0 0.707764)"
+        />
+      </clipPath>
+    </defs>
+  </svg>
+);
 
 const CustomersPage: React.FC = () => {
   const [tenants, setTenants] = useState<Tenant[]>([]);
@@ -128,34 +186,48 @@ const CustomersPage: React.FC = () => {
                   Get started in minutes
                 </IntegrationSubtitle>
                 <IntegrationTitle>Ready to integrate?</IntegrationTitle>
+
+                <IntergrationBlur src="/assets/intro-bottom-blur.png" alt="" />
               </IntegrationHeader>
               <IntegrationContent>
                 <IntegrationStep>
-                  <StepNumber>1</StepNumber>
+                  <StepNumber>
+                    <span>1</span>
+                  </StepNumber>
                   <StepContent>
                     <StepTitle>Install the package</StepTitle>
-                    <CodeBlock>
+                    <CodeBlock $bgImage="/app/bg-terminal-1.png">
                       <CodeHeader>
-                        <PackageManager>npm</PackageManager>
+                        <PackageManager>
+                          <NpmIcon />
+                          npm
+                        </PackageManager>
                       </CodeHeader>
                       <CodeContent>
-                        <CodeText>yarn add @pagemate/sdk</CodeText>
+                        <CodeText>
+                          <code>yarn add @pagemate/sdk</code>
+                        </CodeText>
                       </CodeContent>
                     </CodeBlock>
                   </StepContent>
                 </IntegrationStep>
-                <StepConnector />
                 <IntegrationStep>
-                  <StepNumber $active>2</StepNumber>
+                  <StepNumber>
+                    <span>2</span>
+                  </StepNumber>
                   <StepContent>
-                    <StepTitle $active>Add widget from Pagemate SDK</StepTitle>
-                    <CodeBlock>
+                    <StepTitle>Add widget from Pagemate SDK</StepTitle>
+                    <CodeBlock $bgImage="/app/bg-terminal-2.png">
                       <CodeHeader>
-                        <PackageManager>React</PackageManager>
+                        <PackageManager>
+                          <ReactIcon />
+                          React
+                        </PackageManager>
                       </CodeHeader>
                       <CodeContent>
                         <CodeText>
-                          {`<Pagemate.FloatingOrb
+                          <code>
+                            {`<Pagemate.FloatingOrb
   initialCorner="bottom-right"
   defaultSuggestions={[
     'What is the Austin Office Phone Number?',
@@ -163,6 +235,7 @@ const CustomersPage: React.FC = () => {
     'Insurance quote for $20k Car and $1M Home in MA',
   ]}
 />`}
+                          </code>
                         </CodeText>
                       </CodeContent>
                     </CodeBlock>
@@ -228,6 +301,10 @@ const MainContent = styled.div`
   width: 100%;
   display: flex;
   gap: 24px;
+
+  @media screen and (max-width: 1160px) {
+    flex-direction: column;
+  }
 `;
 
 const LeftSection = styled.div`
@@ -350,6 +427,11 @@ const VerticalDivider = styled.div`
   width: 1px;
   background: #c4e2f1;
   align-self: stretch;
+
+  @media screen and (max-width: 1160px) {
+    width: 100%;
+    height: 1px;
+  }
 `;
 
 const RightSection = styled.div`
@@ -366,13 +448,14 @@ const IntegrationCard = styled.div`
 `;
 
 const IntegrationHeader = styled.div`
-  padding: 40px;
+  padding: 36px 20px;
   border-bottom: 1px solid #c4e2f1;
   text-align: center;
-  position: relative;
   background: rgba(170, 226, 255, 0.1);
-`;
 
+  position: relative;
+  z-index: 0;
+`;
 const IntegrationSubtitle = styled.p`
   font-size: 18px;
   font-weight: 400;
@@ -381,13 +464,27 @@ const IntegrationSubtitle = styled.p`
   line-height: 1.04;
   margin: 0 0 8px 0;
 `;
-
 const IntegrationTitle = styled.h3`
   font-size: 34px;
   font-weight: 500;
   color: #0b3668;
   letter-spacing: -1.36px;
   line-height: 1.04;
+`;
+const IntergrationBlur = styled.img`
+  width: 377px;
+  height: 212px;
+
+  object-fit: contain;
+  object-position: bottom center;
+
+  position: absolute;
+  left: 50%;
+  bottom: -1px;
+  transform: translateX(-50%);
+  z-index: -1;
+
+  opacity: 0.6;
 `;
 
 const IntegrationContent = styled.div`
@@ -402,20 +499,24 @@ const IntegrationStep = styled.div`
   display: flex;
   gap: 12px;
 `;
-
-const StepNumber = styled.div<{ $active?: boolean }>`
+const StepNumber = styled.div`
   width: 20px;
   height: 20px;
   border-radius: 50%;
-  border: 1.5px solid ${(props) => (props.$active ? '#0b3668' : '#6c8bab')};
+  border: 1.5px solid #0b3668;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 13px;
-  font-weight: 600;
-  color: ${(props) => (props.$active ? '#0b3668' : '#6c8bab')};
-  letter-spacing: -0.52px;
-  flex-shrink: 0;
+
+  padding-right: 1px;
+
+  & > span {
+    font-size: 12px;
+    font-weight: 600;
+    color: #0b3668;
+    letter-spacing: -0.52px;
+    flex-shrink: 0;
+  }
 `;
 
 const StepContent = styled.div`
@@ -425,23 +526,48 @@ const StepContent = styled.div`
   gap: 13px;
 `;
 
-const StepTitle = styled.p<{ $active?: boolean }>`
+const StepTitle = styled.p`
   font-size: 18px;
   font-weight: 400;
-  color: ${(props) => (props.$active ? '#0b3668' : '#6c8bab')};
-  letter-spacing: -0.72px;
+  color: #0b3668;
+  letter-spacing: -0.4px;
   line-height: 1.04;
 `;
 
-const CodeBlock = styled.div`
+const CodeBlock = styled.div<{ $bgImage?: string }>`
   background: #1b3452;
   border: 1px solid #506988;
   border-radius: 8px;
   overflow: hidden;
+  position: relative;
+  z-index: 0;
+
+  ${(props) =>
+    props.$bgImage &&
+    css`
+      &::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-image: url('${props.$bgImage}');
+        background-position: center;
+        background-size: cover;
+        background-repeat: no-repeat;
+        z-index: -1;
+      }
+
+      > * {
+        position: relative;
+        z-index: 1;
+      }
+    `}
 `;
 
 const CodeHeader = styled.div`
-  padding: 12px 20px;
+  padding: 10px;
   border-bottom: 1px solid #506988;
   display: flex;
   align-items: center;
@@ -466,13 +592,19 @@ const CodeContent = styled.div`
 `;
 
 const CodeText = styled.pre`
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 14px;
+  font-size: 12.8px;
   font-weight: 500;
-  color: #ffffff;
-  letter-spacing: -0.42px;
-  line-height: 1.04;
+  color: #d5e0eb;
+  letter-spacing: -0.1px;
+  line-height: 1.4;
   white-space: pre-wrap;
+
+  & > code {
+    font-family:
+      ui-monospace, Menlo, Monaco, 'Cascadia Mono', 'Segoe UI Mono',
+      'Roboto Mono', 'Oxygen Mono', 'Ubuntu Mono', 'Source Code Pro',
+      'Fira Mono', 'Droid Sans Mono', 'Consolas', 'Courier New', monospace !important;
+  }
 `;
 
 const StepConnector = styled.div`
