@@ -132,7 +132,7 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
           const details = result.filled.map((f) => `- ${f.label || f.key}: ${truncateText(f.value, 80)}`).join('\n');
           setMessages((prev) => [
             ...prev,
-            { role: 'assistant', content: (result.success ? `✅ Autofilled ${result.filledCount} ${result.filledCount === 1 ? 'field' : 'fields'}` : `⚠️ Autofill failed: ${result.error or 'No matching fields'}`) + (details ? `\n${details}` : '') },
+            { role: 'assistant', content: (result.success ? `✅ Autofilled ${result.filledCount} ${result.filledCount === 1 ? 'field' : 'fields'}` : `⚠️ Autofill failed: ${'No matching fields'}`) + (details ? `\n${details}` : '') },
           ]);
           return result.success;
         } catch {
@@ -218,7 +218,7 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
     return partial || null;
   };
 
-  const isVisible = (el: HTMLElement): boolean => {
+  const isVisibleField = (el: HTMLElement): boolean => {
     const style = window.getComputedStyle(el);
     const rect = el.getBoundingClientRect();
     return (
@@ -389,7 +389,7 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
   };
 
   const norm = (s: string) => s.replace(/\s+/g, ' ').trim().toLowerCase();
-  const isVisible = (el: HTMLElement): boolean => {
+  const isVisibleField = (el: HTMLElement): boolean => {
     const style = window.getComputedStyle(el);
     const rect = el.getBoundingClientRect();
     return style.display !== 'none' && style.visibility !== 'hidden' && style.opacity !== '0' && rect.width > 0 && rect.height > 0;
@@ -421,7 +421,7 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
 
   const collectFormFields = () => {
     const nodes = Array.from(document.querySelectorAll<HTMLElement>('input:not([type="hidden"]):not([disabled]), textarea:not([disabled]), select:not([disabled])'));
-    return nodes.filter(isVisible).map((n) => {
+    return nodes.filter(isVisibleField).map((n) => {
       const tag = n.tagName.toLowerCase();
       const type = (n as HTMLInputElement).type?.toLowerCase?.() || tag;
       const label = getAssociatedLabel(n) || '';
