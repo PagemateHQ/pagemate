@@ -6,17 +6,13 @@ interface IntroViewProps {
   onClose?: () => void;
   onSendMessage?: (message: string) => void;
   onSwitchToChat?: (initialMessage: string) => void;
-  suggestions?: string[];
+  suggestions: string[]; // Required
 }
 
 export const IntroView: React.FC<IntroViewProps> = ({
   onSendMessage,
   onSwitchToChat,
-  suggestions = [
-    'Help me find a specific transaction',
-    'How can I transfer money between accounts?',
-    'How do I deposit a check?',
-  ],
+  suggestions,
 }) => {
   const handleSuggestionClick = (text: string) => {
     if (onSwitchToChat) {

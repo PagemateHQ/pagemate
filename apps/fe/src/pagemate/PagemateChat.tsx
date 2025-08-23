@@ -9,7 +9,7 @@ import { IntroView } from './views/IntroView';
 interface PagemateChatProps {
   isOpen: boolean;
   onClose: () => void;
-  defaultSuggestions?: string[];
+  defaultSuggestions: string[]; // Required
 }
 
 export const PagemateChat: React.FC<PagemateChatProps> = ({
