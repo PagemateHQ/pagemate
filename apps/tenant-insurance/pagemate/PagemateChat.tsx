@@ -258,13 +258,17 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
     const origReplace = win.history.replaceState.bind(win.history);
     const emitNav = () => win.dispatchEvent(new Event('pagemate:navigation'));
     // Patch pushState/replaceState to catch SPA navigations
-    (win.history.pushState as any) = function (...args: any[]) {
-      const ret = origPush(...args as any);
+    (win.history.pushState as any) = function (
+      ...args: Parameters<History['pushState']>
+    ) {
+      const ret = origPush(...args);
       emitNav();
       return ret;
     };
-    (win.history.replaceState as any) = function (...args: any[]) {
-      const ret = origReplace(...args as any);
+    (win.history.replaceState as any) = function (
+      ...args: Parameters<History['replaceState']>
+    ) {
+      const ret = origReplace(...args);
       emitNav();
       return ret;
     };
