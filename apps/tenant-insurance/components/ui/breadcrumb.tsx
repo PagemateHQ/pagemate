@@ -37,12 +37,19 @@ type BreadcrumbLinkProps =
   | ({ asChild: true } & React.ComponentProps<"a">);
 
 function BreadcrumbLink({ asChild, className, ...props }: BreadcrumbLinkProps) {
-  const Comp: any = asChild ? Slot : NextLink;
+  const common = {
+    "data-slot": "breadcrumb-link",
+    className: cn("hover:text-foreground transition-colors", className),
+  } as const;
+
+  if (asChild) {
+    return <Slot {...common} {...(props as React.ComponentProps<"a">)} />;
+  }
+
   return (
-    <Comp
-      data-slot="breadcrumb-link"
-      className={cn("hover:text-foreground transition-colors", className)}
-      {...(props as any)}
+    <NextLink
+      {...common}
+      {...(props as React.ComponentProps<typeof NextLink>)}
     />
   );
 }

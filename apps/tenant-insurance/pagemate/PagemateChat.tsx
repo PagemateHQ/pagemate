@@ -211,6 +211,7 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
       }
       if (reply) {
         working = [...working, { role: 'assistant', content: reply }];
+        messagesRef.current = working;
         setMessages(working);
       }
 
@@ -239,6 +240,7 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
         }
         if (reply) {
           working = [...working, { role: 'assistant', content: reply }];
+          messagesRef.current = working;
           setMessages(working);
         }
         followups++;
@@ -248,6 +250,49 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
       setLoading(false);
     }
   }, [callAI, executeTool, parseAssistantActions, setLoading, setMessages]);
+
+  React.useEffect(() => {
+    const win: Window | undefined = typeof window !== 'undefined' ? window : undefined;
+    if (!win) return;
+    const origPush = win.history.pushState.bind(win.history);
+    const origReplace = win.history.replaceState.bind(win.history);
+    const emitNav = () => win.dispatchEvent(new Event('pagemate:navigation'));
+    // Patch pushState/replaceState to catch SPA navigations
+    (win.history.pushState as any) = function (...args: any[]) {
+      const ret = origPush(...args as any);
+      emitNav();
+      return ret;
+    };
+    (win.history.replaceState as any) = function (...args: any[]) {
+      const ret = origReplace(...args as any);
+      emitNav();
+      return ret;
+    };
+
+    const handleNav = () => {
+      const href = win.location.href;
+      if (href === currentUrlRef.current) return;
+      currentUrlRef.current = href;
+      if (loadingRef.current) {
+        abortControllerRef.current?.abort();
+        setTimeout(() => restartAgent(), 0);
+      } else if (messagesRef.current.length > 0) {
+        setTimeout(() => restartAgent(), 0);
+      }
+    };
+    win.addEventListener('pagemate:navigation', handleNav);
+    win.addEventListener('popstate', handleNav);
+    win.addEventListener('hashchange', handleNav);
+    return () => {
+      try {
+        (win.history.pushState as any) = origPush as any;
+        (win.history.replaceState as any) = origReplace as any;
+        win.removeEventListener('pagemate:navigation', handleNav);
+        win.removeEventListener('popstate', handleNav);
+        win.removeEventListener('hashchange', handleNav);
+      } catch {}
+    };
+  }, [restartAgent]);
 
   // XPath detection removed
 
@@ -468,11 +513,16 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
                 typeof document !== 'undefined' ? document.body.innerHTML : '',
               ...(opts.ragContext ? { ragContext: opts.ragContext } : {}),
             }),
+            signal: abortControllerRef.current?.signal,
           });
           const data = await resp.json();
           if (!resp.ok) throw new Error(data?.error || 'Failed to fetch');
           return (data?.content as string) || '';
         };
+
+        // Prepare abort controller for this agent run
+        try { abortControllerRef.current?.abort(); } catch {}
+        abortControllerRef.current = new AbortController();
 
         // 1) If the user message is a tool command, execute it.
         const tool = parseToolIntent(text);
@@ -492,6 +542,7 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
               ...workingMessages,
               { role: 'assistant', content: successText },
             ];
+            messagesRef.current = workingMessages;
             setMessages(workingMessages);
           }
           // Only call the agent again after a RETRIEVE tool
@@ -499,12 +550,14 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
             const maxFollowups = 3;
             let followups = 0;
             while (followups < maxFollowups) {
+              if (abortControllerRef.current?.signal.aborted) return;
               const reply = await callAI(workingMessages, { ragContext: pendingRag });
               if (reply) {
                 workingMessages = [
                   ...workingMessages,
                   { role: 'assistant', content: reply },
                 ];
+                messagesRef.current = workingMessages;
                 setMessages(workingMessages);
               }
               // Parse and execute any ACTION directives
@@ -536,6 +589,7 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
             ...workingMessages,
             { role: 'assistant', content: reply },
           ];
+          messagesRef.current = workingMessages;
           setMessages(workingMessages);
         }
 
@@ -553,12 +607,14 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
           }
           // Only call AI again if a RETRIEVE tool provided context
           if (!rag) break;
+          if (abortControllerRef.current?.signal.aborted) return;
           reply = await callAI(workingMessages, { ragContext: rag });
           if (reply) {
             workingMessages = [
               ...workingMessages,
               { role: 'assistant', content: reply },
             ];
+            messagesRef.current = workingMessages;
             setMessages(workingMessages);
           }
           followups++;
@@ -585,7 +641,7 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
 
   async function fetchRetrieval(
     query: string,
-    opts: { limit?: number; documentId?: string | null } = {},
+    opts: { limit?: number; documentId?: string | null; signal?: AbortSignal } = {},
   ): Promise<DocumentChunk[]> {
     const baseUrl = 'https://api.pagemate.app';
     const tenantId = process.env.NEXT_PUBLIC_PAGEMATE_TENANT_ID as string | undefined;
@@ -597,7 +653,7 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
     const url = `${baseUrl}/tenants/${encodeURIComponent(
       tenantId,
     )}/retrieval?${params.toString()}`;
-    const resp = await fetch(url, { method: 'GET' });
+    const resp = await fetch(url, { method: 'GET', signal: opts.signal });
     if (!resp.ok) {
       const txt = await resp.text().catch(() => '');
       throw new Error(
