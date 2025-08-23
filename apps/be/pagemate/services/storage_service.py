@@ -28,7 +28,7 @@ async def save_file(content: bytes, extension: str) -> tuple[pathlib.Path, int]:
     return path_obj, file_size
 
 
-async def read_file(path: str | pathlib.Path, encoding: str = "utf-8") -> str:
+async def read_file(path: str | pathlib.Path) -> bytes:
     """텍스트 파일을 읽어옵니다."""
     path_obj = pathlib.Path(path) if isinstance(path, str) else path
     if not await clients.storage.is_exists(path_obj):
@@ -36,10 +36,7 @@ async def read_file(path: str | pathlib.Path, encoding: str = "utf-8") -> str:
 
     data = await clients.storage.read_file(path_obj)
 
-    try:
-        return data.decode(encoding)
-    except UnicodeDecodeError as e:
-        raise ValueError(f"Failed to decode file with encoding {encoding}: {e}")
+    return data
 
 
 async def remove_file(path: str | pathlib.Path) -> None:
