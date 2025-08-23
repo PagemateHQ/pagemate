@@ -4,7 +4,7 @@ from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
-    mongo_url: str = "mongodb://mongo:QdrxnTtkqbiqLzzQVWvyqXjXeBytKSih@shinkansen.proxy.rlwy.net:11626"
+    mongo_url: str = "mongodb://localhost:27017"
     file_storage_base_path_str: str = "/file-storage"
 
     openai_api_key: str = "up_0qBatoABAEwg1XX9BIGusjF46qRyj"
