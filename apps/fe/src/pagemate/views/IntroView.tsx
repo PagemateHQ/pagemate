@@ -231,7 +231,7 @@ const LogoOverlay = styled.div`
   }
 
   .blur-layer:nth-child(1) {
-    backdrop-filter: blur(1px);
+    backdrop-filter: blur(0.67px);
     mask: linear-gradient(
       to bottom,
       rgba(0, 0, 0, 0) 0%,
@@ -243,7 +243,7 @@ const LogoOverlay = styled.div`
   }
 
   .blur-layer:nth-child(2) {
-    backdrop-filter: blur(2px);
+    backdrop-filter: blur(1.33px);
     mask: linear-gradient(
       to bottom,
       rgba(0, 0, 0, 0) 0%,
@@ -255,7 +255,7 @@ const LogoOverlay = styled.div`
   }
 
   .blur-layer:nth-child(3) {
-    backdrop-filter: blur(3px);
+    backdrop-filter: blur(2px);
     mask: linear-gradient(
       to bottom,
       rgba(0, 0, 0, 0) 0%,
@@ -267,7 +267,7 @@ const LogoOverlay = styled.div`
   }
 
   .blur-layer:nth-child(4) {
-    backdrop-filter: blur(4px);
+    backdrop-filter: blur(2.67px);
     mask: linear-gradient(
       to bottom,
       rgba(0, 0, 0, 0) 0%,
@@ -279,7 +279,7 @@ const LogoOverlay = styled.div`
   }
 
   .blur-layer:nth-child(5) {
-    backdrop-filter: blur(5px);
+    backdrop-filter: blur(3.33px);
     mask: linear-gradient(
       to bottom,
       rgba(0, 0, 0, 0) 0%,
@@ -291,7 +291,7 @@ const LogoOverlay = styled.div`
   }
 
   .blur-layer:nth-child(6) {
-    backdrop-filter: blur(6px);
+    backdrop-filter: blur(4px);
     mask: linear-gradient(
       to bottom,
       rgba(0, 0, 0, 0) 0%,
@@ -303,7 +303,7 @@ const LogoOverlay = styled.div`
   }
 
   .blur-layer:nth-child(7) {
-    backdrop-filter: blur(7px);
+    backdrop-filter: blur(4.67px);
     mask: linear-gradient(
       to bottom,
       rgba(0, 0, 0, 0) 0%,
@@ -315,7 +315,7 @@ const LogoOverlay = styled.div`
   }
 
   .blur-layer:nth-child(8) {
-    backdrop-filter: blur(8px);
+    backdrop-filter: blur(5.33px);
     mask: linear-gradient(
       to bottom,
       rgba(0, 0, 0, 0) 0%,
@@ -327,7 +327,7 @@ const LogoOverlay = styled.div`
   }
 
   .blur-layer:nth-child(9) {
-    backdrop-filter: blur(9px);
+    backdrop-filter: blur(6px);
     mask: linear-gradient(
       to bottom,
       rgba(0, 0, 0, 0) 0%,
@@ -339,7 +339,7 @@ const LogoOverlay = styled.div`
   }
 
   .blur-layer:nth-child(10) {
-    backdrop-filter: blur(10px);
+    backdrop-filter: blur(6.67px);
     mask: linear-gradient(
       to bottom,
       rgba(0, 0, 0, 0) 0%,
@@ -351,7 +351,7 @@ const LogoOverlay = styled.div`
   }
 
   .blur-layer:nth-child(11) {
-    backdrop-filter: blur(11px);
+    backdrop-filter: blur(7.33px);
     mask: linear-gradient(
       to bottom,
       rgba(0, 0, 0, 0) 0%,
@@ -363,7 +363,7 @@ const LogoOverlay = styled.div`
   }
 
   .blur-layer:nth-child(12) {
-    backdrop-filter: blur(12px);
+    backdrop-filter: blur(8px);
     mask: linear-gradient(
       to bottom,
       rgba(0, 0, 0, 0) 0%,
