@@ -17,8 +17,10 @@ async def save_file(path: pathlib.Path, data: bytes) -> int:
     return len(data)
 
 
-async def read_file(path: pathlib.Path) -> bytes:
+async def read_file(path: str | pathlib.Path) -> bytes:
     """주어진 경로의 path에서 데이터를 읽어옵니다."""
+    path = pathlib.Path(path) if isinstance(path, str) else path
+
     async with aiofiles.open(path, "rb") as f:
         return await f.read()
 

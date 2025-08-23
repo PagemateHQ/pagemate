@@ -1,4 +1,5 @@
 from fastapi import APIRouter, HTTPException, UploadFile, File
+from fastapi.responses import Response
 
 from pagemate.schema.document import Document, DocumentStatus
 from pagemate.services import document_service, storage_service
@@ -25,7 +26,8 @@ async def create_document(tenant_id: str, file: UploadFile = File(...)):
         raise HTTPException(status_code=400, detail="Only .txt, .md, or .pdf files are supported")
 
     # Save file to storage and get path and size
-    object_path, file_size = await storage_service.save_text_file(content)
+    file_ext = file.filename.split(".")[-1]
+    object_path, file_size = await storage_service.save_file(content, extension=file_ext)
 
     # Create document record (embedding_status is set to pending in service)
     document = await document_service.create_document(
@@ -49,6 +51,7 @@ async def get_document(tenant_id: str, document_id: str):
     return document
 
 
+
 @router.get("/{document_id}/status", response_model=DocumentStatus)
 async def get_document_status(tenant_id: str, document_id: str):
     """Get embedding status and chunk count for a document."""
@@ -58,6 +61,33 @@ async def get_document_status(tenant_id: str, document_id: str):
     if not status:
         raise HTTPException(status_code=404, detail="Document not found")
     return status
+
+@router.get("/{document_id}/attachment")
+async def get_document_attachment(tenant_id: str, document_id: str):
+    """Get the attachment (file content) of a document by ID."""
+    document = await document_service.get_document_by_id(
+        document_id=document_id, tenant_id=tenant_id
+    )
+    if not document:
+        raise HTTPException(status_code=404, detail="Document not found")
+
+    file_content = await storage_service.read_file(document.object_path)
+    
+    # Determine media type based on file extension
+    if document.name.endswith('.pdf'):
+        media_type = "application/pdf"
+    elif document.name.endswith('.txt'):
+        media_type = "text/plain"
+    elif document.name.endswith('.md'):
+        media_type = "text/markdown"
+    else:
+        media_type = "application/octet-stream"
+    
+    return Response(
+        content=file_content,
+        media_type=media_type,
+        headers={"Content-Disposition": f"inline; filename=\"{document.name}\""}
+    )
 
 
 @router.delete("/{document_id}", status_code=204)
