@@ -10,16 +10,16 @@ const DEMO_ITEMS: {
   image: string;
 }[] = [
   {
-    title: 'Travel Booking',
-    image: '/assets/travel-demo.png',
+    title: 'Banking & Finance',
+    image: '/assets/demo-bank.png',
   },
   {
-    title: 'Banking & Finance',
-    image: '/assets/banking-demo.png',
+    title: 'Insurance',
+    image: '/assets/demo-insurance.png',
   },
   {
     title: 'Government Services',
-    image: '/assets/government-demo.png',
+    image: '/assets/demo-government.png',
   },
 ];
 
