@@ -186,6 +186,24 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
 
   // XPath helpers removed
 
+  // Compute a border-radius string expanded by `expandPx` to account for the overlay padding
+  const computeExpandedBorderRadius = (el: HTMLElement, expandPx = 6): string => {
+    const cs = window.getComputedStyle(el);
+    const parseCorner = (val: string) => {
+      if (!val) return `${Math.max(0, expandPx + 8)}px`;
+      // Preserve percentage radii as-is (keeps circles/ellipses correct on the overlay)
+      if (/%/.test(val)) return val;
+      const num = parseFloat(val);
+      if (Number.isFinite(num)) return `${Math.max(0, num + expandPx)}px`;
+      return `${Math.max(0, expandPx + 8)}px`;
+    };
+    const tl = parseCorner(cs.borderTopLeftRadius);
+    const tr = parseCorner(cs.borderTopRightRadius);
+    const br = parseCorner(cs.borderBottomRightRadius);
+    const bl = parseCorner(cs.borderBottomLeftRadius);
+    return `${tl} ${tr} ${br} ${bl}`;
+  };
+
   const flashHighlight = (el: HTMLElement) => {
     const rect = el.getBoundingClientRect();
     const highlight = document.createElement('div');
@@ -195,7 +213,7 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
       top: `${rect.top - 6}px`,
       width: `${rect.width + 12}px`,
       height: `${rect.height + 12}px`,
-      borderRadius: '8px',
+      borderRadius: computeExpandedBorderRadius(el, 6),
       boxShadow: '0 0 0 3px rgba(0,147,246,0.9), 0 0 16px rgba(0,147,246,0.6)',
       pointerEvents: 'none',
       transition: 'opacity 400ms ease',
@@ -233,8 +251,7 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
   const positionSpotlight = () => {
     if (!activeSpotlightOverlay || !activeSpotlightTarget) return;
     const rect = activeSpotlightTarget.getBoundingClientRect();
-    const radius =
-      window.getComputedStyle(activeSpotlightTarget).borderRadius || '8px';
+    const radius = computeExpandedBorderRadius(activeSpotlightTarget, 6);
     Object.assign(activeSpotlightOverlay.style, {
       left: `${rect.left - 6}px`,
       top: `${rect.top - 6}px`,
@@ -249,6 +266,9 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
       clearInterval(spotlightInterval);
       spotlightInterval = null;
     }
+    // Detach listeners used to reposition the overlay
+    window.removeEventListener('scroll', positionSpotlight, true);
+    window.removeEventListener('resize', positionSpotlight);
     if (activeSpotlightOverlay) {
       activeSpotlightOverlay.remove();
       activeSpotlightOverlay = null;
@@ -457,7 +477,7 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
     chunks: DocumentChunk[],
   ): string {
     const lines: string[] = [];
-    lines.push(`RAG: Retrieved ${chunks.length} results for "${query}"`);
+    lines.push(`RAG_BLOCK_START Retrieved ${chunks.length} results for "${query}"`);
     const top = chunks.slice(0, Math.min(5, chunks.length));
     for (let i = 0; i < top.length; i++) {
       const c = top[i];
@@ -470,6 +490,7 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
         typeof c.score === 'number' ? ` score:${c.score.toFixed(3)}` : '';
       lines.push(`- [${i + 1}]${doc}${score} ${text}`);
     }
+    lines.push('RAG_BLOCK_END');
     lines.push('');
     lines.push('ACTION NOTE Retrieved context loaded.');
     return lines.join('\n');

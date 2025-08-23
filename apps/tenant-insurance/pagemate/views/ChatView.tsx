@@ -160,19 +160,54 @@ const CommandTarget = styled.code`
   white-space: pre-wrap;
 `;
 
-function renderMessageContent(content: string) {
-  const out: React.ReactNode[] = [];
-  // Global matcher: ACTION <VERB> <TARGET> until newline, next ACTION, or end
-  const re = /ACTION\s+([A-Z_]+)\s*[:\-]?\s*([\s\S]+?)(?=(?:\r?\n|\s*ACTION\s+[A-Z_]+|$))/gim;
+const RagDetails = styled.details`
+  border: 1px dashed rgba(0, 147, 246, 0.35);
+  background: rgba(171, 220, 246, 0.16);
+  border-radius: 8px;
+  padding: 6px 8px;
+`;
 
+const RagSummary = styled.summary`
+  cursor: pointer;
+  list-style: none;
+  font-size: 12px;
+  color: #074780;
+  background: #e3f3ff;
+  border: 1px solid rgba(0, 147, 246, 0.4);
+  padding: 4px 8px;
+  border-radius: 999px;
+  width: fit-content;
+  margin-bottom: 6px;
+
+  &::-webkit-details-marker {
+    display: none;
+  }
+`;
+
+const RagList = styled.ul`
+  margin: 0;
+  padding-left: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+`;
+
+const RagItem = styled.li`
+  font-size: 13px;
+  color: #0b3668;
+`;
+
+function renderTextWithCommands(text: string) {
+  const out: React.ReactNode[] = [];
+  const re = /ACTION\s+([A-Z_]+)\s*[:\-]?\s*([\s\S]+?)(?=(?:\r?\n|\s*ACTION\s+[A-Z_]+|$))/gim;
   let lastIndex = 0;
   let match: RegExpExecArray | null;
   let cmdIdx = 0;
 
-  while ((match = re.exec(content)) !== null) {
+  while ((match = re.exec(text)) !== null) {
     const start = match.index;
     const end = re.lastIndex;
-    const before = content.slice(lastIndex, start);
+    const before = text.slice(lastIndex, start);
     if (before) {
       out.push(<Fragment key={`txt-${lastIndex}`}>{before}</Fragment>);
     }
@@ -196,11 +231,53 @@ function renderMessageContent(content: string) {
     lastIndex = end;
   }
 
-  const tail = content.slice(lastIndex);
+  const tail = text.slice(lastIndex);
   if (tail) {
     out.push(<Fragment key={`tail-${lastIndex}`}>{tail}</Fragment>);
   }
 
-  if (out.length === 0) return content;
   return out;
+}
+
+function renderMessageContent(content: string) {
+  const nodes: React.ReactNode[] = [];
+  const ragRe = /RAG_BLOCK_START\s*(.*)\r?\n([\s\S]*?)\r?\nRAG_BLOCK_END/gm;
+  let lastIndex = 0;
+  let m: RegExpExecArray | null;
+  let ragIdx = 0;
+
+  while ((m = ragRe.exec(content)) !== null) {
+    const start = m.index;
+    const end = ragRe.lastIndex;
+
+    const before = content.slice(lastIndex, start);
+    if (before) nodes.push(...renderTextWithCommands(before));
+
+    const header = (m[1] || 'Retrieved results').trim();
+    const body = (m[2] || '').trim();
+    const items = body
+      .split(/\r?\n/)
+      .map((l) => l.trim())
+      .filter((l) => l.startsWith('- '));
+
+    nodes.push(
+      <RagDetails key={`rag-${ragIdx++}`}>
+        <RagSummary>🔎 {header}</RagSummary>
+        {items.length > 0 && (
+          <RagList>
+            {items.map((line, i) => (
+              <RagItem key={i}>{line.replace(/^\-\s*/, '')}</RagItem>
+            ))}
+          </RagList>
+        )}
+      </RagDetails>,
+    );
+
+    lastIndex = end;
+  }
+
+  const tail = content.slice(lastIndex);
+  if (tail) nodes.push(...renderTextWithCommands(tail));
+
+  return nodes.length ? nodes : content;
 }
