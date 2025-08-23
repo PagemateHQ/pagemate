@@ -154,11 +154,32 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
                 }),
               });
               const data = await resp.json();
-              if (resp.ok && data?.content) {
-                setMessages((prev) => [
-                  ...prev,
-                  { role: 'assistant', content: data.content },
-                ]);
+              if (resp.ok) {
+                const structured = data?.structured as
+                  | { reply: string; action: { verb: 'SPOTLIGHT' | 'CLICK' | 'RETRIEVE'; target: string } }
+                  | undefined;
+                if (structured && structured.reply) {
+                  setMessages((prev) => [
+                    ...prev,
+                    { role: 'assistant', content: structured.reply },
+                  ]);
+                  try {
+                    const { verb, target } = structured.action || ({} as any);
+                    if (verb === 'SPOTLIGHT') await executeTool(isLikelyXPath(target) ? { type: 'highlightByXPath', xpath: target } : { type: 'highlightByText', text: target });
+                    else if (verb === 'CLICK') await executeTool(isLikelyXPath(target) ? { type: 'clickByXPath', xpath: target } : { type: 'clickByText', text: target });
+                    else if (verb === 'RETRIEVE') await executeTool({ type: 'retrieve', query: target });
+                  } catch {}
+                } else if (data?.content) {
+                  setMessages((prev) => [
+                    ...prev,
+                    { role: 'assistant', content: data.content },
+                  ]);
+                  try {
+                    const actions = parseAssistantActions(data.content);
+                    const first = actions[0];
+                    if (first) await executeTool(first);
+                  } catch {}
+                }
               }
             } catch {}
           }
@@ -434,19 +455,36 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
         const data = await resp.json();
         if (!resp.ok) throw new Error(data?.error || 'Failed to fetch');
 
-        const reply = data?.content ?? '';
-        if (reply) {
+        const structured = data?.structured as
+          | { reply: string; action: { verb: 'SPOTLIGHT' | 'CLICK' | 'RETRIEVE'; target: string } }
+          | undefined;
+
+        if (structured && structured.reply) {
+          // Use structured reply for display, and execute exactly one action
           setMessages((prev) => [
             ...prev,
-            { role: 'assistant', content: reply },
+            { role: 'assistant', content: structured.reply },
           ]);
-          // Parse any ACTION directives in the assistant reply and execute tools.
           try {
-            const actions = parseAssistantActions(reply);
-            for (const a of actions) {
-              await executeTool(a);
-            }
+            const { verb, target } = structured.action || ({} as any);
+            if (verb === 'SPOTLIGHT') await executeTool(isLikelyXPath(target) ? { type: 'highlightByXPath', xpath: target } : { type: 'highlightByText', text: target });
+            else if (verb === 'CLICK') await executeTool(isLikelyXPath(target) ? { type: 'clickByXPath', xpath: target } : { type: 'clickByText', text: target });
+            else if (verb === 'RETRIEVE') await executeTool({ type: 'retrieve', query: target });
           } catch {}
+        } else {
+          const reply = data?.content ?? '';
+          if (reply) {
+            setMessages((prev) => [
+              ...prev,
+              { role: 'assistant', content: reply },
+            ]);
+            // Parse ACTION directives and execute at most one
+            try {
+              const actions = parseAssistantActions(reply);
+              const first = actions[0];
+              if (first) await executeTool(first);
+            } catch {}
+          }
         }
       } catch (e: any) {
         console.error(e);

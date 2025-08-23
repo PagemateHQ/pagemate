@@ -1,5 +1,7 @@
 import styled from '@emotion/styled';
 import React, { Fragment, useEffect, useRef } from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 export type ChatMessage = {
   role: 'user' | 'assistant' | 'system';
@@ -10,12 +12,14 @@ interface ChatViewProps {
   messages: ChatMessage[];
   loading?: boolean;
   error?: string | null;
+  suppressActions?: boolean;
 }
 
 export const ChatView: React.FC<ChatViewProps> = ({
   messages,
   loading = false,
   error = null,
+  suppressActions = false,
 }) => {
   const chatScrollRef = useRef<HTMLDivElement | null>(null);
 
@@ -41,7 +45,9 @@ export const ChatView: React.FC<ChatViewProps> = ({
               <BubbleRole data-role={m.role}>
                 {m.role === 'user' ? 'You' : 'Pagemate'}
               </BubbleRole>
-              <BubbleText>{renderMessageContent(m.content)}</BubbleText>
+              <BubbleText>
+                {renderMessageContent(m.content, { isLast: i === messages.length - 1, suppress: suppressActions })}
+              </BubbleText>
             </Bubble>
           </BubbleWrapper>
         ))
@@ -160,21 +166,103 @@ const CommandTarget = styled.code`
   white-space: pre-wrap;
 `;
 
-function renderMessageContent(content: string) {
-  const out: React.ReactNode[] = [];
-  // Global matcher: ACTION <VERB> <TARGET> until newline, next ACTION, or end
-  const re = /ACTION\s+([A-Z_]+)\s*[:\-]?\s*([\s\S]+?)(?=(?:\r?\n|\s*ACTION\s+[A-Z_]+|$))/gim;
+const RagDetails = styled.details`
+  border: 1px dashed rgba(0, 147, 246, 0.35);
+  background: rgba(171, 220, 246, 0.16);
+  border-radius: 8px;
+  padding: 6px 8px;
+`;
 
+const RagSummary = styled.summary`
+  cursor: pointer;
+  list-style: none;
+  font-size: 12px;
+  color: #074780;
+  background: #e3f3ff;
+  border: 1px solid rgba(0, 147, 246, 0.4);
+  padding: 4px 8px;
+  border-radius: 999px;
+  width: fit-content;
+  margin-bottom: 6px;
+
+  &::-webkit-details-marker {
+    display: none;
+  }
+`;
+
+const RagList = styled.ul`
+  margin: 0;
+  padding-left: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+`;
+
+const RagItem = styled.li`
+  font-size: 13px;
+  color: #0b3668;
+`;
+
+const MarkdownBlock = styled.div`
+  color: #0b3668;
+  font-size: 14px;
+  line-height: 1.5;
+
+  p { margin: 0 0 6px; }
+  ul, ol { margin: 6px 0; padding-left: 20px; }
+  li { margin: 2px 0; }
+  a { color: #0b5cc1; text-decoration: underline; }
+  code { background: #eef6ff; padding: 2px 4px; border-radius: 4px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+  pre { background: #082f4b; color: #e6f1fa; padding: 10px; border-radius: 6px; overflow: auto; }
+  pre code { background: transparent; padding: 0; }
+  h1, h2, h3, h4, h5, h6 { margin: 8px 0 6px; line-height: 1.2; }
+  h1 { font-size: 18px; }
+  h2 { font-size: 16px; }
+  h3 { font-size: 15px; }
+`;
+
+function renderTextWithCommands(text: string, parseCommands: boolean) {
+  if (!parseCommands) {
+    return [
+      <MarkdownBlock key={`md-all`}>
+        <ReactMarkdown
+          remarkPlugins={[remarkGfm]}
+          components={{
+            a: ({ node, ...props }) => (
+              <a target="_blank" rel="noopener noreferrer" {...props} />
+            ),
+          }}
+        >
+          {text}
+        </ReactMarkdown>
+      </MarkdownBlock>,
+    ];
+  }
+  const out: React.ReactNode[] = [];
+  const re = /ACTION\s+([A-Z_]+)\s*[:\-]?\s*([\s\S]+?)(?=(?:\r?\n|\s*ACTION\s+[A-Z_]+|$))/gim;
   let lastIndex = 0;
   let match: RegExpExecArray | null;
   let cmdIdx = 0;
 
-  while ((match = re.exec(content)) !== null) {
+  while ((match = re.exec(text)) !== null) {
     const start = match.index;
     const end = re.lastIndex;
-    const before = content.slice(lastIndex, start);
+    const before = text.slice(lastIndex, start);
     if (before) {
-      out.push(<Fragment key={`txt-${lastIndex}`}>{before}</Fragment>);
+      out.push(
+        <MarkdownBlock key={`md-${lastIndex}`}>
+          <ReactMarkdown
+            remarkPlugins={[remarkGfm]}
+            components={{
+              a: ({ node, ...props }) => (
+                <a target="_blank" rel="noopener noreferrer" {...props} />
+              ),
+            }}
+          >
+            {before}
+          </ReactMarkdown>
+        </MarkdownBlock>,
+      );
     }
 
     const verb = (match[1] || '').toUpperCase().trim();
@@ -196,11 +284,70 @@ function renderMessageContent(content: string) {
     lastIndex = end;
   }
 
-  const tail = content.slice(lastIndex);
+  const tail = text.slice(lastIndex);
   if (tail) {
-    out.push(<Fragment key={`tail-${lastIndex}`}>{tail}</Fragment>);
+    out.push(
+      <MarkdownBlock key={`md-tail-${lastIndex}`}>
+        <ReactMarkdown
+          remarkPlugins={[remarkGfm]}
+          components={{
+            a: ({ node, ...props }) => (
+              <a target="_blank" rel="noopener noreferrer" {...props} />
+            ),
+          }}
+        >
+          {tail}
+        </ReactMarkdown>
+      </MarkdownBlock>,
+    );
   }
 
-  if (out.length === 0) return content;
   return out;
+}
+
+function renderMessageContent(
+  content: string,
+  opts?: { isLast?: boolean; suppress?: boolean },
+) {
+  const nodes: React.ReactNode[] = [];
+  const ragRe = /RAG_BLOCK_START\s*(.*)\r?\n([\s\S]*?)\r?\nRAG_BLOCK_END/gm;
+  let lastIndex = 0;
+  let m: RegExpExecArray | null;
+  let ragIdx = 0;
+  const parseCommands = !!opts?.isLast && !opts?.suppress;
+
+  while ((m = ragRe.exec(content)) !== null) {
+    const start = m.index;
+    const end = ragRe.lastIndex;
+
+    const before = content.slice(lastIndex, start);
+    if (before) nodes.push(...renderTextWithCommands(before, parseCommands));
+
+    const header = (m[1] || 'Retrieved results').trim();
+    const body = (m[2] || '').trim();
+    const items = body
+      .split(/\r?\n/)
+      .map((l) => l.trim())
+      .filter((l) => l.startsWith('- '));
+
+    nodes.push(
+      <RagDetails key={`rag-${ragIdx++}`}>
+        <RagSummary>🔎 {header}</RagSummary>
+        {items.length > 0 && (
+          <RagList>
+            {items.map((line, i) => (
+              <RagItem key={i}>{line.replace(/^\-\s*/, '')}</RagItem>
+            ))}
+          </RagList>
+        )}
+      </RagDetails>,
+    );
+
+    lastIndex = end;
+  }
+
+  const tail = content.slice(lastIndex);
+  if (tail) nodes.push(...renderTextWithCommands(tail, parseCommands));
+
+  return nodes.length ? nodes : content;
 }

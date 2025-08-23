@@ -7,6 +7,12 @@ import { stopAtom } from "@/lib/task-store";
 
 const offices = [
 	{
+		city: "Austin, TX",
+		zipPrefix: "78",
+		phone: "(512) 555-0102",
+		address: "300 Congress Ave",
+	},
+	{
 		city: "San Francisco, CA",
 		zipPrefix: "94",
 		phone: "(415) 555-0100",
@@ -17,12 +23,6 @@ const offices = [
 		zipPrefix: "10",
 		phone: "(212) 555-0101",
 		address: "200 Broadway",
-	},
-	{
-		city: "Austin, TX",
-		zipPrefix: "78",
-		phone: "(512) 555-0102",
-		address: "300 Congress Ave",
 	},
 	{
 		city: "Chicago, IL",
