@@ -59,6 +59,7 @@ async function handler(
       'If the user says "highlight <text>", they mean visually highlight the on-page element — do NOT format text as bold/italics.',
       'You MUST respond as a strict JSON object, no markdown/code fences, no extra text. JSON ONLY.',
       'Schema: { "reply": string, "action": { "verb": "SPOTLIGHT"|"CLICK"|"RETRIEVE", "target": string } }',
+      'CLICK should follow with the text of the element to click, not URL.',
       'Exactly one action is required. Think carefully and choose one.',
       'Keep the "reply" concise and confirm the action (e.g., "Highlighting Start Building").',
       'When uncertain, ask a short clarifying question in "reply". Do not hallucinate UI that is not present.',
