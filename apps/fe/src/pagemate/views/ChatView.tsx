@@ -103,7 +103,7 @@ const BubbleRole = styled.span`
   color: #6c8bab;
 `;
 
-const BubbleText = styled.div`
+const BubbleText = styled.span`
   font-size: 14px;
   color: #0b3668;
   white-space: pre-wrap;
@@ -163,7 +163,8 @@ const CommandTarget = styled.code`
 function renderMessageContent(content: string) {
   const out: React.ReactNode[] = [];
   // Global matcher: ACTION <VERB> <TARGET> until newline, next ACTION, or end
-  const re = /ACTION\s+([A-Z_]+)\s*[:\-]?\s*([\s\S]+?)(?=(?:\r?\n|\s*ACTION\s+[A-Z_]+|$))/gim;
+  const re =
+    /ACTION\s+([A-Z_]+)\s*[:\-]?\s*([\s\S]+?)(?=(?:\r?\n|\s*ACTION\s+[A-Z_]+|$))/gim;
 
   let lastIndex = 0;
   let match: RegExpExecArray | null;

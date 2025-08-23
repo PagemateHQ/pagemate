@@ -109,7 +109,7 @@ const BubbleRole = styled.span`
   color: #6c8bab;
 `;
 
-const BubbleText = styled.div`
+const BubbleText = styled.span`
   font-size: 14px;
   color: #0b3668;
   white-space: pre-wrap;

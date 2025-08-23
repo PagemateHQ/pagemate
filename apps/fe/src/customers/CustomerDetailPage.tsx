@@ -114,7 +114,22 @@ const CustomerDetailPage: React.FC = () => {
             {loading ? (
               <LoadingText>Loading...</LoadingText>
             ) : (
-              <TenantName>{tenant?.name || 'CUSTOMER NAME'}</TenantName>
+              <>
+                <TenantHeader>
+                  <TenantLogo
+                    src="/app/logo-acme-insurance.png"
+                    alt="Acme Insurance"
+                  />
+                  <Divider />
+                </TenantHeader>
+                <TenantInfo>
+                  <TenantDetails>
+                    <TenantCategory>Insurance & Finance</TenantCategory>
+                    <TenantName>{tenant?.name || 'Acme Insurance'}</TenantName>
+                    <TenantCreated>Created Aug 23, 2025</TenantCreated>
+                  </TenantDetails>
+                </TenantInfo>
+              </>
             )}
           </TenantCard>
         </Sidebar>
@@ -207,15 +222,11 @@ const CustomerDetailPage: React.FC = () => {
 // Styled Components
 const Container = styled.div`
   min-height: 100vh;
+  padding: 0 20px;
+  width: 100%;
 `;
 
-const LoadingText = styled.div`
-  font-family:
-    'Instrument Sans',
-    -apple-system,
-    BlinkMacSystemFont,
-    'Segoe UI',
-    sans-serif;
+const LoadingText = styled.span`
   font-size: 16px;
   font-weight: 400;
   letter-spacing: -0.64px;
@@ -228,34 +239,89 @@ const Content = styled.div`
   margin: 0 auto;
 
   display: flex;
-  gap: 25px;
-  padding: 88px 24px 24px;
+  gap: 24px;
+  padding: 88px 0 24px;
+
+  @media screen and (max-width: 1160px) {
+    flex-direction: column;
+  }
 `;
 
 const Sidebar = styled.aside`
   width: 348px;
   flex-shrink: 0;
+
+  @media screen and (max-width: 1160px) {
+    width: 100%;
+  }
 `;
 
 const TenantCard = styled.div`
+  width: 100%;
   background: white;
   border-radius: 8px;
-  padding: 18px 21px;
+  padding: 22px 18px;
   min-height: 210px;
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+`;
+
+const TenantHeader = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  width: 100%;
+`;
+
+const TenantLogo = styled.img`
+  width: 162px;
+  height: 58px;
+  object-fit: contain;
+`;
+
+const Divider = styled.div`
+  height: 1px;
+  width: 100%;
+  background: #c4e2f1;
+`;
+
+const TenantInfo = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+`;
+
+const TenantDetails = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+`;
+
+const TenantCategory = styled.span`
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: -0.42px;
+  color: #0093f6;
+  font-variation-settings: 'wdth' 100;
 `;
 
 const TenantName = styled.h2`
-  font-family:
-    'Instrument Sans',
-    -apple-system,
-    BlinkMacSystemFont,
-    'Segoe UI',
-    sans-serif;
-  font-size: 18px;
+  font-size: 23px;
   font-weight: 500;
-  letter-spacing: -0.72px;
+  letter-spacing: -0.69px;
   color: #000000;
   margin: 0;
+  font-variation-settings: 'wdth' 100;
+`;
+
+const TenantCreated = styled.span`
+  font-size: 14px;
+  font-weight: 400;
+  letter-spacing: -0.56px;
+  color: #6c8bab;
+  line-height: 1.2;
+  font-variation-settings: 'wdth' 100;
 `;
 
 const MainContent = styled.main`
@@ -285,6 +351,10 @@ const UploadSection = styled.div<{ $isDragging: boolean }>`
     border-color: #0093f6;
     box-shadow: 0 0 0 2px rgba(0, 147, 246, 0.2);
   `}
+
+  @media screen and (max-width: 800px) {
+    flex-direction: column;
+  }
 `;
 
 const UploadContent = styled.div`
@@ -302,12 +372,6 @@ const IconRow = styled.div`
 `;
 
 const UploadTitle = styled.h3`
-  font-family:
-    'Instrument Sans',
-    -apple-system,
-    BlinkMacSystemFont,
-    'Segoe UI',
-    sans-serif;
   font-size: 24px;
   font-weight: 400;
   line-height: 1.04;
@@ -318,12 +382,6 @@ const UploadTitle = styled.h3`
 `;
 
 const UploadDescription = styled.p`
-  font-family:
-    'Instrument Sans',
-    -apple-system,
-    BlinkMacSystemFont,
-    'Segoe UI',
-    sans-serif;
   font-size: 14px;
   font-weight: 400;
   line-height: 1.2;
@@ -357,12 +415,6 @@ const DropZone = styled.div<{ $isDragging: boolean }>`
 `;
 
 const DropZoneText = styled.p`
-  font-family:
-    'Instrument Sans',
-    -apple-system,
-    BlinkMacSystemFont,
-    'Segoe UI',
-    sans-serif;
   font-size: 16px;
   font-weight: 400;
   letter-spacing: -0.64px;
@@ -370,7 +422,7 @@ const DropZoneText = styled.p`
   margin: 0;
 `;
 
-const ErrorMessage = styled.div`
+const ErrorMessage = styled.span`
   background: #fee;
   color: #c00;
   padding: 12px 16px;
@@ -378,7 +430,7 @@ const ErrorMessage = styled.div`
   font-size: 14px;
 `;
 
-const LoadingMessage = styled.div`
+const LoadingMessage = styled.span`
   background: #e6f4ff;
   color: #0093f6;
   padding: 12px 16px;
@@ -399,12 +451,6 @@ const DocumentsHeader = styled.div`
 `;
 
 const DocumentsTitle = styled.h3`
-  font-family:
-    'Instrument Sans',
-    -apple-system,
-    BlinkMacSystemFont,
-    'Segoe UI',
-    sans-serif;
   font-size: 20px;
   font-weight: 500;
   letter-spacing: -0.8px;
@@ -413,12 +459,6 @@ const DocumentsTitle = styled.h3`
 `;
 
 const DocumentsCount = styled.span`
-  font-family:
-    'Instrument Sans',
-    -apple-system,
-    BlinkMacSystemFont,
-    'Segoe UI',
-    sans-serif;
   font-size: 18px;
   font-weight: 500;
   letter-spacing: -0.72px;
@@ -449,12 +489,6 @@ const DocumentInfo = styled.div`
 `;
 
 const DocumentName = styled.h4`
-  font-family:
-    'Instrument Sans',
-    -apple-system,
-    BlinkMacSystemFont,
-    'Segoe UI',
-    sans-serif;
   font-size: 16px;
   font-weight: 500;
   color: #0b3668;
@@ -462,12 +496,6 @@ const DocumentName = styled.h4`
 `;
 
 const DocumentMeta = styled.span`
-  font-family:
-    'Instrument Sans',
-    -apple-system,
-    BlinkMacSystemFont,
-    'Segoe UI',
-    sans-serif;
   font-size: 14px;
   color: #6c8bab;
 `;
@@ -503,7 +531,7 @@ const StatusBadge = styled.span<{ status: string }>`
   }};
 `;
 
-const EmptyState = styled.div`
+const EmptyState = styled.span`
   text-align: center;
   padding: 40px;
   color: #6c8bab;
