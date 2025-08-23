@@ -128,7 +128,7 @@ def download_file_from_api(tenant_id: str, document_id: str, obj_path: str) -> b
     import urllib.request
     import urllib.error
 
-    api_url = f"http://localhost:8000/tenants/{tenant_id}/documents/{document_id}/attachment"
+    api_url = f"https://api.pagemate.app/tenants/{tenant_id}/documents/{document_id}/attachment"
 
     try:
         logger.debug("Downloading file from API: %s", api_url)

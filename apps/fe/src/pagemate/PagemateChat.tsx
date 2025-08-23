@@ -9,11 +9,13 @@ import { IntroView } from './views/IntroView';
 interface PagemateChatProps {
   isOpen: boolean;
   onClose: () => void;
+  defaultSuggestions: string[]; // Required
 }
 
 export const PagemateChat: React.FC<PagemateChatProps> = ({
   isOpen,
   onClose,
+  defaultSuggestions,
 }) => {
   const [currentView, setCurrentView] = useAtom(currentViewAtom);
   const [messages, setMessages] = useAtom(messagesAtom);
@@ -553,6 +555,7 @@ export const PagemateChat: React.FC<PagemateChatProps> = ({
           onClose={onClose}
           onSendMessage={sendMessage}
           onSwitchToChat={handleSwitchToChat}
+          suggestions={defaultSuggestions}
         />
       ) : (
         <ChatView messages={messages} loading={loading} error={error} />

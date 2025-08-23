@@ -51,9 +51,7 @@ const HomePage = () => {
               <Link href="/customers" style={{ textDecoration: 'none' }}>
                 <StartBuildingButton>Start Building</StartBuildingButton>
               </Link>
-              <Link
-                href="https://insurance.pagemate.app"
-              >
+              <Link href="https://insurance.pagemate.app">
                 <DemoButton>Demo</DemoButton>
               </Link>
             </ButtonGroup>
@@ -61,7 +59,7 @@ const HomePage = () => {
         </HeroSection>
 
         <DemoSection>
-          <DemoLabel>DEMO</DemoLabel>
+          <DemoLabel>USAGE</DemoLabel>
           <DemoGrid>
             {DEMO_ITEMS.map((item) => (
               <DemoCard key={item.title}>
