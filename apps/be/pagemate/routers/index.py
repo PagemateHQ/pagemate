@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from starlette.responses import PlainTextResponse, HTMLResponse
+from starlette.responses import HTMLResponse
 
 router = APIRouter()
 

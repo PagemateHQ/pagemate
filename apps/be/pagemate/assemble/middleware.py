@@ -1,7 +1,7 @@
 from starlette.middleware import Middleware
 from starlette.middleware.cors import CORSMiddleware
-from starlette_context.middleware import RawContextMiddleware
 from starlette_context import plugins
+from starlette_context.middleware import RawContextMiddleware
 
 cors_middleware = Middleware(
     CORSMiddleware,
