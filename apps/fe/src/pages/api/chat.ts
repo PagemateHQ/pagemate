@@ -30,12 +30,6 @@ async function handler(
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
 
-  const apiKey = process.env.UPSTAGE_API_KEY;
-
-  if (!apiKey) {
-    return res.status(500).json({ error: 'Missing UPSTAGE_API_KEY' });
-  }
-
   try {
     const {
       messages,
@@ -53,9 +47,7 @@ async function handler(
       return res.status(400).json({ error: 'messages[] is required' });
     }
 
-    const upstageClient = apiKey
-      ? new OpenAI({ apiKey, baseURL: 'https://api.upstage.ai/v1' })
-      : null;
+    const upstageClient = new OpenAI({ apiKey: process.env.UPSTAGE_API_KEY, baseURL: 'https://api.upstage.ai/v1' });
 
     const DEFAULT_SYSTEM_PROMPT = [
       'You are Pagemate, an on-page AI assistant embedded in a website.',
@@ -216,8 +208,8 @@ async function handler(
 
     const mname = (model || 'solar-pro2').trim();
 
-    const oai = new OpenAI({ apiKey: apiKey, baseURL: 'https://api.upstage.ai/v1' });
-      try {
+    const oai = new OpenAI({ apiKey: process.env.UPSTAGE_API_KEY, baseURL: 'https://api.upstage.ai/v1' });
+      
         const completion: any = await oai.chat.completions.create({
           model: mname,
           messages: finalMessages,
@@ -235,16 +227,7 @@ async function handler(
           const text = msg?.content?.[0]?.text || msg?.content || '';
           ({ content, structured } = locallyValidateOrSanitize(String(text || '')));
         }
-      } catch (e: any) {
-        if (!upstageClient) throw e;
-        const completion = await upstageClient.chat.completions.create({
-          model: 'solar-pro2',
-          messages: finalMessages,
-          stream: false,
-        });
-        const raw = completion.choices?.[0]?.message?.content ?? '';
-        ({ content, structured } = locallyValidateOrSanitize(raw));
-      }
+      
    
 
     return res.status(200).json({ content, structured: structured ?? undefined });
