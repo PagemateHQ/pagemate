@@ -578,7 +578,7 @@ def main() -> None:
                     break
                 except Exception as e:
                     logger.error("Polling loop error: %s", e)
-                    time.sleep(1.0)
+                    time.sleep(10.0)
     run_polling_loop()
 
 
