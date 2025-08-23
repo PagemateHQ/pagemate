@@ -9,8 +9,8 @@ from pagemate.settings import settings
 
 router = APIRouter(prefix="/upstage", tags=["upstage"])
 openai_client = openai.Client(
-    api_key=settings.upstage_api_key,
-    base_url=settings.upstage_base_url,
+    api_key=settings.upstage_completion_api_key,
+    base_url=settings.upstage_completion_base_url,
 )
 
 

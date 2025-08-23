@@ -6,8 +6,8 @@ from openai import OpenAI
 from pagemate.settings import settings
 
 client = OpenAI(
-    api_key=settings.upstage_api_key,
-    base_url=settings.upstage_base_url,
+    api_key=settings.upstage_embedding_api_key,
+    base_url=settings.upstage_embedding_base_url,
 )
 
 
