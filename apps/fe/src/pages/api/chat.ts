@@ -55,6 +55,7 @@ async function handler(
         'Examples: ACTION SPOTLIGHT Start Building | ACTION CLICK Start Building | ACTION RETRIEVE refund policy for subscriptions',
         'Unless the user asks, only use SPOTLIGHT. Also, the website information changes frequently, so do not rely on knowledge retrieval; only figure out the where to find the information.',
         'The command line should be in a single line, and should not contain any other text.',
+        'Think very carefully and you MUST execute only one action.',
       'Keep replies concise and confirm actions you take (e.g., "Highlighting Start Building").',
       'When uncertain, ask a short clarifying question. Do not hallucinate UI that is not present.',
       'Never use bold text in your response. Do not quote commands in your response; commands should not show up in your response unless they are being executed.',

@@ -1,5 +1,7 @@
 import styled from '@emotion/styled';
 import React, { Fragment, useEffect, useRef } from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 export type ChatMessage = {
   role: 'user' | 'assistant' | 'system';
@@ -197,6 +199,24 @@ const RagItem = styled.li`
   color: #0b3668;
 `;
 
+const MarkdownBlock = styled.div`
+  color: #0b3668;
+  font-size: 14px;
+  line-height: 1.5;
+
+  p { margin: 0 0 6px; }
+  ul, ol { margin: 6px 0; padding-left: 20px; }
+  li { margin: 2px 0; }
+  a { color: #0b5cc1; text-decoration: underline; }
+  code { background: #eef6ff; padding: 2px 4px; border-radius: 4px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+  pre { background: #082f4b; color: #e6f1fa; padding: 10px; border-radius: 6px; overflow: auto; }
+  pre code { background: transparent; padding: 0; }
+  h1, h2, h3, h4, h5, h6 { margin: 8px 0 6px; line-height: 1.2; }
+  h1 { font-size: 18px; }
+  h2 { font-size: 16px; }
+  h3 { font-size: 15px; }
+`;
+
 function renderTextWithCommands(text: string) {
   const out: React.ReactNode[] = [];
   const re = /ACTION\s+([A-Z_]+)\s*[:\-]?\s*([\s\S]+?)(?=(?:\r?\n|\s*ACTION\s+[A-Z_]+|$))/gim;
@@ -209,7 +229,20 @@ function renderTextWithCommands(text: string) {
     const end = re.lastIndex;
     const before = text.slice(lastIndex, start);
     if (before) {
-      out.push(<Fragment key={`txt-${lastIndex}`}>{before}</Fragment>);
+      out.push(
+        <MarkdownBlock key={`md-${lastIndex}`}>
+          <ReactMarkdown
+            remarkPlugins={[remarkGfm]}
+            components={{
+              a: ({ node, ...props }) => (
+                <a target="_blank" rel="noopener noreferrer" {...props} />
+              ),
+            }}
+          >
+            {before}
+          </ReactMarkdown>
+        </MarkdownBlock>,
+      );
     }
 
     const verb = (match[1] || '').toUpperCase().trim();
@@ -233,7 +266,20 @@ function renderTextWithCommands(text: string) {
 
   const tail = text.slice(lastIndex);
   if (tail) {
-    out.push(<Fragment key={`tail-${lastIndex}`}>{tail}</Fragment>);
+    out.push(
+      <MarkdownBlock key={`md-tail-${lastIndex}`}>
+        <ReactMarkdown
+          remarkPlugins={[remarkGfm]}
+          components={{
+            a: ({ node, ...props }) => (
+              <a target="_blank" rel="noopener noreferrer" {...props} />
+            ),
+          }}
+        >
+          {tail}
+        </ReactMarkdown>
+      </MarkdownBlock>,
+    );
   }
 
   return out;
