@@ -77,7 +77,16 @@ export default async function Home({
 						))}
 					</ul>
 				</div>
-				<Card className="relative overflow-hidden" aria-label="Why choose us section">
+				<Card
+					className="relative overflow-hidden"
+					aria-label="Why choose us section"
+					style={{
+						backgroundImage: `url('/card-bg-light.png')`,
+						backgroundSize: 'cover',
+						backgroundPosition: 'top right',
+						backgroundRepeat: 'no-repeat',
+					}}
+				>
 					<CardHeader aria-label="Section header">
 						<div className="flex items-center gap-3" aria-label="Section title with icon">
 							<span className="inline-flex size-10 items-center justify-center rounded-full bg-primary text-primary-foreground" aria-hidden="true">
@@ -89,7 +98,7 @@ export default async function Home({
 							</div>
 						</div>
 					</CardHeader>
-					<CardContent aria-label="Feature cards">
+					<CardContent style={{ marginTop: 'auto' }} aria-label="Feature cards">
 						<div className="grid gap-3 sm:grid-cols-2" aria-label="Feature grid">
 							{[
 								{ key: "flexible" as const },
