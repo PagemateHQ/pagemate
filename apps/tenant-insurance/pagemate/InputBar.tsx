@@ -12,7 +12,7 @@ interface InputBarProps {
 export const InputBar: React.FC<InputBarProps> = ({
   onSendMessage,
   loading = false,
-  placeholder = 'Ask anything about your product…',
+  placeholder = 'Ask me anything about this website…',
 }) => {
   const [input, setInput] = useState('');
 
