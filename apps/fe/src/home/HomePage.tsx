@@ -2,6 +2,7 @@ import styled from '@emotion/styled';
 import Image from 'next/image';
 import Link from 'next/link';
 import React from 'react';
+import { motion } from 'framer-motion';
 
 import { Header } from '@/components/Header';
 
@@ -59,6 +60,54 @@ const HomePage = () => {
             </ButtonGroup>
           </HeroContent>
         </HeroSection>
+
+        {/* Scenario explanation section */}
+        <ScenarioSection>
+          <DemoLabel>SCENARIO</DemoLabel>
+          <ScenarioGrid>
+            <motion.div
+              initial={{ opacity: 0, y: 28 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.3 }}
+              transition={{ duration: 0.5, ease: 'easeOut' }}
+            >
+              <ScenarioColumn>
+                <BubbleLabel>User says</BubbleLabel>
+                <ChatBubbleLeft>
+                  I cannot find this feature!
+                </ChatBubbleLeft>
+              </ScenarioColumn>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true, amount: 0.3 }}
+              transition={{ duration: 0.5, ease: 'easeOut', delay: 0.1 }}
+            >
+              <ScenarioCenter>
+                <CalloutWrapper>
+                  <HelpCallout>Pagemate is here to help!</HelpCallout>
+                  <TightLogo src="/assets/logo.png" alt="Pagemate" />
+                </CalloutWrapper>
+              </ScenarioCenter>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 28 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.3 }}
+              transition={{ duration: 0.5, ease: 'easeOut', delay: 0.2 }}
+            >
+              <ScenarioColumn alignRight>
+                <BubbleLabel>Company says</BubbleLabel>
+                <ChatBubbleRight>
+                  How can you not find it?!?
+                </ChatBubbleRight>
+              </ScenarioColumn>
+            </motion.div>
+          </ScenarioGrid>
+        </ScenarioSection>
 
         <DemoSection>
           <DemoLabel>USAGE</DemoLabel>
@@ -261,6 +310,171 @@ const DemoSection = styled.div`
 
   @media screen and (max-width: 400px) {
     margin-top: 100px;
+  }
+`;
+
+const ScenarioSection = styled.div`
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+
+  @media screen and (max-width: 700px) {
+    margin-top: 24px;
+  }
+`;
+
+const ScenarioGrid = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  align-items: stretch;
+`;
+
+const ScenarioColumn = styled.div<{ alignRight?: boolean }>`
+  display: flex;
+  flex-direction: column;
+  align-items: ${(p) => (p.alignRight ? 'flex-end' : 'flex-start')};
+  gap: 12px;
+  width: 100%;
+`;
+
+const BubbleLabel = styled.span`
+  font-family: 'Instrument Sans', sans-serif;
+  font-weight: 600;
+  font-size: 18px;
+  letter-spacing: -0.4px;
+  color: #6c8bab;
+`;
+
+const ChatBubbleBase = styled.div`
+  position: relative;
+  width: fit-content;
+  max-width: 860px;
+  padding: 22px 26px;
+  background: #ffffff;
+  border: 1px solid #c4e2f1;
+  border-radius: 16px;
+  box-shadow: 0px 14px 32px rgba(64, 156, 203, 0.2);
+
+  font-family: 'Instrument Sans', sans-serif;
+  font-size: 24px;
+  line-height: 1.5;
+  letter-spacing: -0.48px;
+  color: #0b3668;
+
+  @media screen and (max-width: 900px) {
+    max-width: 100%;
+  }
+
+  @media screen and (max-width: 500px) {
+    font-size: 18px;
+    padding: 18px 22px;
+  }
+`;
+
+const ChatBubbleLeft = styled(ChatBubbleBase)`
+  &:after {
+    content: '';
+    position: absolute;
+    left: -12px;
+    top: 28px;
+    width: 0;
+    height: 0;
+    border-top: 12px solid transparent;
+    border-bottom: 12px solid transparent;
+    border-right: 12px solid #ffffff;
+  }
+
+  &:before {
+    content: '';
+    position: absolute;
+    left: -13px;
+    top: 28px;
+    width: 0;
+    height: 0;
+    border-top: 13px solid transparent;
+    border-bottom: 13px solid transparent;
+    border-right: 13px solid #c4e2f1;
+  }
+`;
+
+const ChatBubbleRight = styled(ChatBubbleBase)`
+  &:after {
+    content: '';
+    position: absolute;
+    right: -12px;
+    top: 28px;
+    width: 0;
+    height: 0;
+    border-top: 12px solid transparent;
+    border-bottom: 12px solid transparent;
+    border-left: 12px solid #ffffff;
+  }
+
+  &:before {
+    content: '';
+    position: absolute;
+    right: -13px;
+    top: 28px;
+    width: 0;
+    height: 0;
+    border-top: 13px solid transparent;
+    border-bottom: 13px solid transparent;
+    border-left: 13px solid #c4e2f1;
+  }
+`;
+
+const ScenarioCenter = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+`;
+
+const CalloutWrapper = styled.div`
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+`;
+
+const TightLogo = styled.img`
+  position: absolute;
+  top: -14px;
+  right: -14px;
+  width: 40px;
+  height: 40px;
+  /* No background, border, or shadow for a clean look */
+
+  @media screen and (max-width: 500px) {
+    width: 32px;
+    height: 32px;
+    top: -10px;
+    right: -10px;
+  }
+`;
+
+const HelpCallout = styled.div`
+  padding: 22px 30px;
+  background: linear-gradient(180deg, #eef9ff 29.327%, #cdeeff 100%);
+  border: 1px solid #c4e2f1;
+  border-radius: 999px;
+  box-shadow: 0px 14px 28px 0px rgba(64, 156, 203, 0.28);
+
+  font-family: 'Instrument Sans', sans-serif;
+  font-weight: 700;
+  font-size: 28px;
+  letter-spacing: -0.56px;
+  color: #59b3e1;
+  text-align: center;
+
+  /* Allow wrapping on small screens to avoid overflow */
+  max-width: 100%;
+  white-space: normal;
+
+  @media screen and (max-width: 500px) {
+    font-size: 22px;
+    padding: 18px 24px;
   }
 `;
 
