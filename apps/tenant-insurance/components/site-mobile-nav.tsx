@@ -55,11 +55,11 @@ export function MobileNav() {
 					<Link onClick={() => setOpen(false)} className="py-1" href="/faq" aria-label="View frequently asked questions">
 						{t("Common.mobile.faq")}
 					</Link>
-					<Link onClick={() => setOpen(false)} className="py-1" href="/agents" aria-label="Find insurance agents">
-						{t("Common.mobile.agents")}
-					</Link>
 					<Link onClick={() => setOpen(false)} className="py-1" href="/contact" aria-label="Contact customer service">
 						{t("Common.mobile.contact")}
+					</Link>
+					<Link onClick={() => setOpen(false)} className="py-1" href="/agents" aria-label="Find insurance agents">
+						{t("Common.mobile.agents")}
 					</Link>
 					<Link
 						onClick={() => setOpen(false)}

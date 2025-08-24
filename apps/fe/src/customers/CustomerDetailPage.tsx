@@ -156,11 +156,8 @@ const CustomerDetailPage: React.FC = () => {
               </UploadTitle>
 
               <UploadDescription>
-                Teams ingest their documents and playbooks,
-                <br />
-                Pagemate converts them into executable flows,
-                <br />
-                and tracks completion and deflection.
+                Ingest your documents and playbooks, <br />
+                and Pagemate will convert them into executable flows
               </UploadDescription>
             </UploadContent>
 
