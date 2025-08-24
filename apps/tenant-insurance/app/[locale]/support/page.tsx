@@ -23,8 +23,8 @@ export default async function SupportPage({
 	const items = [
 		{ href: "/claims", key: "fileClaim" },
 		{ href: "/faq", key: "faq" },
-		{ href: "/agents", key: "agents" },
 		{ href: "/contact", key: "contact" },
+		{ href: "/agents", key: "agents" },
 	] as const;
 
 	return (
