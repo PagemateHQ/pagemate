@@ -5,14 +5,10 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from starlette.responses import PlainTextResponse
 
+from pagemate.services import upstage_service
 from pagemate.settings import settings
 
 router = APIRouter(prefix="/upstage", tags=["upstage"])
-openai_client = openai.Client(
-    api_key=settings.upstage_completion_api_key,
-    base_url=settings.upstage_completion_base_url,
-)
-
 
 class Message(BaseModel):
     role: Literal["system", "user", "assistant"]
@@ -36,13 +32,7 @@ async def upstage_chat_completions(request: ChatCompletionRequest):
             [{"role": msg.role, "content": msg.content} for msg in request.messages]
         )
 
-        params = {
-            "model": settings.upstage_completion_model,
-            "messages": messages,
-        }
-
-        response = openai_client.chat.completions.create(**params)
-        content = response.choices[0].message.content
+        content = await upstage_service.complete_chat(messages)
 
         return content
 
