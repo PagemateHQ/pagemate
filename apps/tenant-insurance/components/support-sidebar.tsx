@@ -6,8 +6,8 @@ import { Link, usePathname } from "@/i18n/routing";
 const items = [
 	{ href: "/claims", labelKey: "Support.items.fileClaim.title" },
 	{ href: "/faq", labelKey: "Support.items.faq.title" },
-	{ href: "/agents", labelKey: "Support.items.agents.title" },
 	{ href: "/contact", labelKey: "Support.items.contact.title" },
+	{ href: "/agents", labelKey: "Support.items.agents.title" },
 ];
 
 export function SupportSidebar() {
